@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
 """Final counts: DML only and all statements, with 'unmapped' split from refused-by-design."""
 import collections
 import json

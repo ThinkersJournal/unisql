@@ -1,8 +1,9 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! A target that does not implement `array_membership` must refuse an array parameter loudly: no
 //! text, a named construct, and a reason. (The default is the safe one; nothing is passed through.)
 
 use unisql_core::ast::*;
-use unisql_core::{write, Options, Target};
+use unisql_core::{Options, Target, write};
 
 struct Bare;
 
@@ -19,7 +20,10 @@ fn any_param_query(negated: bool) -> Statement {
         body: SetExpr::Select(Box::new(Select {
             distinct: Distinct::No,
             projection: vec![SelectItem::Wildcard],
-            from: vec![TableRef::Table { name: Name::simple("t"), alias: None }],
+            from: vec![TableRef::Table {
+                name: Name::simple("t"),
+                alias: None,
+            }],
             where_: Some(Expr::AnyParam {
                 expr: Box::new(Expr::Column(Name::simple("id"))),
                 param: 1,
@@ -38,7 +42,13 @@ fn any_param_query(negated: bool) -> Statement {
 #[test]
 fn array_param_without_a_codec_is_refused() {
     for negated in [false, true] {
-        let err = write(&any_param_query(negated), "postgres", &Bare, &Options::default()).unwrap_err();
+        let err = write(
+            &any_param_query(negated),
+            "postgres",
+            &Bare,
+            &Options::default(),
+        )
+        .unwrap_err();
         assert_eq!(err.construct, "array_param");
         assert_eq!(err.subject(), "array_param.refused");
         assert!(err.reason.contains("no codec"), "{}", err.reason);
@@ -66,8 +76,12 @@ fn a_param_used_as_array_and_scalar_is_refused() {
         }
     }
     // WHERE id = ANY($1) AND id = $1
-    let Statement::Query(mut q) = any_param_query(false) else { unreachable!() };
-    let SetExpr::Select(s) = &mut q.body else { unreachable!() };
+    let Statement::Query(mut q) = any_param_query(false) else {
+        unreachable!()
+    };
+    let SetExpr::Select(s) = &mut q.body else {
+        unreachable!()
+    };
     let any = s.where_.take().unwrap();
     s.where_ = Some(Expr::Binary {
         op: BinaryOp::And,
@@ -78,7 +92,18 @@ fn a_param_used_as_array_and_scalar_is_refused() {
             right: Box::new(Expr::Param(1)),
         }),
     });
-    let err = write(&Statement::Query(q), "postgres", &Codec, &Options::default()).unwrap_err();
+    let err = write(
+        &Statement::Query(q),
+        "postgres",
+        &Codec,
+        &Options::default(),
+    )
+    .unwrap_err();
     assert_eq!(err.construct, "array_param");
-    assert!(err.reason.contains("both as an array and as a single value"), "{}", err.reason);
+    assert!(
+        err.reason
+            .contains("both as an array and as a single value"),
+        "{}",
+        err.reason
+    );
 }

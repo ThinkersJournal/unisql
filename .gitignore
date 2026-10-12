@@ -5,3 +5,4 @@ Cargo.lock.bak
 target/
 measure/docker-pull.log
 measure/docker-pull-mysql.log
+measure/corpus-*.json

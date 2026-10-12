@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Tiers, allowances, the per-translation report, and the refusal error.
 
 use std::collections::BTreeSet;
@@ -115,13 +116,21 @@ impl Report {
         }
     }
     pub fn worst(&self) -> Tier {
-        self.entries.iter().map(|e| e.tier).max().unwrap_or(Tier::Exact)
+        self.entries
+            .iter()
+            .map(|e| e.tier)
+            .max()
+            .unwrap_or(Tier::Exact)
     }
     pub fn constructs(&self) -> BTreeSet<&str> {
         self.entries.iter().map(|e| e.construct.as_str()).collect()
     }
     pub fn tier_of(&self, construct: &str) -> Option<Tier> {
-        self.entries.iter().filter(|e| e.construct == construct).map(|e| e.tier).max()
+        self.entries
+            .iter()
+            .filter(|e| e.construct == construct)
+            .map(|e| e.tier)
+            .max()
     }
 }
 

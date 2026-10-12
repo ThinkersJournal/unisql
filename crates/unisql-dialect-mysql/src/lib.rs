@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! MySQL / MariaDB dialect module: a writer (the [`Mysql`] target). One module, two flavours:
 //! MariaDB is MySQL plus `INSERT/DELETE .. RETURNING` (DESIGN.md section 2.1: a child dialect is a
 //! table of overrides on its parent).
@@ -7,11 +8,11 @@
 //! assume MySQL 8.4 / MariaDB 11.x with `utf8mb4_bin` as the collation, which is what makes text
 //! equality, ordering and `LIKE` agree with a PostgreSQL `C` locale (allowance `text_collation`).
 
+use unisql_core::Target;
 use unisql_core::ast::*;
 use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
 use unisql_core::rewrite;
 use unisql_core::target::{Ctx, Escape, StmtKind};
-use unisql_core::Target;
 
 type R<T> = Result<T, Untranslatable>;
 
@@ -27,11 +28,15 @@ pub struct Mysql {
 }
 
 impl Mysql {
-    pub fn mysql() -> Self {
-        Mysql { flavor: Flavor::MySql }
+    pub fn for_mysql() -> Self {
+        Mysql {
+            flavor: Flavor::MySql,
+        }
     }
-    pub fn mariadb() -> Self {
-        Mysql { flavor: Flavor::MariaDb }
+    pub fn for_mariadb() -> Self {
+        Mysql {
+            flavor: Flavor::MariaDb,
+        }
     }
 
     /// Read exactly one MySQL / MariaDB statement.
@@ -42,13 +47,22 @@ impl Mysql {
 
 impl Default for Mysql {
     fn default() -> Self {
-        Mysql::mysql()
+        Mysql::for_mysql()
     }
 }
 
 const WINDOW_FNS: &[&str] = &[
-    "row_number", "rank", "dense_rank", "percent_rank", "cume_dist", "ntile", "lag", "lead",
-    "first_value", "last_value", "nth_value",
+    "row_number",
+    "rank",
+    "dense_rank",
+    "percent_rank",
+    "cume_dist",
+    "ntile",
+    "lag",
+    "lead",
+    "first_value",
+    "last_value",
+    "nth_value",
 ];
 
 impl Target for Mysql {
@@ -116,7 +130,12 @@ impl Target for Mysql {
         let n = f.name.as_str();
         let call = |name: &str, a: &[String]| format!("{}({})", name.to_uppercase(), a.join(", "));
         if f.over.is_some() && WINDOW_FNS.contains(&n) {
-            ctx.note(format!("fn:{n}"), Tier::Exact, "window function (MySQL >= 8.0)", None)?;
+            ctx.note(
+                format!("fn:{n}"),
+                Tier::Exact,
+                "window function (MySQL >= 8.0)",
+                None,
+            )?;
             return Ok(call(n, args));
         }
         match n {
@@ -218,7 +237,10 @@ impl Target for Mysql {
         let name = match ty {
             SqlType::SmallInt | SqlType::Integer | SqlType::BigInt => "SIGNED".to_string(),
             SqlType::Real | SqlType::Double => "DOUBLE".to_string(),
-            SqlType::Numeric { precision: Some(p), scale } => format!("DECIMAL({p}, {})", scale.unwrap_or(0)),
+            SqlType::Numeric {
+                precision: Some(p),
+                scale,
+            } => format!("DECIMAL({p}, {})", scale.unwrap_or(0)),
             SqlType::Text | SqlType::Varchar(_) => "CHAR".to_string(),
             SqlType::Date => "DATE".to_string(),
             SqlType::Timestamp { with_tz: false } => "DATETIME".to_string(),
@@ -240,35 +262,49 @@ impl Target for Mysql {
     }
 
     fn rewrite_query(&self, q: &Query, ctx: &mut Ctx) -> R<Option<Query>> {
-        if let SetExpr::Select(s) = &q.body {
-            if matches!(s.distinct, Distinct::On(_)) {
-                return match rewrite::distinct_on_via_window(q) {
-                    Ok(q2) => {
-                        ctx.note(
-                            "distinct_on",
-                            Tier::Emulated,
-                            "row_number() OVER (PARTITION BY keys ORDER BY ..) = 1 in a derived table",
-                            None,
-                        )?;
-                        Ok(Some(q2))
-                    }
-                    Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
-                };
-            }
+        if let SetExpr::Select(s) = &q.body
+            && matches!(s.distinct, Distinct::On(_))
+        {
+            return match rewrite::distinct_on_via_window(q) {
+                Ok(q2) => {
+                    ctx.note(
+                        "distinct_on",
+                        Tier::Emulated,
+                        "row_number() OVER (PARTITION BY keys ORDER BY ..) = 1 in a derived table",
+                        None,
+                    )?;
+                    Ok(Some(q2))
+                }
+                Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
+            };
         }
         Ok(None)
     }
 
     fn feature(&self, name: &'static str, ctx: &mut Ctx) -> R<()> {
         match name {
-            "window_function" => ctx.note(name, Tier::Exact, "requires MySQL >= 8.0 / MariaDB >= 10.2", None),
-            "recursive_cte" => ctx.note(name, Tier::Exact, "requires MySQL >= 8.0 / MariaDB >= 10.2", None),
+            "window_function" => ctx.note(
+                name,
+                Tier::Exact,
+                "requires MySQL >= 8.0 / MariaDB >= 10.2",
+                None,
+            ),
+            "recursive_cte" => ctx.note(
+                name,
+                Tier::Exact,
+                "requires MySQL >= 8.0 / MariaDB >= 10.2",
+                None,
+            ),
             "filter_clause" => Err(ctx.refuse(
                 "filter_clause",
                 "MySQL has no FILTER (WHERE ..) on aggregates",
                 &["use SUM(CASE WHEN .. THEN 1 ELSE 0 END)"],
             )),
-            "named_arg" => Err(ctx.refuse("named_arg", "MySQL functions have no named-argument notation", &[])),
+            "named_arg" => Err(ctx.refuse(
+                "named_arg",
+                "MySQL functions have no named-argument notation",
+                &[],
+            )),
             _ => ctx.note(name, Tier::Exact, "", None),
         }
     }
@@ -325,7 +361,10 @@ impl Target for Mysql {
                 Some(m) => format!("({value}) * {m}"),
                 None => value.clone(),
             };
-            out = format!("({out} {} INTERVAL ({v}) {u})", if minus { "-" } else { "+" });
+            out = format!(
+                "({out} {} INTERVAL ({v}) {u})",
+                if minus { "-" } else { "+" }
+            );
         }
         ctx.note(
             "interval_arithmetic",
@@ -365,7 +404,10 @@ impl Target for Mysql {
             (Flavor::MySql, _) => Err(ctx.refuse(
                 "returning",
                 "MySQL has no RETURNING clause",
-                &["select the row back with a second statement", "use MariaDB >= 10.5 for INSERT/DELETE"],
+                &[
+                    "select the row back with a second statement",
+                    "use MariaDB >= 10.5 for INSERT/DELETE",
+                ],
             )),
         }
     }
@@ -394,9 +436,15 @@ impl Target for Mysql {
         )?;
         if do_nothing {
             if first_insert_col.is_empty() {
-                return Err(ctx.refuse("upsert", "DO NOTHING needs at least one inserted column", &[]));
+                return Err(ctx.refuse(
+                    "upsert",
+                    "DO NOTHING needs at least one inserted column",
+                    &[],
+                ));
             }
-            Ok(format!(" ON DUPLICATE KEY UPDATE {first_insert_col} = {first_insert_col}"))
+            Ok(format!(
+                " ON DUPLICATE KEY UPDATE {first_insert_col} = {first_insert_col}"
+            ))
         } else {
             Ok(format!(" ON DUPLICATE KEY UPDATE {set}"))
         }
@@ -419,7 +467,12 @@ impl Target for Mysql {
                 Ok(format!(" LIMIT {l} OFFSET {o}"))
             }
             (None, Some(o)) => {
-                ctx.note("offset", Tier::Emulated, "MySQL requires LIMIT with OFFSET; 2^64-1 means unbounded", None)?;
+                ctx.note(
+                    "offset",
+                    Tier::Emulated,
+                    "MySQL requires LIMIT with OFFSET; 2^64-1 means unbounded",
+                    None,
+                )?;
                 Ok(format!(" LIMIT 18446744073709551615 OFFSET {o}"))
             }
         }
@@ -456,10 +509,22 @@ impl Target for Mysql {
         Ok(format!("({expr} IS NULL){lead}, {expr}{dir}"))
     }
 
-    fn binary_override(&self, op: BinaryOp, l: &str, r: &str, numeric: bool, ctx: &mut Ctx) -> R<Option<String>> {
+    fn binary_override(
+        &self,
+        op: BinaryOp,
+        l: &str,
+        r: &str,
+        numeric: bool,
+        ctx: &mut Ctx,
+    ) -> R<Option<String>> {
         match op {
             BinaryOp::Concat => {
-                ctx.note("concat", Tier::Exact, "|| is OR in MySQL, so CONCAT() is used", None)?;
+                ctx.note(
+                    "concat",
+                    Tier::Exact,
+                    "|| is OR in MySQL, so CONCAT() is used",
+                    None,
+                )?;
                 Ok(Some(format!("CONCAT({l}, {r})")))
             }
             BinaryOp::IntDivide => {
@@ -504,7 +569,14 @@ impl Target for Mysql {
         }
     }
 
-    fn array_membership(&self, lhs: &str, ph: &str, negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+    fn array_membership(
+        &self,
+        lhs: &str,
+        ph: &str,
+        negated: bool,
+        n: u32,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         ctx.note(
             "array_param",
             Tier::Conditional,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! The UniSQL intermediate representation.
 //!
 //! Dialect-neutral nodes. **A construct that is not representable here is an error at read time,
@@ -47,7 +48,12 @@ pub struct Cte {
 #[derive(Clone, Debug, PartialEq)]
 pub enum SetExpr {
     Select(Box<Select>),
-    SetOp { op: SetOp, all: bool, left: Box<SetExpr>, right: Box<SetExpr> },
+    SetOp {
+        op: SetOp,
+        all: bool,
+        left: Box<SetExpr>,
+        right: Box<SetExpr>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -91,9 +97,20 @@ pub enum SelectItem {
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum TableRef {
-    Table { name: Name, alias: Option<String> },
-    Subquery { query: Box<Query>, alias: String },
-    Join { left: Box<TableRef>, right: Box<TableRef>, kind: JoinKind, on: Option<Expr> },
+    Table {
+        name: Name,
+        alias: Option<String>,
+    },
+    Subquery {
+        query: Box<Query>,
+        alias: String,
+    },
+    Join {
+        left: Box<TableRef>,
+        right: Box<TableRef>,
+        kind: JoinKind,
+        on: Option<Expr>,
+    },
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -139,7 +156,10 @@ pub struct OnConflict {
 #[derive(Clone, Debug, PartialEq)]
 pub enum ConflictAction {
     DoNothing,
-    DoUpdate { set: Vec<Assignment>, where_: Option<Expr> },
+    DoUpdate {
+        set: Vec<Assignment>,
+        where_: Option<Expr>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -174,12 +194,35 @@ pub enum Expr {
     Literal(Literal),
     /// Positional parameter, **1-based** and dialect-neutral. A writer chooses `$n` or `?n`.
     Param(u32),
-    Unary { op: UnaryOp, expr: Box<Expr> },
-    Binary { op: BinaryOp, left: Box<Expr>, right: Box<Expr> },
-    IsNull { expr: Box<Expr>, negated: bool },
-    InList { expr: Box<Expr>, list: Vec<Expr>, negated: bool },
-    InSubquery { expr: Box<Expr>, query: Box<Query>, negated: bool },
-    Between { expr: Box<Expr>, low: Box<Expr>, high: Box<Expr>, negated: bool },
+    Unary {
+        op: UnaryOp,
+        expr: Box<Expr>,
+    },
+    Binary {
+        op: BinaryOp,
+        left: Box<Expr>,
+        right: Box<Expr>,
+    },
+    IsNull {
+        expr: Box<Expr>,
+        negated: bool,
+    },
+    InList {
+        expr: Box<Expr>,
+        list: Vec<Expr>,
+        negated: bool,
+    },
+    InSubquery {
+        expr: Box<Expr>,
+        query: Box<Query>,
+        negated: bool,
+    },
+    Between {
+        expr: Box<Expr>,
+        low: Box<Expr>,
+        high: Box<Expr>,
+        negated: bool,
+    },
     /// `escape`: `None` = no escape character; `Some(literal "\\")` = the PostgreSQL default,
     /// which a reader makes explicit so no engine's default leaks through the IR.
     Like {
@@ -189,17 +232,35 @@ pub enum Expr {
         case_insensitive: bool,
         escape: Option<Box<Expr>>,
     },
-    Case { operand: Option<Box<Expr>>, branches: Vec<(Expr, Expr)>, else_: Option<Box<Expr>> },
-    Cast { expr: Box<Expr>, ty: SqlType },
+    Case {
+        operand: Option<Box<Expr>>,
+        branches: Vec<(Expr, Expr)>,
+        else_: Option<Box<Expr>>,
+    },
+    Cast {
+        expr: Box<Expr>,
+        ty: SqlType,
+    },
     Function(Function),
     Subquery(Box<Query>),
-    Exists { query: Box<Query>, negated: bool },
+    Exists {
+        query: Box<Query>,
+        negated: bool,
+    },
     Nested(Box<Expr>),
     /// `expr = ANY($n)` (or `expr <> ALL($n)` when `negated`): membership in an *array parameter*.
     /// The parameter's binding shape is target-specific; see `Translation::param_bindings`.
-    AnyParam { expr: Box<Expr>, param: u32, negated: bool },
+    AnyParam {
+        expr: Box<Expr>,
+        param: u32,
+        negated: bool,
+    },
     /// `TRIM([LEADING|TRAILING|BOTH] [chars FROM] expr)`; `chars` absent means whitespace.
-    Trim { expr: Box<Expr>, side: TrimSide, chars: Option<Box<Expr>> },
+    Trim {
+        expr: Box<Expr>,
+        side: TrimSide,
+        chars: Option<Box<Expr>>,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -222,7 +283,10 @@ pub struct Function {
 pub enum FunctionArg {
     Expr(Expr),
     /// `name => value` (PostgreSQL named notation).
-    Named { name: String, value: Expr },
+    Named {
+        name: String,
+        value: Expr,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -312,12 +376,17 @@ pub enum SqlType {
     BigInt,
     Real,
     Double,
-    Numeric { precision: Option<u32>, scale: Option<u32> },
+    Numeric {
+        precision: Option<u32>,
+        scale: Option<u32>,
+    },
     Text,
     Varchar(Option<u32>),
     Boolean,
     Date,
-    Timestamp { with_tz: bool },
+    Timestamp {
+        with_tz: bool,
+    },
     Uuid,
     Bytes,
     Json,

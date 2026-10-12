@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! The shared printer: IR -> SQL text for any [`Target`].
 
 use crate::ast::*;
@@ -16,7 +17,11 @@ pub fn write(
 ) -> Result<Translation, Untranslatable> {
     let mut ctx = Ctx::new(opts, source, target.name());
     let sql = Printer { t: target }.statement(stmt, &mut ctx)?;
-    if let Some(n) = ctx.array_params.keys().find(|n| ctx.scalar_params.contains(n)) {
+    if let Some(n) = ctx
+        .array_params
+        .keys()
+        .find(|n| ctx.scalar_params.contains(n))
+    {
         return Err(ctx.refuse(
             "array_param",
             &format!("parameter ${n} is used both as an array and as a single value"),
@@ -24,7 +29,12 @@ pub fn write(
         ));
     }
     let param_bindings = (1..=ctx.max_param)
-        .map(|n| ctx.array_params.get(&n).copied().unwrap_or(ParamBinding::Scalar))
+        .map(|n| {
+            ctx.array_params
+                .get(&n)
+                .copied()
+                .unwrap_or(ParamBinding::Scalar)
+        })
         .collect();
     Ok(Translation {
         sql,
@@ -75,10 +85,19 @@ impl Printer<'_> {
                 } else {
                     format!(
                         " ({})",
-                        cte.columns.iter().map(|x| self.id(x)).collect::<Vec<_>>().join(", ")
+                        cte.columns
+                            .iter()
+                            .map(|x| self.id(x))
+                            .collect::<Vec<_>>()
+                            .join(", ")
                     )
                 };
-                parts.push(format!("{}{} AS ({})", self.id(&cte.name), cols, self.query(&cte.query, c)?));
+                parts.push(format!(
+                    "{}{} AS ({})",
+                    self.id(&cte.name),
+                    cols,
+                    self.query(&cte.query, c)?
+                ));
             }
             out.push_str(&parts.join(", "));
             out.push(' ');
@@ -90,7 +109,11 @@ impl Printer<'_> {
         }
         let limit = q.limit.as_ref().map(|e| self.expr(e, c)).transpose()?;
         let offset = q.offset.as_ref().map(|e| self.expr(e, c)).transpose()?;
-        out.push_str(&self.t.limit_offset(limit.as_deref(), offset.as_deref(), c)?);
+        out.push_str(
+            &self
+                .t
+                .limit_offset(limit.as_deref(), offset.as_deref(), c)?,
+        );
         Ok(out)
     }
 
@@ -109,7 +132,12 @@ impl Printer<'_> {
     fn set_expr(&self, s: &SetExpr, c: &mut Ctx) -> R<String> {
         match s {
             SetExpr::Select(sel) => self.select(sel, c),
-            SetExpr::SetOp { op, all, left, right } => {
+            SetExpr::SetOp {
+                op,
+                all,
+                left,
+                right,
+            } => {
                 let kw = match op {
                     SetOp::Union => "UNION",
                     SetOp::Intersect => "INTERSECT",
@@ -133,20 +161,31 @@ impl Printer<'_> {
             Distinct::Yes => out.push_str("DISTINCT "),
             Distinct::On(exprs) => {
                 self.t.distinct_on(c)?;
-                let e = exprs.iter().map(|e| self.expr(e, c)).collect::<R<Vec<_>>>()?;
+                let e = exprs
+                    .iter()
+                    .map(|e| self.expr(e, c))
+                    .collect::<R<Vec<_>>>()?;
                 out.push_str(&format!("DISTINCT ON ({}) ", e.join(", ")));
             }
         }
         out.push_str(&self.select_items(&s.projection, c)?);
         if !s.from.is_empty() {
-            let f = s.from.iter().map(|t| self.table_ref(t, c)).collect::<R<Vec<_>>>()?;
+            let f = s
+                .from
+                .iter()
+                .map(|t| self.table_ref(t, c))
+                .collect::<R<Vec<_>>>()?;
             out.push_str(&format!(" FROM {}", f.join(", ")));
         }
         if let Some(w) = &s.where_ {
             out.push_str(&format!(" WHERE {}", self.expr(w, c)?));
         }
         if !s.group_by.is_empty() {
-            let g = s.group_by.iter().map(|e| self.expr(e, c)).collect::<R<Vec<_>>>()?;
+            let g = s
+                .group_by
+                .iter()
+                .map(|e| self.expr(e, c))
+                .collect::<R<Vec<_>>>()?;
             out.push_str(&format!(" GROUP BY {}", g.join(", ")));
         }
         if let Some(h) = &s.having {
@@ -189,7 +228,12 @@ impl Printer<'_> {
             TableRef::Subquery { query, alias } => {
                 Ok(format!("({}) AS {}", self.query(query, c)?, self.id(alias)))
             }
-            TableRef::Join { left, right, kind, on } => {
+            TableRef::Join {
+                left,
+                right,
+                kind,
+                on,
+            } => {
                 let kw = match kind {
                     JoinKind::Inner => "INNER JOIN",
                     JoinKind::Left => "LEFT JOIN",
@@ -203,7 +247,12 @@ impl Printer<'_> {
                     "",
                     None,
                 )?;
-                let mut s = format!("{} {} {}", self.table_ref(left, c)?, kw, self.table_ref(right, c)?);
+                let mut s = format!(
+                    "{} {} {}",
+                    self.table_ref(left, c)?,
+                    kw,
+                    self.table_ref(right, c)?
+                );
                 if let Some(on) = on {
                     s.push_str(&format!(" ON {}", self.expr(on, c)?));
                 }
@@ -225,7 +274,11 @@ impl Printer<'_> {
         if !i.columns.is_empty() {
             out.push_str(&format!(
                 " ({})",
-                i.columns.iter().map(|x| self.id(x)).collect::<Vec<_>>().join(", ")
+                i.columns
+                    .iter()
+                    .map(|x| self.id(x))
+                    .collect::<Vec<_>>()
+                    .join(", ")
             ));
         }
         match &i.source {
@@ -253,7 +306,14 @@ impl Printer<'_> {
                     (false, s?, w?)
                 }
             };
-            out.push_str(&self.t.upsert_clause(&cols, do_nothing, &set, where_.as_deref(), &first, c)?);
+            out.push_str(&self.t.upsert_clause(
+                &cols,
+                do_nothing,
+                &set,
+                where_.as_deref(),
+                &first,
+                c,
+            )?);
         }
         out.push_str(&self.returning(&i.returning, StmtKind::Insert, c)?);
         Ok(out)
@@ -262,7 +322,11 @@ impl Printer<'_> {
     fn assignments(&self, set: &[Assignment], c: &mut Ctx) -> R<String> {
         let mut parts = Vec::new();
         for a in set {
-            parts.push(format!("{} = {}", self.id(&a.column), self.expr(&a.value, c)?));
+            parts.push(format!(
+                "{} = {}",
+                self.id(&a.column),
+                self.expr(&a.value, c)?
+            ));
         }
         Ok(parts.join(", "))
     }
@@ -275,7 +339,11 @@ impl Printer<'_> {
         out.push_str(&format!(" SET {}", self.assignments(&u.set, c)?));
         if !u.from.is_empty() {
             c.note("update_from", self.t.update_from_tier(), "", None)?;
-            let f = u.from.iter().map(|t| self.table_ref(t, c)).collect::<R<Vec<_>>>()?;
+            let f = u
+                .from
+                .iter()
+                .map(|t| self.table_ref(t, c))
+                .collect::<R<Vec<_>>>()?;
             out.push_str(&format!(" FROM {}", f.join(", ")));
         }
         if let Some(w) = &u.where_ {
@@ -324,7 +392,11 @@ impl Printer<'_> {
     fn window(&self, w: &Window, c: &mut Ctx) -> R<String> {
         let mut parts = Vec::new();
         if !w.partition_by.is_empty() {
-            let p = w.partition_by.iter().map(|e| self.expr(e, c)).collect::<R<Vec<_>>>()?;
+            let p = w
+                .partition_by
+                .iter()
+                .map(|e| self.expr(e, c))
+                .collect::<R<Vec<_>>>()?;
             parts.push(format!("PARTITION BY {}", p.join(", ")));
         }
         if !w.order_by.is_empty() {
@@ -372,7 +444,11 @@ impl Printer<'_> {
                 c.scalar_params.insert(*n);
                 self.t.placeholder(*n)
             }
-            Expr::AnyParam { expr, param, negated } => {
+            Expr::AnyParam {
+                expr,
+                param,
+                negated,
+            } => {
                 let lhs = self.operand(expr, c)?;
                 c.max_param = c.max_param.max(*param);
                 c.param_order.push(*param);
@@ -388,19 +464,30 @@ impl Printer<'_> {
                     UnaryOp::Plus => format!("+{o}"),
                 }
             }
-            Expr::Binary { op: op @ (BinaryOp::JsonGet | BinaryOp::JsonGetText), left, right } => {
+            Expr::Binary {
+                op: op @ (BinaryOp::JsonGet | BinaryOp::JsonGetText),
+                left,
+                right,
+            } => {
                 let l = self.operand(left, c)?;
                 let r = self.operand(right, c)?;
-                self.t.json_access(*op == BinaryOp::JsonGetText, &l, &r, c)?
+                self.t
+                    .json_access(*op == BinaryOp::JsonGetText, &l, &r, c)?
             }
-            Expr::Binary { op: op @ (BinaryOp::Plus | BinaryOp::Minus), left, right }
-                if matches!(&**right, Expr::Function(f) if f.name == "make_interval") =>
-            {
-                let Expr::Function(f) = &**right else { unreachable!() };
+            Expr::Binary {
+                op: op @ (BinaryOp::Plus | BinaryOp::Minus),
+                left,
+                right,
+            } if matches!(&**right, Expr::Function(f) if f.name == "make_interval") => {
+                let Expr::Function(f) = &**right else {
+                    unreachable!()
+                };
                 let mut parts = Vec::new();
                 for a in &f.args {
                     match a {
-                        FunctionArg::Named { name, value } => parts.push((name.clone(), self.expr(value, c)?)),
+                        FunctionArg::Named { name, value } => {
+                            parts.push((name.clone(), self.expr(value, c)?))
+                        }
                         FunctionArg::Expr(_) => {
                             return Err(c.refuse(
                                 "fn:make_interval",
@@ -448,10 +535,21 @@ impl Printer<'_> {
                 }
             }
             Expr::IsNull { expr, negated } => {
-                format!("{} IS {}NULL", self.operand(expr, c)?, if *negated { "NOT " } else { "" })
+                format!(
+                    "{} IS {}NULL",
+                    self.operand(expr, c)?,
+                    if *negated { "NOT " } else { "" }
+                )
             }
-            Expr::InList { expr, list, negated } => {
-                let l = list.iter().map(|x| self.expr(x, c)).collect::<R<Vec<_>>>()?;
+            Expr::InList {
+                expr,
+                list,
+                negated,
+            } => {
+                let l = list
+                    .iter()
+                    .map(|x| self.expr(x, c))
+                    .collect::<R<Vec<_>>>()?;
                 format!(
                     "{} {}IN ({})",
                     self.operand(expr, c)?,
@@ -459,23 +557,39 @@ impl Printer<'_> {
                     l.join(", ")
                 )
             }
-            Expr::InSubquery { expr, query, negated } => format!(
+            Expr::InSubquery {
+                expr,
+                query,
+                negated,
+            } => format!(
                 "{} {}IN ({})",
                 self.operand(expr, c)?,
                 if *negated { "NOT " } else { "" },
                 self.query(query, c)?
             ),
-            Expr::Between { expr, low, high, negated } => {
-                self.t.between(is_numeric(low) || is_numeric(high) || is_numeric(expr), c)?;
+            Expr::Between {
+                expr,
+                low,
+                high,
+                negated,
+            } => {
+                self.t
+                    .between(is_numeric(low) || is_numeric(high) || is_numeric(expr), c)?;
                 format!(
-                "{} {}BETWEEN {} AND {}",
-                self.operand(expr, c)?,
-                if *negated { "NOT " } else { "" },
-                self.operand(low, c)?,
-                self.operand(high, c)?
+                    "{} {}BETWEEN {} AND {}",
+                    self.operand(expr, c)?,
+                    if *negated { "NOT " } else { "" },
+                    self.operand(low, c)?,
+                    self.operand(high, c)?
                 )
             }
-            Expr::Like { expr, pattern, negated, case_insensitive, escape } => {
+            Expr::Like {
+                expr,
+                pattern,
+                negated,
+                case_insensitive,
+                escape,
+            } => {
                 let l = self.operand(expr, c)?;
                 let r = self.operand(pattern, c)?;
                 let esc_txt = match escape {
@@ -490,13 +604,21 @@ impl Printer<'_> {
                 };
                 self.t.like(&l, &r, *negated, *case_insensitive, esc, c)?
             }
-            Expr::Case { operand, branches, else_ } => {
+            Expr::Case {
+                operand,
+                branches,
+                else_,
+            } => {
                 let mut s = String::from("CASE");
                 if let Some(o) = operand {
                     s.push_str(&format!(" {}", self.operand(o, c)?));
                 }
                 for (w, t) in branches {
-                    s.push_str(&format!(" WHEN {} THEN {}", self.expr(w, c)?, self.expr(t, c)?));
+                    s.push_str(&format!(
+                        " WHEN {} THEN {}",
+                        self.expr(w, c)?,
+                        self.expr(t, c)?
+                    ));
                 }
                 if let Some(e) = else_ {
                     s.push_str(&format!(" ELSE {}", self.expr(e, c)?));
@@ -562,15 +684,31 @@ fn is_numeric(e: &Expr) -> bool {
     match e {
         Expr::Literal(Literal::Number(_)) => true,
         Expr::Nested(x) => is_numeric(x),
-        Expr::Unary { op: UnaryOp::Minus | UnaryOp::Plus, expr } => is_numeric(expr),
+        Expr::Unary {
+            op: UnaryOp::Minus | UnaryOp::Plus,
+            expr,
+        } => is_numeric(expr),
         Expr::Binary {
-            op: BinaryOp::Plus | BinaryOp::Minus | BinaryOp::Multiply | BinaryOp::Divide | BinaryOp::Modulo,
+            op:
+                BinaryOp::Plus
+                | BinaryOp::Minus
+                | BinaryOp::Multiply
+                | BinaryOp::Divide
+                | BinaryOp::Modulo,
             ..
         } => true,
-        Expr::Function(f) => matches!(f.name.as_str(), "count" | "sum" | "avg" | "length" | "char_length" | "abs"),
+        Expr::Function(f) => matches!(
+            f.name.as_str(),
+            "count" | "sum" | "avg" | "length" | "char_length" | "abs"
+        ),
         Expr::Cast { ty, .. } => matches!(
             ty,
-            SqlType::SmallInt | SqlType::Integer | SqlType::BigInt | SqlType::Real | SqlType::Double | SqlType::Numeric { .. }
+            SqlType::SmallInt
+                | SqlType::Integer
+                | SqlType::BigInt
+                | SqlType::Real
+                | SqlType::Double
+                | SqlType::Numeric { .. }
         ),
         _ => false,
     }
