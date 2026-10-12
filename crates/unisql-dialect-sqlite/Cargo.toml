@@ -1,0 +1,10 @@
+[package]
+name = "unisql-dialect-sqlite"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+unisql-core = { version = "0.0.1", path = "../unisql-core" }

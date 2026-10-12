@@ -1,3 +1,5 @@
+<img src="../assets/Unicycle-Small.png" alt="UniSQL unicycle logo" align="right" width="81">
+
 # UniSQL: one SQL for every database
 
 Design note. **No code, no repository, no crate name reserved, nothing published.** Written 2026-10-12
@@ -167,6 +169,25 @@ SQL Server's `TOP` and `OUTPUT`, and procedural dialects will need Rust rewrites
 two dialects will have found the right trait boundaries. Expect to redo the boundary once, at the
 third dialect (MySQL), and keep the first two small enough that this is cheap.
 
+## 2.2 The public API shape (session user, 2026-10-12)
+
+The session user's proposal (verbatim): *"Correct me if you think this is the wrong design but I'm
+thinking UniSQL can take a string of SQL, a source dialect, and a destination dialect in and produce
+the SQL translated to the destination dialect as output. That way UniSQL doesn't need to care about
+any other parts of the stack (sqlx for example)."* **Agreed.** It is the section 5.7 shape. Three
+refinements, none of which add a dependency on any other layer:
+
+1. **The result is `Result<Translation, Error>`, not a bare string.** A refusal must produce no text
+   (section 3), and the report is how a caller sees emulation. A convenience `translate_str` that
+   returns only the text is fine as long as it still errors on refusal.
+2. **An options argument carries the named allowances** (the Conditional tier). No allowance, no text.
+3. **The result carries the parameter order**, because the text alone cannot be bound correctly when
+   the target uses positional `?` and the source used `$2, $1` or reused `$1`.
+
+Dialects are named at runtime (`"postgres"`, `"sqlite"`), looked up in a registry of the dialect
+modules compiled in (section 2.1). Integrations (sqlx, Diesel, PersistAnt) are separate optional
+crates that call this function; the core never depends on them.
+
 ## 3. The honest limit of "full portability"
 
 CireSnave's own phrase is "as close as possible to full portability", and it is the right phrase.
@@ -235,9 +256,9 @@ here and in the README.
 | # | Project | What it is (as fetched) | What we take | What we do not | Licence |
 |---|---|---|---|---|---|
 | 1 | **sqlparser-rs** `sqlparser` 0.63.0 | Rust syntax parser with the sixteen dialects above, `VisitMut`, round-trip `Display`. Declines semantics. | The parser and AST, as a dependency (crates.io, not git: EXPECTATIONS §6.8). | Any emission for a different target (it does not claim it). | Apache-2.0 (crates.io API); compatible as a dependency of an `MIT OR Apache-2.0` crate; its notice travels with binaries. |
-| 2 | **SQLGlot** (Python) | Parses to an AST and generates SQL, "over 30 dialects", 32 built-in listed; a transpiler "not a validator"; strict mode raises `UnsupportedError`. | Design: transpile as `read=`/`write=`, explicit dialects both sides, per-dialect generator tables as the *structure* of the work, the strict-mode idea as our default. | Python code; its best-effort default. | **UNVERIFIED**: the README page fetched states none. Read `LICENSE` in its repo before any file or table is derived from it. |
+| 2 | **SQLGlot** (Python) | Parses to an AST and generates SQL, "over 30 dialects", 32 built-in listed; a transpiler "not a validator"; strict mode raises `UnsupportedError`. | Design: transpile as `read=`/`write=`, explicit dialects both sides, per-dialect generator tables as the *structure* of the work, the strict-mode idea as our default. | Python code; its best-effort default. | **MIT**, "Copyright (c) 2026 Toby Mao", byte-read at `5b949bd6` (docs/LICENCES.md). Derivation permitted; keep the notice with derived portions. `tests/fixtures/jsonpath` is separate BSD-2. |
 | 3 | **sea-query** 1.0.2 | Rust query *builder* (not a parser): fluent AST rendered by `MysqlQueryBuilder`/`PostgresQueryBuilder`/`SqliteQueryBuilder`; `build()` returns SQL plus bound values. No documented unsupported-feature detection. | The per-backend rendering split and the quoting/placeholder conventions as a **reference for our emitters**. Evaluate using it *as* the emitter (D4). | Its construction API (we have text input). | `MIT OR Apache-2.0` (crates.io API, README). MSRV 1.88.0. |
-| 4 | **jOOQ** (Java) | Models dialects as an enum; marks each API with `@Support` listing native dialects and noting emulation; has a SQL-to-SQL translating parser (named only in link text on the page fetched). | The `@Support`-style idea: **each construct carries the list of targets that give it natively and which emulate it**, which is our matrix. Credit the idea. | Java code and its dialect list. | **UNVERIFIED** (not on the page fetched). |
+| 4 | **jOOQ** (Java) | Models dialects as an enum; marks each API with `@Support` listing native dialects and noting emulation; has a SQL-to-SQL translating parser (named only in link text on the page fetched). | The `@Support`-style idea: **each construct carries the list of targets that give it natively and which emulate it**, which is our matrix. Credit the idea. | Java code and its dialect list. | **Apache-2.0** by notice, with a commercial alternative "for commercial database integrations"; byte-read at `e450fb50` (docs/LICENCES.md). Open-repo content derivable with notices; which dialects are open is not established. |
 | 5 | **Diesel** 2.3.14 | `MultiConnection` derive combines Postgres/MySQL/SQLite into one enum connection, but "can only cover the common subset of all inner connection types"; non-core SQL types need hand-written impls per backend. | The warning: *common-subset-only* is the failure mode of "one type for all backends". Our answer is the tiers plus a per-target report, not the subset. | The ORM and schema DSL. | `MIT OR Apache-2.0`; MSRV 1.86.0 (crates.io API). |
 | 6 | **sqlx** 0.9.0 | Does not parse SQL; "any syntax that the development DB accepts" works; `query!` needs `DATABASE_URL` to a DB of "the same kind" as production; `Any` proxies to a driver chosen at runtime by URL scheme; placeholders differ (`$1` vs `?`). | The driver and the checking mechanism (section 6). | `Any` as a portability story: it moves the driver choice to runtime but changes no SQL. | `MIT OR Apache-2.0`; MSRV 1.94.0 (crates.io API). |
 
@@ -246,8 +267,8 @@ here and in the README.
 | Project | Role in UniSQL | Condition |
 |---|---|---|
 | sqlparser-rs | Parser *adapter* for the first dialects, behind our IR boundary; may be replaced per dialect. | The IR exposes no sqlparser type; a dialect's parser is a trait object or feature, so a hand-written parser can take over without an IR change. The corpus measurement already shows its limits (6 real statements it cannot parse: `DO`, `CREATE EVENT TRIGGER`, `DROP DATABASE .. WITH (FORCE)`, adjacent-literal concatenation). |
-| SQLGlot | **Primary information source**: dialect tables, per-dialect generator structure, the transformation catalogue, and its test corpus as a source of cases. | **Licence first.** Section 4 row 2 records it as UNVERIFIED. Before any file, table or test case is derived from it, read its repo `LICENSE`, record it here, and keep its notice and credit (EXPECTATIONS §6.4a). "Python as pseudocode" is a *reading* aid; a translated table or algorithm is a derived work and carries the licence. Not yet done. |
-| jOOQ | Read for the `@Support`-style capability annotations and its translating parser's behaviour; expect to glean concepts, not code. | Licence UNVERIFIED (jOOQ has historically had commercial editions for some databases); read before borrowing anything. |
+| SQLGlot | **Primary information source**: dialect tables, per-dialect generator structure, the transformation catalogue, and its test corpus as a source of cases. | **Licence read 2026-10-12: MIT** (docs/LICENCES.md), so derivation is permitted. Keep the MIT notice and credit with every derived table or algorithm (EXPECTATIONS §6.4a) and trace each derived file to its SQLGlot source path and SHA. "Python as pseudocode" that follows the source closely is a derived work. |
+| jOOQ | Read for the `@Support`-style capability annotations and its translating parser's behaviour; expect to glean concepts, not code. | **Apache-2.0** with a commercial alternative (docs/LICENCES.md): concepts free, code needs notices; do not assume a commercial-database dialect is in the open repo. |
 | Diesel | **Integration target**: a `diesel` feature that routes a UniSQL-translated statement through `sql_query` or a custom `QueryFragment`. | Not designed yet; needs a spike. Its `MultiConnection` is the common-subset trap (row 5), so UniSQL feeds it statements and does not adopt it as the abstraction. |
 | sqlx | **Integration target**: the prepare check (section 6.2) and a `sqlx` feature that hands translated text to `sqlx::query` per driver. | Bind order and placeholder style come from the report. |
 
@@ -258,6 +279,8 @@ Rust SQL-transpile crates, `prql`-style languages, the dialect handling inside `
 task of the build phase, before any emitter is written.
 
 ## 5. Composition with PersistAnt's `rel.*` vocabulary
+
+**Working rule (session user, 2026-10-12, verbatim):** *"PersistAnt is very much still in its early stages of development so we can consider the possibility of changing PersistAnt's SQL/relational database bits as an option when they don't mesh well with UniSQL's goals."* and, clarifying: *"I'm not saying you can't work directly with the PersistAnt lane. I am saying that if there is a disagreement, the PM decides it."* So: the unisql and PersistAnt lanes agree things directly (as with D5); a disagreement goes to the PM as an `[ASK]` with both positions, and the PM rules. PersistAnt's relational design is changeable where it does not mesh with UniSQL.
 
 PersistAnt's Option C is a typed pass-through whose relational capability ids include
 `rel.dialect(d, min)`, `rel.transaction`, `rel.isolation(level)`, `rel.savepoint`, `rel.foreign_key`,
@@ -382,8 +405,8 @@ Each is the PM's to route; none blocks the others except where noted.
 
 | # | Decision | Options | Recommend |
 |---|---|---|---|
-| D1 | Source scope (section 1) | R1 canonical only; R2 declared source with one shipped; R2 with several | R2 architecture, Postgres only shipped first |
-| D2 | First targets | Postgres + SQLite; add MySQL/MariaDB at once | Postgres + SQLite (an oracle exists, section 7) |
+| D1 | Source scope (section 1) | R1 canonical only; R2 declared source with one shipped; R2 with several | **Ruled (PM, 2026-10-12): R2 architecture, Postgres source first. SEQUENCING ONLY** per section 0.1: the goal is comprehensive modular dialects |
+| D2 | First targets | Postgres + SQLite; add MySQL/MariaDB at once | **Ruled: Postgres + SQLite first, sequencing only.** First slice = IR + Postgres source -> Postgres/SQLite emitters with differential tests against real engines; further dialects as modules |
 | D3 | Compile-time story (section 6) | prepare-check only; prepare-check then a `unisql::query!` spike; macro first | prepare-check first, macro as a spike afterwards |
 | D4 | Emitter foundation | own emitters over sqlparser; sea-query as emitter; fork-and-extend a transpiler | evaluate sea-query against the corpus before choosing; default own emitters |
 | D5 | Capability ids shared with PersistAnt, and who owns the matrix file | `unisql` depends on `persistant-core`; plain-string spec in a third place; each owns its own | **Settled at lane level 2026-10-12** (section 5.3-5.6): plain strings, PersistAnt owns the vocabulary and the row schema, each repo checks in its own matrix file |

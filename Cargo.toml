@@ -1,0 +1,25 @@
+[workspace]
+resolver = "3"
+members = [
+    "crates/unisql",
+    "crates/unisql-core",
+    "crates/unisql-dialect-postgres",
+    "crates/unisql-dialect-sqlite",
+    "crates/unisql-differential",
+]
+# measure/classify is a throwaway tool with its own manifest; keep it out of the workspace.
+exclude = ["measure/classify"]
+
+[workspace.package]
+# One version number for every crate in this project (CLAUDE.md section 9). The PM allocates real numbers.
+version = "0.0.1"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+rust-version = "1.94"
+
+[workspace.dependencies]
+unisql = { path = "crates/unisql", version = "0.0.1" }
+unisql-core = { path = "crates/unisql-core", version = "0.0.1" }
+unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.0.1" }
+unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.0.1" }

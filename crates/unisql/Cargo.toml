@@ -1,0 +1,13 @@
+[package]
+name = "unisql"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+description = "Translate SQL text from one dialect to another. No I/O, no driver."
+
+[dependencies]
+unisql-core.workspace = true
+unisql-dialect-postgres.workspace = true
+unisql-dialect-sqlite.workspace = true

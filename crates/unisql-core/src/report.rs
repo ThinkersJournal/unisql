@@ -1,0 +1,173 @@
+//! Tiers, allowances, the per-translation report, and the refusal error.
+
+use std::collections::BTreeSet;
+use std::fmt;
+
+/// How a target gives a construct. Order matters: a statement's tier is the maximum of its parts.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Tier {
+    /// Same meaning by construction and by test.
+    Exact,
+    /// Target lacks it; an equivalent form exists, with a stated difference.
+    Emulated,
+    /// Same meaning only if the caller accepts a named assumption ([`Allowance`]).
+    Conditional,
+    /// No meaning-preserving equivalent. The writer returns [`Untranslatable`], never text.
+    Refused,
+}
+
+impl Tier {
+    pub fn name(self) -> &'static str {
+        match self {
+            Tier::Exact => "exact",
+            Tier::Emulated => "emulated",
+            Tier::Conditional => "conditional",
+            Tier::Refused => "refused",
+        }
+    }
+}
+
+/// A named, explicit assumption a caller accepts for a Conditional construct.
+/// There is **no** blanket "best effort" switch (DESIGN.md section 3).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Allowance {
+    /// `now()` yields text (`YYYY-MM-DD HH:MM:SS`, UTC) rather than a timestamptz.
+    NowAsText,
+    /// `LIKE` case sensitivity is a *connection setting* on the target, not a property of the
+    /// statement; the source's case-sensitive `LIKE` is exact only if that setting is on.
+    LikeCaseSensitivityIsConnectionSetting,
+    /// Case folding (`ILIKE`, `lower`, `upper`) is ASCII-only on the target.
+    AsciiOnlyCaseFolding,
+    /// A bad `CAST` that errors on the source silently yields 0 / a numeric prefix on the target.
+    LenientCast,
+    /// Division or modulo by zero is an error on the source and `NULL` on the target.
+    DivisionByZeroIsNull,
+    /// Text ordering and comparison use the target's collation; both engines must be configured
+    /// alike (for example byte order on both) for results to match.
+    TextCollation,
+    /// Boolean values are stored and returned as integers 0/1.
+    BooleanAsInteger,
+}
+
+impl Allowance {
+    pub fn name(self) -> &'static str {
+        match self {
+            Allowance::NowAsText => "now_as_text",
+            Allowance::LikeCaseSensitivityIsConnectionSetting => {
+                "like_case_sensitivity_is_connection_setting"
+            }
+            Allowance::AsciiOnlyCaseFolding => "ascii_only_case_folding",
+            Allowance::LenientCast => "lenient_cast",
+            Allowance::DivisionByZeroIsNull => "division_by_zero_is_null",
+            Allowance::TextCollation => "text_collation",
+            Allowance::BooleanAsInteger => "boolean_as_integer",
+        }
+    }
+}
+
+/// One line of the report: a construct used and how the target gave it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Entry {
+    /// Stable construct id, e.g. `returning`, `upsert`, `ilike`, `fn:string_agg`.
+    pub construct: String,
+    pub tier: Tier,
+    /// What differs, for Emulated/Conditional.
+    pub note: String,
+    pub allowance: Option<Allowance>,
+}
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Report {
+    pub entries: Vec<Entry>,
+}
+
+impl Report {
+    pub fn push(&mut self, e: Entry) {
+        if !self.entries.contains(&e) {
+            self.entries.push(e);
+        }
+    }
+    pub fn worst(&self) -> Tier {
+        self.entries.iter().map(|e| e.tier).max().unwrap_or(Tier::Exact)
+    }
+    pub fn constructs(&self) -> BTreeSet<&str> {
+        self.entries.iter().map(|e| e.construct.as_str()).collect()
+    }
+    pub fn tier_of(&self, construct: &str) -> Option<Tier> {
+        self.entries.iter().filter(|e| e.construct == construct).map(|e| e.tier).max()
+    }
+}
+
+/// Everything a caller may relax, explicitly.
+#[derive(Clone, Debug, Default)]
+pub struct Options {
+    pub allow: BTreeSet<Allowance>,
+}
+
+impl Options {
+    pub fn with(mut self, a: Allowance) -> Self {
+        self.allow.insert(a);
+        self
+    }
+}
+
+/// The only way a translation fails. Carries no SQL text (DESIGN.md section 3).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Untranslatable {
+    pub construct: String,
+    pub source: String,
+    pub target: String,
+    pub reason: String,
+    /// What the caller could do instead, if anything.
+    pub alternatives: Vec<String>,
+}
+
+impl fmt::Display for Untranslatable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "untranslatable `{}` ({} -> {}): {}",
+            self.construct, self.source, self.target, self.reason
+        )?;
+        if !self.alternatives.is_empty() {
+            write!(f, " [alternatives: {}]", self.alternatives.join("; "))?;
+        }
+        Ok(())
+    }
+}
+
+impl std::error::Error for Untranslatable {}
+
+/// Reading failed: the text is not valid for the source dialect, or uses a construct the IR does not
+/// represent (which is an error, not a pass-through).
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum ReadError {
+    Syntax(String),
+    NotInIr { construct: String, detail: String },
+}
+
+impl fmt::Display for ReadError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            ReadError::Syntax(s) => write!(f, "syntax error: {s}"),
+            ReadError::NotInIr { construct, detail } => {
+                write!(f, "construct `{construct}` is not in the IR: {detail}")
+            }
+        }
+    }
+}
+
+impl std::error::Error for ReadError {}
+
+/// A successful translation.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Translation {
+    pub sql: String,
+    /// Number of distinct source parameters (`$1..$n`).
+    pub param_count: u32,
+    /// Source parameter numbers in the order their placeholders appear in `sql`. A target with
+    /// numbered placeholders (`$n`, `?n`) can ignore it; a target with positional `?` binds the
+    /// values in exactly this order (a source parameter used twice appears twice).
+    pub param_order: Vec<u32>,
+    pub report: Report,
+}
