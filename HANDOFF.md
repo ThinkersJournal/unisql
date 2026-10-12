@@ -1,12 +1,14 @@
 # unisql lane HANDOFF (current state only; rewrite, never append)
 
-Written 2026-10-12 after milestones A, B, C. Lane `unisql`, cwd `C:\Projects\unisql`.
-**Local git only: `main`, no remote, nothing published, no name reserved; every crate `publish = false`.**
-Rules: Rust only; crates.io deps only; `MIT OR Apache-2.0`; no Opus; every subagent `model: sonnet|haiku`;
-never push/publish/create a repo (the PM creates repos; D7 = board 182 must be answered first); never touch
-`gh auth`; remove the engine containers when you stop.
+Written 2026-10-12 after milestones A-E and the first push. Lane `unisql`, cwd `C:\Projects\unisql`.
+**Remote: `origin` = https://github.com/ThinkersJournal/unisql (PRIVATE, created by the PM; board 182:
+CireSnave "ThinkersJournal/unisql using unisql on Crates.io").** `main` = 7340fd0 (pushed, history intact).
+First CI-workflow PR = #1 (branch `ci/first-workflow`); the PM sets branch protection after its checks exist.
+Rules: Rust only; crates.io deps only; `MIT OR Apache-2.0`; one version number (workspace 0.0.1); no Opus;
+every subagent `model: sonnet|haiku`; **do NOT make the repo public, publish, or reserve the crate name**
+(`publish = false` on every crate); never touch `gh auth`; remove engine containers when you stop.
 
-## State (last local commit: see `git log`)
+## State
 - Crates: `unisql` (facade `translate`), `unisql-core` (IR, tiers, report, printer, `Target` hooks, rewrites,
   `ParamBinding`), `unisql-sqlparser-adapter` (sqlparser AST -> IR, `Rules` per dialect, replaceable),
   `unisql-dialect-{postgres,sqlite,mysql}` (all four dialects read AND write), `unisql-differential`.
@@ -14,9 +16,13 @@ never push/publish/create a repo (the PM creates repos; D7 = board 182 must be a
   pg->mariadb 85, mysql->pg 41, mysql->sqlite 40, mariadb->pg 41, + core unit tests 2. Engines: PostgreSQL 16.15
   (`--locale=C`), SQLite 3.53.2 bundled, MySQL 8.4.11 / MariaDB 11.4.13 with `utf8mb4_bin`; commands + digests in
   README. Containers REMOVED at stop: recreate per README (suites fail, never skip, if unreachable).
-- Matrix files (PersistAnt row schema, agreed with their lane): `crates/unisql-dialect-*/matrix-<backend>-from-
-  <source>.tsv`; `how=conditional` carries `allowance=` first in note; EVERY refusal is subject `<construct>.refused`
-  (= `Untranslatable::subject()`), so a gate keys on the same string the matrix holds.
+- CI (PR #1, run 38292311341, all 6 jobs green on the first run): `Build, test, clippy, fmt` (ubuntu +
+  windows), `MSRV` (rustc 1.94.1), `cargo deny`, `Every source file declares the licence`, `Differential suites
+  ...` (engines pinned by digest; ends with `git diff --exit-code` on matrix files and run logs). Names and
+  action pins mirror PersistAnt's workflow (cc934e10).
+- Matrix files (PersistAnt row schema, acked by their lane): `crates/unisql-dialect-*/matrix-<backend>-from-
+  <source>.tsv`; `how=conditional` carries `allowance=` first in note; EVERY refusal is subject
+  `<construct>.refused` (= `Untranslatable::subject()`).
 - Param codec: `Translation::param_bindings` (Scalar | NativeArray | JsonArrayText) next to `param_order`;
   `= ANY($n)` works pg/sqlite/mysql/mariadb; a target with no codec refuses `array_param`.
 - Allowances: 15 named (see `report.rs`); no blanket mode.
