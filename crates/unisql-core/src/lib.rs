@@ -6,6 +6,7 @@
 pub mod ast;
 pub mod print;
 pub mod report;
+pub mod rewrite;
 pub mod target;
 
 pub use print::write;

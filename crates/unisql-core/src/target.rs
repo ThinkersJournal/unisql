@@ -144,6 +144,55 @@ pub trait Target {
         Tier::Exact
     }
 
+    /// Whole-query rewrite before printing (for example `DISTINCT ON` via a window function).
+    /// Return `Some(q2)` to print `q2` instead; `q2` must not trigger the same rewrite again.
+    fn rewrite_query(&self, _q: &Query, _ctx: &mut Ctx) -> R<Option<Query>> {
+        Ok(None)
+    }
+
+    /// A feature the printer is about to emit: `window_function`, `filter_clause`,
+    /// `recursive_cte`, `named_arg`. Default: exact (PostgreSQL).
+    fn feature(&self, name: &'static str, ctx: &mut Ctx) -> R<()> {
+        ctx.note(name, Tier::Exact, "", None)
+    }
+
+    /// `TRIM(..)` with operands already printed.
+    fn trim(&self, side: TrimSide, expr: &str, chars: Option<&str>, ctx: &mut Ctx) -> R<String> {
+        ctx.note("trim", Tier::Exact, "", None)?;
+        Ok(match (side, chars) {
+            (TrimSide::Both, None) => format!("TRIM({expr})"),
+            (s, c) => {
+                let kw = match s {
+                    TrimSide::Both => "BOTH",
+                    TrimSide::Leading => "LEADING",
+                    TrimSide::Trailing => "TRAILING",
+                };
+                match c {
+                    Some(c) => format!("TRIM({kw} {c} FROM {expr})"),
+                    None => format!("TRIM({kw} FROM {expr})"),
+                }
+            }
+        })
+    }
+
+    /// `left (+|-) make_interval(parts..)`; `parts` are (unit, printed value). Return `Some(text)`
+    /// to replace the whole expression, `None` to print it the generic way.
+    fn interval_arith(
+        &self,
+        _minus: bool,
+        _left: &str,
+        _parts: &[(String, String)],
+        _ctx: &mut Ctx,
+    ) -> R<Option<String>> {
+        Ok(None)
+    }
+
+    /// JSON `->` / `->>` with operands printed. Default: PostgreSQL.
+    fn json_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        ctx.note(if text { "json_get_text" } else { "json_get" }, Tier::Exact, "", None)?;
+        Ok(format!("{lhs} {} {rhs}", if text { "->>" } else { "->" }))
+    }
+
     /// Hook for `[NOT] BETWEEN`. `numeric` is true when an operand is syntactically numeric (so no
     /// text collation is involved). Default: exact.
     fn between(&self, _numeric: bool, _ctx: &mut Ctx) -> R<()> {

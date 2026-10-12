@@ -5,6 +5,7 @@
 //! version assumed by the tiers: SQLite 3.35 (`RETURNING`), noted per construct.
 
 use unisql_core::ast::*;
+use unisql_core::rewrite;
 use unisql_core::report::{Allowance, Tier, Untranslatable};
 use unisql_core::target::{generic_call, Ctx};
 use unisql_core::Target;
@@ -63,8 +64,162 @@ impl Target for Sqlite {
         }
     }
 
+    fn rewrite_query(&self, q: &Query, ctx: &mut Ctx) -> R<Option<Query>> {
+        if let SetExpr::Select(s) = &q.body {
+            if matches!(s.distinct, Distinct::On(_)) {
+                return match rewrite::distinct_on_via_window(q) {
+                    Ok(q2) => {
+                        ctx.note(
+                            "distinct_on",
+                            Tier::Emulated,
+                            "row_number() OVER (PARTITION BY keys ORDER BY ..) = 1 in a derived table; \
+                             without ORDER BY the surviving row per key is arbitrary on both engines",
+                            None,
+                        )?;
+                        Ok(Some(q2))
+                    }
+                    Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
+                };
+            }
+        }
+        Ok(None)
+    }
+
+    fn feature(&self, name: &'static str, ctx: &mut Ctx) -> R<()> {
+        let min = match name {
+            "window_function" => "requires SQLite >= 3.25",
+            "filter_clause" => "requires SQLite >= 3.30",
+            "recursive_cte" => "requires SQLite >= 3.8.3",
+            "named_arg" => {
+                return Err(ctx.refuse(
+                    "named_arg",
+                    "SQLite functions have no named-argument notation",
+                    &["use positional arguments"],
+                ));
+            }
+            _ => "",
+        };
+        ctx.note(name, Tier::Exact, min, None)
+    }
+
+    fn trim(&self, side: TrimSide, expr: &str, chars: Option<&str>, ctx: &mut Ctx) -> R<String> {
+        ctx.note("trim", Tier::Exact, "", None)?;
+        let f = match side {
+            TrimSide::Both => "trim",
+            TrimSide::Leading => "ltrim",
+            TrimSide::Trailing => "rtrim",
+        };
+        Ok(match chars {
+            Some(c) => format!("{f}({expr}, {c})"),
+            None => format!("{f}({expr})"),
+        })
+    }
+
+    fn interval_arith(
+        &self,
+        minus: bool,
+        left: &str,
+        parts: &[(String, String)],
+        ctx: &mut Ctx,
+    ) -> R<Option<String>> {
+        let mut mods = Vec::new();
+        for (unit, value) in parts {
+            let (sql_unit, mult) = match unit.as_str() {
+                "secs" => ("seconds", None),
+                "mins" => ("minutes", None),
+                "hours" => ("hours", None),
+                "days" => ("days", None),
+                "weeks" => ("days", Some(7)),
+                other => {
+                    return Err(ctx.refuse(
+                        "fn:make_interval",
+                        &format!("make_interval({other} => ..): month/year arithmetic differs between the engines"),
+                        &["use secs/mins/hours/days/weeks"],
+                    ));
+                }
+            };
+            let v = match mult {
+                Some(m) => format!("(({value}) * {m})"),
+                None => format!("({value})"),
+            };
+            let signed = if minus { format!("(-{v})") } else { v };
+            mods.push(format!("printf('%+f {sql_unit}', {signed})"));
+        }
+        ctx.note(
+            "interval_arithmetic",
+            Tier::Conditional,
+            "timestamp +/- make_interval(..) becomes datetime(ts, modifiers): text, whole seconds, UTC",
+            Some(Allowance::TimestampArithmeticAsText),
+        )?;
+        Ok(Some(format!("datetime({left}, {})", mods.join(", "))))
+    }
+
+    fn json_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        if text {
+            ctx.note(
+                "json_get_text",
+                Tier::Conditional,
+                "SQLite ->> keeps the scalar's type (true -> 1); cast to TEXT here, but a JSON boolean \
+                 still reads '1' where PostgreSQL reads 'true'. Requires SQLite >= 3.38",
+                Some(Allowance::JsonScalarAffinity),
+            )?;
+            Ok(format!("CAST({lhs} ->> {rhs} AS TEXT)"))
+        } else {
+            ctx.note(
+                "json_get",
+                Tier::Conditional,
+                "SQLite -> returns JSON text; comparison is textual, not jsonb equality. Requires >= 3.38",
+                Some(Allowance::JsonRepresentationAsText),
+            )?;
+            Ok(format!("{lhs} -> {rhs}"))
+        }
+    }
+
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
+        if f.over.is_some()
+            && matches!(
+                n,
+                "row_number" | "rank" | "dense_rank" | "percent_rank" | "cume_dist" | "ntile" | "lag"
+                    | "lead" | "first_value" | "last_value" | "nth_value"
+            )
+        {
+            ctx.note(format!("fn:{n}"), Tier::Exact, "window function", None)?;
+            return Ok(generic_call(n, args, false, false));
+        }
+        match n {
+            "md5" | "sha256" | "sha1" | "sha512" | "encode" | "decode" | "convert_to" | "convert_from" => {
+                return Err(ctx.refuse(
+                    &format!("fn:{n}"),
+                    "SQLite has no built-in hashing/encoding functions; the result would depend on a \
+                     host-registered function or extension, which UniSQL cannot assume",
+                    &["hash in the application", "register the function and use a raw(sqlite, ..) fragment"],
+                ));
+            }
+            "current_schema" | "current_database" | "current_user" | "session_user" | "to_regclass"
+            | "pg_backend_pid" | "set_config" | "current_setting" => {
+                return Err(ctx.refuse(
+                    &format!("fn:{n}"),
+                    "PostgreSQL catalog/session introspection has no SQLite equivalent",
+                    &["query sqlite_schema (a different, SQLite-specific statement)"],
+                ));
+            }
+            "make_interval" => {
+                return Err(ctx.refuse(
+                    "fn:make_interval",
+                    "SQLite has no interval type; only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated",
+                    &[],
+                ));
+            }
+            "regexp_replace" | "regexp_match" | "regexp_matches" | "split_part" => {
+                return Err(ctx.refuse(
+                    &format!("fn:{n}"),
+                    "no built-in regular-expression or split function in SQLite",
+                    &[],
+                ));
+            }
+            _ => {}
+        }
         match n {
             "min" | "max" => {
                 ctx.note(
@@ -88,6 +243,22 @@ impl Target for Sqlite {
                     Some(Allowance::AsciiOnlyCaseFolding),
                 )?;
                 Ok(generic_call(n, args, false, false))
+            }
+            "btrim" => {
+                ctx.note("fn:btrim", Tier::Emulated, "-> trim(x[, chars])", None)?;
+                Ok(generic_call("trim", args, false, false))
+            }
+            "octet_length" => {
+                if args.len() != 1 {
+                    return Err(ctx.refuse("fn:octet_length", "octet_length takes one argument", &[]));
+                }
+                ctx.note(
+                    "fn:octet_length",
+                    Tier::Emulated,
+                    "-> length(CAST(x AS BLOB)): bytes, not characters",
+                    None,
+                )?;
+                Ok(format!("LENGTH(CAST({} AS BLOB))", args[0]))
             }
             "char_length" | "character_length" => {
                 ctx.note(format!("fn:{n}"), Tier::Emulated, "-> length()", None)?;

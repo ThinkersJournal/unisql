@@ -46,6 +46,7 @@ pub type Rows = Vec<Vec<Cell>>;
 pub enum Param {
     Null,
     Int(i64),
+    Real(f64),
     Text(&'static str),
 }
 
@@ -127,6 +128,7 @@ impl Engines {
                 .map(|p| match p {
                     Param::Null => rusqlite::types::Value::Null,
                     Param::Int(i) => rusqlite::types::Value::Integer(*i),
+                    Param::Real(r) => rusqlite::types::Value::Real(*r),
                     Param::Text(t) => rusqlite::types::Value::Text((*t).to_string()),
                 })
                 .collect();
@@ -175,6 +177,9 @@ fn pg_params(types: &[Type], params: &[Param]) -> Result<Vec<Box<dyn ToSql + Syn
             (Type::INT2, Param::Null) => Box::new(None::<i16>),
             (Type::INT4, Param::Null) => Box::new(None::<i32>),
             (Type::INT8, Param::Null) => Box::new(None::<i64>),
+            (Type::FLOAT8, Param::Real(r)) => Box::new(*r),
+            (Type::FLOAT8, Param::Int(i)) => Box::new(*i as f64),
+            (Type::FLOAT8, Param::Null) => Box::new(None::<f64>),
             (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Text(s)) => Box::new((*s).to_string()),
             (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Null) => Box::new(None::<String>),
             (t, p) => return Err(format!("harness cannot bind {p:?} to PostgreSQL type {t}")),
@@ -245,6 +250,9 @@ pub enum Expect {
     Diverges,
     /// The reader refuses it: the construct is not in the IR (named).
     NotInIr(&'static str),
+    /// The text is valid PostgreSQL (the engine runs it) but the parser behind the reader rejects it:
+    /// a recorded parser limitation, not a property of the SQL.
+    ParserGap,
 }
 
 pub struct Case {
@@ -285,6 +293,15 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
             out.passed = u.reason.contains(a.name());
             out.detail = format!("refused without allowance: {}", u.reason);
         }
+        (Expect::ParserGap, Err(unisql::Error::Read(unisql::ReadError::Syntax(msg)))) => {
+            match e.run_pg(c.sql, &c.params, None) {
+                Ok(_) => {
+                    out.passed = true;
+                    out.detail = format!("parser gap (PostgreSQL accepts it): {msg}");
+                }
+                Err(pe) => out.detail = format!("PostgreSQL also rejects it, so this is not a parser gap: {pe}"),
+            }
+        }
         (Expect::NotInIr(construct), Err(unisql::Error::Read(unisql::ReadError::NotInIr { construct: got, detail }))) => {
             out.passed = got == *construct;
             out.detail = format!("not in IR `{got}`: {detail}");
@@ -305,7 +322,7 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
                 (o, l) => out.detail = format!("expected a divergence but engines agree/failed alike: {:?} / {:?}", o.map(|x| x.0), l.map(|x| x.0)),
             }
         }
-        (Expect::Refused(_) | Expect::NeedsAllowance(_) | Expect::NotInIr(_), Ok(t)) => {
+        (Expect::Refused(_) | Expect::NeedsAllowance(_) | Expect::NotInIr(_) | Expect::ParserGap, Ok(t)) => {
             out.detail = format!("expected a refusal but got text: {}", t.sql);
             out.translated = Some(t.sql);
         }

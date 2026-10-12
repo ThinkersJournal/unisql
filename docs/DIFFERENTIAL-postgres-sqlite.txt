@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=74
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=106
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -23,7 +23,6 @@ PASS coalesce_nullif              same
        -> SELECT "id", COALESCE("city", 'none'), NULLIF("age", 25) FROM "users"
 PASS string_funcs                 same
        -> SELECT "id", LENGTH("name"), REPLACE("name", 'a', 'A'), LTRIM('  x') FROM "users"
-PASS ir_trim_syntax               not in IR `expression`: Trim
 PASS concat_op                    same
        -> SELECT ("name" || '-') || COALESCE("city", '?') FROM "users"
 PASS aggregates                   same
@@ -110,6 +109,10 @@ PASS string_agg_single            same
        -> SELECT GROUP_CONCAT("name", ',') FROM "users" WHERE "id" = 1
 PASS char_length                  same
        -> SELECT LENGTH("name") FROM "users"
+PASS btrim_forms                  same
+       -> SELECT TRIM('  hi  '), TRIM('xxhixx', 'x')
+PASS octet_length_utf8            same
+       -> SELECT LENGTH(CAST('abc' AS BLOB)), LENGTH(CAST('héllo' AS BLOB))
 PASS now_as_text                  same
        -> SELECT "id" FROM "users" WHERE (CURRENT_TIMESTAMP IS NOT NULL) AND ("id" = 1)
 PASS cast_int_text                same
@@ -126,23 +129,81 @@ PASS diverge_division_by_zero     diverges: postgres errors (query: db error); s
        -> SELECT 1 / 0
 PASS diverge_bad_cast             diverges: postgres errors (prepare: db error); sqlite returns [[Int(0)]]
        -> SELECT CAST('abc' AS INTEGER)
-PASS refuse_distinct_on           refused `distinct_on`: SQLite has no DISTINCT ON
+PASS distinct_on_emulated         same
+       -> SELECT "__u0" AS "city", "__u1" AS "id" FROM (SELECT "city" AS "__u0", "id" AS "__u1", "city" AS "__o0", "id" AS "__o1", ROW_NUMBER() OVER (PARTITION BY "city" ORDER BY "city" NULLS LAST, "id" NULLS LAST) AS "__rn" FROM "users" WHERE "city" IS NOT NULL) AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" NULLS LAST
 PASS refuse_for_update            refused `row_lock`: SQLite has no row-level locks (it locks the whole database)
-PASS refuse_unmapped_fn           refused `fn:md5`: no verified mapping for this function on SQLite yet
+PASS refuse_unmapped_fn           refused `fn:md5`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_cast_uuid             refused `cast`: CAST to Uuid has no SQLite equivalent that preserves meaning
-PASS ir_json_arrow                not in IR `binary_operator`: LongArrow (JSON/array/regex/bitwise operators are not in the IR)
 PASS ir_skip_locked               not in IR `row_lock_option`: FOR UPDATE OF / NOWAIT / SKIP LOCKED is not in the IR yet
-PASS ir_window                    not in IR `window_function`: OVER (..) is not in the IR yet
-PASS ir_recursive                 not in IR `recursive_cte`: WITH RECURSIVE is not in the IR
+PASS ir_json_path_op              not in IR `binary_operator`: HashArrow (JSON/array/regex/bitwise operators are not in the IR)
+PASS ir_named_window              not in IR `select_clause`: a SELECT clause the IR does not represent (TOP/INTO/WINDOW/QUALIFY/hints/...)
+PASS distinct_on_basic            same
+       -> SELECT "__u0" AS "city", "__u1" AS "id", "__u2" AS "name" FROM (SELECT "city" AS "__u0", "id" AS "__u1", "name" AS "__u2", "city" AS "__o0", "age" AS "__o1", "id" AS "__o2", ROW_NUMBER() OVER (PARTITION BY "city" ORDER BY "city" NULLS LAST, "age" DESC NULLS FIRST, "id" NULLS LAST) AS "__rn" FROM "users" WHERE "city" IS NOT NULL) AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" DESC NULLS FIRST, "__o2" NULLS LAST
+PASS distinct_on_orders           same
+       -> SELECT "__u0" AS "user_id", "__u1" AS "amount", "__u2" AS "id" FROM (SELECT "user_id" AS "__u0", "amount" AS "__u1", "id" AS "__u2", "user_id" AS "__o0", "amount" AS "__o1", "id" AS "__o2", ROW_NUMBER() OVER (PARTITION BY "user_id" ORDER BY "user_id" NULLS LAST, "amount" DESC NULLS FIRST, "id" NULLS LAST) AS "__rn" FROM "orders") AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" DESC NULLS FIRST, "__o2" NULLS LAST
+PASS distinct_on_limit            same
+       -> SELECT "__u0" AS "user_id", "__u1" AS "id" FROM (SELECT "user_id" AS "__u0", "id" AS "__u1", "user_id" AS "__o0", "id" AS "__o1", ROW_NUMBER() OVER (PARTITION BY "user_id" ORDER BY "user_id" NULLS LAST, "id" NULLS LAST) AS "__rn" FROM "orders") AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" NULLS LAST LIMIT 2
+PASS distinct_on_star_refused     refused `distinct_on`: DISTINCT ON with a * projection cannot be emulated; list the columns explicitly
+PASS win_row_number               same
+       -> SELECT "id", ROW_NUMBER() OVER (ORDER BY "id" NULLS LAST) FROM "users"
+PASS win_rank_partition           same
+       -> SELECT "id", RANK() OVER (PARTITION BY "city" ORDER BY "age" NULLS LAST) FROM "users" ORDER BY "id" NULLS LAST
+PASS win_running_sum              same
+       -> SELECT "id", SUM("amount") OVER (PARTITION BY "user_id" ORDER BY "id" NULLS LAST ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM "orders" ORDER BY "id" NULLS LAST
+PASS win_lag_lead                 same
+       -> SELECT "id", LAG("amount") OVER (ORDER BY "id" NULLS LAST), LEAD("amount", 2) OVER (ORDER BY "id" NULLS LAST) FROM "orders" ORDER BY "id" NULLS LAST
+PASS agg_filter                   same
+       -> SELECT COUNT(*) FILTER (WHERE "status" = 'paid'), COUNT(*) FROM "orders"
+PASS with_recursive               same
+       -> WITH RECURSIVE "t" ("n") AS (SELECT 1 UNION ALL SELECT "n" + 1 FROM "t" WHERE "n" < 5) SELECT "n" FROM "t" ORDER BY "n" NULLS LAST
+PASS trim_simple                  same
+       -> SELECT trim("name"), trim('  x  ') FROM "users" WHERE "id" = 1
+PASS trim_both_chars              same
+       -> SELECT trim('xxhixx', 'x')
+PASS trim_leading                 same
+       -> SELECT ltrim('xxhixx', 'x')
+PASS trim_trailing                same
+       -> SELECT rtrim('xxhixx', 'x')
+PASS gap_trim_leading_from        parser gap (PostgreSQL accepts it): sql parser error: Expected: ), found: '  hi' at Line: 1, Column: 26
+PASS gap_trim_trailing_from       parser gap (PostgreSQL accepts it): sql parser error: Expected: ), found: 'hi  ' at Line: 1, Column: 27
+PASS json_get_text                same
+       -> SELECT "id", CAST("data" ->> 'a' AS TEXT) FROM "docs" ORDER BY "id" NULLS LAST
+PASS json_get_text_number         same
+       -> SELECT "id", CAST("data" ->> 'n' AS TEXT) FROM "docs" ORDER BY "id" NULLS LAST
+PASS json_nested                  same
+       -> SELECT "id", CAST(("data" -> 'o') ->> 'k' AS TEXT) FROM "docs" ORDER BY "id" NULLS LAST
+PASS json_cast_int                same
+       -> SELECT "id", CAST(CAST("data" ->> 'n' AS TEXT) AS INTEGER) + 1 FROM "docs" ORDER BY "id" NULLS LAST
+PASS diverge_json_boolean         diverges: postgres [[Text("true")]] vs sqlite [[Text("1")]]
+       -> SELECT CAST("data" ->> 't' AS TEXT) FROM "docs" WHERE "id" = 1
+PASS gate_json                    refused without allowance: conditional: needs allowance `json_scalar_affinity`: SQLite ->> keeps the scalar's type (true -> 1); cast to TEXT here, but a JSON boolean still reads '1' where PostgreSQL reads 'true'. Requires SQLite >= 3.38
+PASS interval_secs                same
+       -> SELECT "id" FROM "events" WHERE "at" > (datetime(CURRENT_TIMESTAMP, printf('%+f seconds', (-(?1)))))
+PASS interval_wide                same
+       -> SELECT "id" FROM "events" WHERE "at" > (datetime(CURRENT_TIMESTAMP, printf('%+f seconds', (-(?1)))))
+PASS interval_mins                same
+       -> SELECT "id" FROM "events" WHERE "at" > (datetime(CURRENT_TIMESTAMP, printf('%+f minutes', (-(?1)))))
+PASS gate_interval                refused without allowance: conditional: needs allowance `timestamp_arithmetic_as_text`: timestamp +/- make_interval(..) becomes datetime(ts, modifiers): text, whole seconds, UTC
+PASS refuse_interval_months       refused `fn:make_interval`: make_interval(months => ..): month/year arithmetic differs between the engines
+PASS refuse_interval_standalone   refused `named_arg`: SQLite functions have no named-argument notation
+PASS refuse_current_schema        refused `fn:current_schema`: PostgreSQL catalog/session introspection has no SQLite equivalent
+PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/session introspection has no SQLite equivalent
+PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
+PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 61 passing translated cases:
+MATRIX (construct, tier) from 85 passing translated cases:
   boolean_literal              conditional
   cast                         conditional
+  distinct_on                  emulated
   division                     conditional
+  filter_clause                exact
   fn:avg                       exact
+  fn:btrim                     emulated
   fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
+  fn:lag                       exact
+  fn:lead                      exact
   fn:length                    exact
   fn:lower                     conditional
   fn:ltrim                     exact
@@ -150,13 +211,19 @@ MATRIX (construct, tier) from 61 passing translated cases:
   fn:min                       conditional
   fn:now                       conditional
   fn:nullif                    exact
+  fn:octet_length              emulated
+  fn:rank                      exact
   fn:replace                   exact
+  fn:row_number                exact
   fn:string_agg                emulated
   fn:sum                       exact
   fn:upper                     conditional
   ilike                        conditional
+  interval_arithmetic          conditional
   join:inner_join              exact
   join:left_join               exact
+  json_get                     conditional
+  json_get_text                conditional
   like                         conditional
   limit                        exact
   null_ordering                emulated
@@ -166,7 +233,10 @@ MATRIX (construct, tier) from 61 passing translated cases:
   order_by                     conditional
   ordered_comparison           conditional
   ordered_comparison           exact
+  recursive_cte                exact
   returning                    exact
+  trim                         exact
   update_from                  exact
   upsert                       exact
   upsert_where                 exact
+  window_function              exact

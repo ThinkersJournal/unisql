@@ -1,0 +1,60 @@
+//! Corpus runner: reads JSON lines `{id, group, sql}` on stdin, runs the real translator
+//! PostgreSQL -> SQLite on each, and prints one JSON line per statement. No engine is contacted.
+//!
+//! status: `translated` (no allowance needed), `conditional` (translates only with the listed
+//! allowances), `refused` (construct), `not_in_ir` (construct), `syntax` (parser rejected the text).
+
+use std::io::BufRead;
+
+use unisql::{Allowance, Error, Options, Tier};
+
+const ALL: &[Allowance] = &[
+    Allowance::NowAsText,
+    Allowance::LikeCaseSensitivityIsConnectionSetting,
+    Allowance::AsciiOnlyCaseFolding,
+    Allowance::LenientCast,
+    Allowance::DivisionByZeroIsNull,
+    Allowance::TextCollation,
+    Allowance::BooleanAsInteger,
+    Allowance::TimestampArithmeticAsText,
+    Allowance::JsonScalarAffinity,
+    Allowance::JsonRepresentationAsText,
+];
+
+fn main() {
+    let all = ALL.iter().fold(Options::default(), |o, a| o.with(*a));
+    for line in std::io::stdin().lock().lines() {
+        let line = line.unwrap();
+        let mut rec: serde_json::Value = serde_json::from_str(&line).unwrap();
+        let sql = rec["sql"].as_str().unwrap_or("").to_string();
+        let (status, detail, allowances): (&str, String, Vec<String>) =
+            match unisql::translate(&sql, "postgres", "sqlite", &all) {
+                Ok(t) => {
+                    let needed: Vec<String> = t
+                        .report
+                        .entries
+                        .iter()
+                        .filter(|e| e.tier == Tier::Conditional)
+                        .filter_map(|e| e.allowance.map(|a| a.name().to_string()))
+                        .collect::<std::collections::BTreeSet<_>>()
+                        .into_iter()
+                        .collect();
+                    if needed.is_empty() {
+                        ("translated", String::new(), vec![])
+                    } else {
+                        ("conditional", String::new(), needed)
+                    }
+                }
+                Err(Error::Untranslatable(u)) => ("refused", u.construct, vec![]),
+                Err(Error::Read(unisql::ReadError::NotInIr { construct, .. })) => ("not_in_ir", construct, vec![]),
+                Err(Error::Read(unisql::ReadError::Syntax(m))) => ("syntax", m.chars().take(80).collect(), vec![]),
+                Err(e) => ("error", e.to_string(), vec![]),
+            };
+        let obj = rec.as_object_mut().unwrap();
+        obj.remove("sql");
+        obj.insert("status".into(), status.into());
+        obj.insert("detail".into(), detail.into());
+        obj.insert("allowances".into(), allowances.into());
+        println!("{rec}");
+    }
+}

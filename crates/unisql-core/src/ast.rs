@@ -29,6 +29,8 @@ pub enum Statement {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Query {
     pub with: Vec<Cte>,
+    /// `WITH RECURSIVE`
+    pub recursive: bool,
     pub body: SetExpr,
     pub order_by: Vec<OrderItem>,
     pub limit: Option<Expr>,
@@ -185,6 +187,8 @@ pub enum Expr {
     Subquery(Box<Query>),
     Exists { query: Box<Query>, negated: bool },
     Nested(Box<Expr>),
+    /// `TRIM([LEADING|TRAILING|BOTH] [chars FROM] expr)`; `chars` absent means whitespace.
+    Trim { expr: Box<Expr>, side: TrimSide, chars: Option<Box<Expr>> },
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -195,11 +199,54 @@ pub struct Function {
     pub distinct: bool,
     /// `count(*)`
     pub star: bool,
+    /// `FILTER (WHERE ..)` on an aggregate.
+    pub filter: Option<Box<Expr>>,
+    /// `OVER (..)`: makes the call a window function.
+    pub over: Option<Window>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum FunctionArg {
     Expr(Expr),
+    /// `name => value` (PostgreSQL named notation).
+    Named { name: String, value: Expr },
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Window {
+    pub partition_by: Vec<Expr>,
+    pub order_by: Vec<OrderItem>,
+    pub frame: Option<Frame>,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct Frame {
+    pub units: FrameUnits,
+    pub start: FrameBound,
+    pub end: Option<FrameBound>,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FrameUnits {
+    Rows,
+    Range,
+    Groups,
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub enum FrameBound {
+    CurrentRow,
+    /// `UNBOUNDED PRECEDING` when `None`.
+    Preceding(Option<Box<Expr>>),
+    /// `UNBOUNDED FOLLOWING` when `None`.
+    Following(Option<Box<Expr>>),
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TrimSide {
+    Both,
+    Leading,
+    Trailing,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -235,6 +282,10 @@ pub enum BinaryOp {
     Modulo,
     /// `||`
     Concat,
+    /// JSON `->` (returns JSON)
+    JsonGet,
+    /// JSON `->>` (returns text)
+    JsonGetText,
 }
 
 /// Types, as the IR sees them. Precision/length arguments are kept; engines differ in what they do

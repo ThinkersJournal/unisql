@@ -10,12 +10,16 @@ use std::fmt::Write as _;
 use unisql::Allowance as A;
 use unisql_differential::{run_case, Case, Engines, Expect, Param};
 
-const PG: &str = "
+const PG: &str = r#"
 CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age integer,
                     active boolean NOT NULL, score double precision, city text);
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES users(id),
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
+CREATE TABLE docs (id integer PRIMARY KEY, data jsonb);
+CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
+INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"}}'),(2,'{"a":null,"n":7}');
+INSERT INTO events VALUES (1, now() - interval '10 seconds'),(2, now() - interval '120 seconds'),(3, now() - interval '3600 seconds');
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,true,9.5,'Oslo'),
  (2,'Bob','bob@example.com',25,false,7.25,'Bergen'),
@@ -25,14 +29,18 @@ INSERT INTO users VALUES
  (6,'frank%','f@x.org',60,true,1.5,'Trondheim');
 INSERT INTO orders VALUES (1,1,100,'paid'),(2,1,250,'paid'),(3,2,75,'open'),(4,3,0,'void'),(5,3,500,'paid'),(6,5,30,'open');
 INSERT INTO kv VALUES ('a','1',1),('b',NULL,2),('c','x',NULL),('Cap','z',3);
-";
+"#;
 
-const LITE: &str = "
+const LITE: &str = r#"
 CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age integer,
                     active integer NOT NULL, score real, city text);
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES users(id),
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
+CREATE TABLE docs (id integer PRIMARY KEY, data text);
+CREATE TABLE events (id integer PRIMARY KEY, at text NOT NULL);
+INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"}}'),(2,'{"a":null,"n":7}');
+INSERT INTO events VALUES (1, datetime('now','-10 seconds')),(2, datetime('now','-120 seconds')),(3, datetime('now','-3600 seconds'));
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,1,9.5,'Oslo'),
  (2,'Bob','bob@example.com',25,0,7.25,'Bergen'),
@@ -42,7 +50,7 @@ INSERT INTO users VALUES
  (6,'frank%','f@x.org',60,1,1.5,'Trondheim');
 INSERT INTO orders VALUES (1,1,100,'paid'),(2,1,250,'paid'),(3,2,75,'open'),(4,3,0,'void'),(5,3,500,'paid'),(6,5,30,'open');
 INSERT INTO kv VALUES ('a','1',1),('b',NULL,2),('c','x',NULL),('Cap','z',3);
-";
+"#;
 
 const COLL: &[A] = &[A::TextCollation];
 
@@ -84,7 +92,6 @@ fn cases() -> Vec<Case> {
         c("case_operand", "SELECT id, CASE city WHEN 'Oslo' THEN 1 WHEN 'Bergen' THEN 2 ELSE 0 END FROM users", &[]),
         c("coalesce_nullif", "SELECT id, coalesce(city, 'none'), nullif(age, 25) FROM users", &[]),
         c("string_funcs", "SELECT id, length(name), replace(name, 'a', 'A'), ltrim('  x') FROM users", &[]),
-        exp(c("ir_trim_syntax", "SELECT trim(' x ') FROM users", &[]), Expect::NotInIr("expression")),
         c("concat_op", "SELECT name || '-' || coalesce(city, '?') FROM users", &[]),
         c("aggregates", "SELECT count(*), count(status), sum(amount), min(amount), max(amount) FROM orders", COLL),
         c("count_distinct", "SELECT count(DISTINCT user_id) FROM orders", &[]),
@@ -137,6 +144,8 @@ fn cases() -> Vec<Case> {
         // ---- functions with a stated tier
         c("string_agg_single", "SELECT string_agg(name, ',') FROM users WHERE id = 1", &[]),
         c("char_length", "SELECT char_length(name) FROM users", &[]),
+        c("btrim_forms", "SELECT btrim('  hi  '), btrim('xxhixx', 'x')", &[]),
+        c("octet_length_utf8", "SELECT octet_length('abc'), octet_length('héllo')", &[]),
         c("now_as_text", "SELECT id FROM users WHERE now() IS NOT NULL AND id = 1", &[A::NowAsText]),
         c("cast_int_text", "SELECT CAST(id AS TEXT), CAST('12' AS INTEGER) FROM users WHERE id = 1", &[A::LenientCast]),
         c("lower_upper_ascii", "SELECT lower(name), upper(name) FROM users", &[A::AsciiOnlyCaseFolding]),
@@ -150,15 +159,53 @@ fn cases() -> Vec<Case> {
         exp(c("diverge_division_by_zero", "SELECT 1 / 0", &[A::DivisionByZeroIsNull]), Expect::Diverges),
         exp(c("diverge_bad_cast", "SELECT CAST('abc' AS INTEGER)", &[A::LenientCast]), Expect::Diverges),
         // ---- refusals: no text
-        exp(c("refuse_distinct_on", "SELECT DISTINCT ON (city) city, id FROM users ORDER BY city, id", COLL), Expect::Refused("distinct_on")),
+        ord(c("distinct_on_emulated", "SELECT DISTINCT ON (city) city, id FROM users WHERE city IS NOT NULL ORDER BY city, id", COLL)),
         exp(c("refuse_for_update", "SELECT id FROM users WHERE id = 1 FOR UPDATE", &[]), Expect::Refused("row_lock")),
         exp(c("refuse_unmapped_fn", "SELECT md5(name) FROM users", &[]), Expect::Refused("fn:md5")),
         exp(c("refuse_cast_uuid", "SELECT CAST(name AS UUID) FROM users", &[A::LenientCast]), Expect::Refused("cast")),
         // ---- reader: not in the IR (an error, never a pass-through)
-        exp(c("ir_json_arrow", "SELECT name->>'k' FROM users", &[]), Expect::NotInIr("binary_operator")),
         exp(c("ir_skip_locked", "SELECT id FROM users FOR UPDATE SKIP LOCKED", &[]), Expect::NotInIr("row_lock_option")),
-        exp(c("ir_window", "SELECT row_number() OVER (ORDER BY id) FROM users", &[]), Expect::NotInIr("window_function")),
-        exp(c("ir_recursive", "WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n+1 FROM t WHERE n<3) SELECT n FROM t", &[]), Expect::NotInIr("recursive_cte")),
+        exp(c("ir_json_path_op", "SELECT data #> '{o,k}' FROM docs", &[]), Expect::NotInIr("binary_operator")),
+        exp(c("ir_named_window", "SELECT id, sum(amount) OVER w FROM orders WINDOW w AS (ORDER BY id)", &[]), Expect::NotInIr("select_clause")),
+        // ---- milestone B: DISTINCT ON emulation
+        ord(c("distinct_on_basic", "SELECT DISTINCT ON (city) city, id, name FROM users WHERE city IS NOT NULL ORDER BY city, age DESC, id", COLL)),
+        ord(c("distinct_on_orders", "SELECT DISTINCT ON (user_id) user_id, amount, id FROM orders ORDER BY user_id, amount DESC, id", COLL)),
+        ord(c("distinct_on_limit", "SELECT DISTINCT ON (user_id) user_id, id FROM orders ORDER BY user_id, id LIMIT 2", COLL)),
+        exp(c("distinct_on_star_refused", "SELECT DISTINCT ON (city) * FROM users ORDER BY city, id", COLL), Expect::Refused("distinct_on")),
+        // ---- window functions, FILTER, frames
+        ord(c("win_row_number", "SELECT id, row_number() OVER (ORDER BY id) FROM users", COLL)),
+        ord(c("win_rank_partition", "SELECT id, rank() OVER (PARTITION BY city ORDER BY age) FROM users ORDER BY id", COLL)),
+        ord(c("win_running_sum", "SELECT id, sum(amount) OVER (PARTITION BY user_id ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM orders ORDER BY id", COLL)),
+        ord(c("win_lag_lead", "SELECT id, lag(amount) OVER (ORDER BY id), lead(amount, 2) OVER (ORDER BY id) FROM orders ORDER BY id", COLL)),
+        c("agg_filter", "SELECT count(*) FILTER (WHERE status = 'paid'), count(*) FROM orders", &[]),
+        // ---- WITH RECURSIVE
+        ord(c("with_recursive", "WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM t WHERE n < 5) SELECT n FROM t ORDER BY n", COLL)),
+        // ---- TRIM syntax forms
+        c("trim_simple", "SELECT trim(name), trim('  x  ') FROM users WHERE id = 1", &[]),
+        c("trim_both_chars", "SELECT trim(both 'x' from 'xxhixx')", &[]),
+        c("trim_leading", "SELECT trim(leading 'x' from 'xxhixx')", &[]),
+        c("trim_trailing", "SELECT trim(trailing 'x' from 'xxhixx')", &[]),
+        exp(c("gap_trim_leading_from", "SELECT trim(leading from '  hi')", &[]), Expect::ParserGap),
+        exp(c("gap_trim_trailing_from", "SELECT trim(trailing from 'hi  ')", &[]), Expect::ParserGap),
+        // ---- JSON operators
+        ord(c("json_get_text", "SELECT id, data->>'a' FROM docs ORDER BY id", &[A::JsonScalarAffinity, A::TextCollation])),
+        ord(c("json_get_text_number", "SELECT id, data->>'n' FROM docs ORDER BY id", &[A::JsonScalarAffinity, A::TextCollation])),
+        ord(c("json_nested", "SELECT id, data->'o'->>'k' FROM docs ORDER BY id", &[A::JsonScalarAffinity, A::JsonRepresentationAsText, A::TextCollation])),
+        ord(c("json_cast_int", "SELECT id, CAST(data->>'n' AS INTEGER) + 1 FROM docs ORDER BY id", &[A::JsonScalarAffinity, A::LenientCast, A::TextCollation])),
+        exp(c("diverge_json_boolean", "SELECT data->>'t' FROM docs WHERE id = 1", &[A::JsonScalarAffinity]), Expect::Diverges),
+        exp(c("gate_json", "SELECT data->>'a' FROM docs", &[]), Expect::NeedsAllowance(A::JsonScalarAffinity)),
+        // ---- make_interval arithmetic
+        p(c("interval_secs", "SELECT id FROM events WHERE at > now() - make_interval(secs => $1)", &[A::NowAsText, A::TimestampArithmeticAsText]), vec![Param::Real(60.0)]),
+        p(c("interval_wide", "SELECT id FROM events WHERE at > now() - make_interval(secs => $1)", &[A::NowAsText, A::TimestampArithmeticAsText]), vec![Param::Real(1000.0)]),
+        p(c("interval_mins", "SELECT id FROM events WHERE at > now() - make_interval(mins => $1)", &[A::NowAsText, A::TimestampArithmeticAsText]), vec![Param::Int(5)]),
+        exp(c("gate_interval", "SELECT id FROM events WHERE at > now() - make_interval(secs => 5)", &[A::NowAsText]), Expect::NeedsAllowance(A::TimestampArithmeticAsText)),
+        exp(c("refuse_interval_months", "SELECT now() - make_interval(months => 1)", &[A::NowAsText, A::TimestampArithmeticAsText]), Expect::Refused("fn:make_interval")),
+        exp(c("refuse_interval_standalone", "SELECT make_interval(secs => 5)", &[]), Expect::Refused("named_arg")),
+        // ---- loud refusals named in the corpus
+        exp(c("refuse_current_schema", "SELECT current_schema()", &[]), Expect::Refused("fn:current_schema")),
+        exp(c("refuse_to_regclass", "SELECT to_regclass('users') IS NOT NULL", &[]), Expect::Refused("fn:to_regclass")),
+        exp(c("refuse_sha256", "SELECT encode(sha256(convert_to(name, 'UTF8')), 'hex') FROM users", &[]), Expect::Refused("fn:convert_to")),
+        exp(c("refuse_regexp_replace", "SELECT regexp_replace(name, 'a', 'b') FROM users", &[]), Expect::Refused("fn:regexp_replace")),
     ]
 }
 

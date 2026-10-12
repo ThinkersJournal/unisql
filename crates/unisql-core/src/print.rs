@@ -42,9 +42,16 @@ impl Printer<'_> {
     }
 
     fn query(&self, q: &Query, c: &mut Ctx) -> R<String> {
+        if let Some(q2) = self.t.rewrite_query(q, c)? {
+            return self.query(&q2, c);
+        }
         let mut out = String::new();
         if !q.with.is_empty() {
             out.push_str("WITH ");
+            if q.recursive {
+                self.t.feature("recursive_cte", c)?;
+                out.push_str("RECURSIVE ");
+            }
             let mut parts = Vec::new();
             for cte in &q.with {
                 let cols = if cte.columns.is_empty() {
@@ -308,6 +315,39 @@ impl Printer<'_> {
         })
     }
 
+    fn window(&self, w: &Window, c: &mut Ctx) -> R<String> {
+        let mut parts = Vec::new();
+        if !w.partition_by.is_empty() {
+            let p = w.partition_by.iter().map(|e| self.expr(e, c)).collect::<R<Vec<_>>>()?;
+            parts.push(format!("PARTITION BY {}", p.join(", ")));
+        }
+        if !w.order_by.is_empty() {
+            parts.push(format!("ORDER BY {}", self.order_items(&w.order_by, c)?));
+        }
+        if let Some(f) = &w.frame {
+            let u = match f.units {
+                FrameUnits::Rows => "ROWS",
+                FrameUnits::Range => "RANGE",
+                FrameUnits::Groups => "GROUPS",
+            };
+            let b = |x: &FrameBound, c: &mut Ctx| -> R<String> {
+                Ok(match x {
+                    FrameBound::CurrentRow => "CURRENT ROW".to_string(),
+                    FrameBound::Preceding(None) => "UNBOUNDED PRECEDING".to_string(),
+                    FrameBound::Following(None) => "UNBOUNDED FOLLOWING".to_string(),
+                    FrameBound::Preceding(Some(e)) => format!("{} PRECEDING", self.expr(e, c)?),
+                    FrameBound::Following(Some(e)) => format!("{} FOLLOWING", self.expr(e, c)?),
+                })
+            };
+            let s = match &f.end {
+                None => format!("{u} {}", b(&f.start, c)?),
+                Some(e) => format!("{u} BETWEEN {} AND {}", b(&f.start, c)?, b(e, c)?),
+            };
+            parts.push(s);
+        }
+        Ok(parts.join(" "))
+    }
+
     fn expr(&self, e: &Expr, c: &mut Ctx) -> R<String> {
         Ok(match e {
             Expr::Column(n) => self.name(n),
@@ -331,6 +371,38 @@ impl Printer<'_> {
                     UnaryOp::Plus => format!("+{o}"),
                 }
             }
+            Expr::Binary { op: op @ (BinaryOp::JsonGet | BinaryOp::JsonGetText), left, right } => {
+                let l = self.operand(left, c)?;
+                let r = self.operand(right, c)?;
+                self.t.json_access(*op == BinaryOp::JsonGetText, &l, &r, c)?
+            }
+            Expr::Binary { op: op @ (BinaryOp::Plus | BinaryOp::Minus), left, right }
+                if matches!(&**right, Expr::Function(f) if f.name == "make_interval") =>
+            {
+                let Expr::Function(f) = &**right else { unreachable!() };
+                let mut parts = Vec::new();
+                for a in &f.args {
+                    match a {
+                        FunctionArg::Named { name, value } => parts.push((name.clone(), self.expr(value, c)?)),
+                        FunctionArg::Expr(_) => {
+                            return Err(c.refuse(
+                                "fn:make_interval",
+                                "positional make_interval arguments are not in the IR; use named notation",
+                                &[],
+                            ));
+                        }
+                    }
+                }
+                let l = self.operand(left, c)?;
+                let minus = *op == BinaryOp::Minus;
+                match self.t.interval_arith(minus, &l, &parts, c)? {
+                    Some(text) => text,
+                    None => {
+                        let r = self.expr(right, c)?;
+                        format!("{l} {} {r}", if minus { "-" } else { "+" })
+                    }
+                }
+            }
             Expr::Binary { op, left, right } => {
                 let sym = match op {
                     BinaryOp::Eq => "=",
@@ -347,6 +419,7 @@ impl Printer<'_> {
                     BinaryOp::Divide => "/",
                     BinaryOp::Modulo => "%",
                     BinaryOp::Concat => "||",
+                    BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
                 };
                 self.t.binary_op(*op, is_numeric(left) || is_numeric(right), c)?;
                 format!("{} {sym} {}", self.operand(left, c)?, self.operand(right, c)?)
@@ -403,12 +476,31 @@ impl Printer<'_> {
                 self.t.cast(&inner, ty, c)?
             }
             Expr::Function(f) => {
-                let args = f
-                    .args
-                    .iter()
-                    .map(|FunctionArg::Expr(a)| self.expr(a, c))
-                    .collect::<R<Vec<_>>>()?;
-                self.t.function(f, &args, c)?
+                let mut args = Vec::new();
+                for a in &f.args {
+                    args.push(match a {
+                        FunctionArg::Expr(e) => self.expr(e, c)?,
+                        FunctionArg::Named { name, value } => {
+                            self.t.feature("named_arg", c)?;
+                            format!("{} => {}", self.id(name), self.expr(value, c)?)
+                        }
+                    });
+                }
+                let mut s = self.t.function(f, &args, c)?;
+                if let Some(flt) = &f.filter {
+                    self.t.feature("filter_clause", c)?;
+                    s.push_str(&format!(" FILTER (WHERE {})", self.expr(flt, c)?));
+                }
+                if let Some(w) = &f.over {
+                    self.t.feature("window_function", c)?;
+                    s.push_str(&format!(" OVER ({})", self.window(w, c)?));
+                }
+                s
+            }
+            Expr::Trim { expr, side, chars } => {
+                let e = self.expr(expr, c)?;
+                let ch = chars.as_ref().map(|x| self.expr(x, c)).transpose()?;
+                self.t.trim(*side, &e, ch.as_deref(), c)?
             }
             Expr::Subquery(q) => format!("({})", self.query(q, c)?),
             Expr::Exists { query, negated } => format!(

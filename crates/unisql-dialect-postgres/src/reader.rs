@@ -86,11 +86,10 @@ fn query(q: sp::Query) -> R<Query> {
         return no("query_clause", "FOR/SETTINGS/FORMAT/pipe operators");
     }
     let mut ctes = Vec::new();
+    let mut recursive = false;
     if let Some(w) = with {
-        let sp::With { with_token: _, recursive, cte_tables } = w;
-        if recursive {
-            return no("recursive_cte", "WITH RECURSIVE is not in the IR");
-        }
+        let sp::With { with_token: _, recursive: rec, cte_tables } = w;
+        recursive = rec;
         for c in cte_tables {
             let sp::Cte { alias, query: cq, from, materialized, closing_paren_token: _ } = c;
             if from.is_some() || materialized.is_some() {
@@ -163,7 +162,7 @@ fn query(q: sp::Query) -> R<Query> {
             return no("limit_comma", "MySQL LIMIT a, b is not PostgreSQL");
         }
     }
-    Ok(Query { with: ctes, body, order_by: order, limit, offset })
+    Ok(Query { with: ctes, recursive, body, order_by: order, limit, offset })
 }
 
 fn order_item(o: sp::OrderByExpr) -> R<OrderItem> {
@@ -696,6 +695,8 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 B::Divide => BinaryOp::Divide,
                 B::Modulo => BinaryOp::Modulo,
                 B::StringConcat => BinaryOp::Concat,
+                B::Arrow => BinaryOp::JsonGet,
+                B::LongArrow => BinaryOp::JsonGetText,
                 other => {
                     return no(
                         "binary_operator",
@@ -718,6 +719,21 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 return no("cast_form", "TRY_CAST / SAFE_CAST / CAST .. FORMAT");
             }
             Expr::Cast { expr: boxed(*x)?, ty: data_type_to_ir(&data_type)? }
+        }
+        E::Trim { trim_where, trim_what, expr: x, trim_characters } => {
+            // `trim(chars FROM x)` / `trim(BOTH chars FROM x)`; the comma form is `trim_characters`.
+            let side = match trim_where {
+                None | Some(sp::TrimWhereField::Both) => TrimSide::Both,
+                Some(sp::TrimWhereField::Leading) => TrimSide::Leading,
+                Some(sp::TrimWhereField::Trailing) => TrimSide::Trailing,
+            };
+            let chars = match (trim_what, trim_characters) {
+                (Some(w), None) => Some(boxed(*w)?),
+                (None, None) => None,
+                (None, Some(mut cs)) if cs.len() == 1 => Some(boxed(cs.remove(0))?),
+                _ => return no("trim_form", "TRIM with several character arguments"),
+            };
+            Expr::Trim { expr: boxed(*x)?, side, chars }
         }
         E::Exists { subquery, negated } => Expr::Exists { query: Box::new(query(*subquery)?), negated },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
@@ -766,14 +782,18 @@ fn function(f: sp::Function) -> R<Expr> {
     if uses_odbc_syntax
         || !matches!(parameters, sp::FunctionArguments::None)
         || !within_group.is_empty()
-        || filter.is_some()
         || null_treatment.is_some()
     {
         return no("function_option", "ODBC syntax/parameters/WITHIN GROUP/FILTER/IGNORE NULLS");
     }
-    if over.is_some() {
-        return no("window_function", "OVER (..) is not in the IR yet");
-    }
+    let over = match over {
+        None => None,
+        Some(sp::WindowType::NamedWindow(_)) => {
+            return no("named_window", "OVER w (a WINDOW clause) is not in the IR yet");
+        }
+        Some(sp::WindowType::WindowSpec(spec)) => Some(window_spec(spec)?),
+    };
+    let filter = filter.map(|f| expr(*f).map(Box::new)).transpose()?;
     let name = object_name(&name)?;
     let base = name.last().to_string();
     if name.0.len() != 1 {
@@ -788,6 +808,8 @@ fn function(f: sp::Function) -> R<Expr> {
                     args: vec![],
                     distinct: false,
                     star: false,
+                    filter: None,
+                    over: None,
                 }));
             }
             return no("bare_function", &format!("`{base}` without parentheses"));
@@ -809,6 +831,17 @@ fn function(f: sp::Function) -> R<Expr> {
         match a {
             sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(e)) => out.push(FunctionArg::Expr(expr(e)?)),
             sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Wildcard) => star = true,
+            sp::FunctionArg::Named { name, arg: sp::FunctionArgExpr::Expr(e), operator }
+                if matches!(operator, sp::FunctionArgOperator::RightArrow) =>
+            {
+                out.push(FunctionArg::Named { name: ident(&name), value: expr(e)? })
+            }
+            // sqlparser produces `ExprNamed` when the name is parsed as an expression.
+            sp::FunctionArg::ExprNamed {
+                name: sp::Expr::Identifier(name),
+                arg: sp::FunctionArgExpr::Expr(e),
+                operator: sp::FunctionArgOperator::RightArrow,
+            } => out.push(FunctionArg::Named { name: ident(&name), value: expr(e)? }),
             other => return no("function_argument", &head(&other)),
         }
     }
@@ -816,7 +849,44 @@ fn function(f: sp::Function) -> R<Expr> {
     if name == "current_timestamp" {
         name = "now".to_string();
     }
-    Ok(Expr::Function(Function { name, args: out, distinct, star }))
+    Ok(Expr::Function(Function { name, args: out, distinct, star, filter, over }))
+}
+
+fn window_spec(w: sp::WindowSpec) -> R<Window> {
+    let sp::WindowSpec { window_name, partition_by, order_by, window_frame } = w;
+    if window_name.is_some() {
+        return no("named_window", "OVER (w ..) refinement of a named window");
+    }
+    let frame = match window_frame {
+        None => None,
+        Some(sp::WindowFrame { units, start_bound, end_bound }) => {
+            let bound = |b: sp::WindowFrameBound| -> R<FrameBound> {
+                Ok(match b {
+                    sp::WindowFrameBound::CurrentRow => FrameBound::CurrentRow,
+                    sp::WindowFrameBound::Preceding(e) => {
+                        FrameBound::Preceding(e.map(|x| expr(*x).map(Box::new)).transpose()?)
+                    }
+                    sp::WindowFrameBound::Following(e) => {
+                        FrameBound::Following(e.map(|x| expr(*x).map(Box::new)).transpose()?)
+                    }
+                })
+            };
+            Some(Frame {
+                units: match units {
+                    sp::WindowFrameUnits::Rows => FrameUnits::Rows,
+                    sp::WindowFrameUnits::Range => FrameUnits::Range,
+                    sp::WindowFrameUnits::Groups => FrameUnits::Groups,
+                },
+                start: bound(start_bound)?,
+                end: end_bound.map(bound).transpose()?,
+            })
+        }
+    };
+    Ok(Window {
+        partition_by: partition_by.into_iter().map(expr).collect::<R<_>>()?,
+        order_by: order_by.into_iter().map(order_item).collect::<R<_>>()?,
+        frame,
+    })
 }
 
 fn data_type_to_ir(t: &sp::DataType) -> R<SqlType> {

@@ -47,6 +47,14 @@ pub enum Allowance {
     TextCollation,
     /// Boolean values are stored and returned as integers 0/1.
     BooleanAsInteger,
+    /// Timestamp arithmetic goes through text (`'YYYY-MM-DD HH:MM:SS'`, UTC, whole seconds).
+    TimestampArithmeticAsText,
+    /// JSON `->>` yields text on the source; on the target a scalar's type affinity can survive
+    /// (a JSON `true` extracts as 1, not 'true').
+    JsonScalarAffinity,
+    /// JSON `->` yields a JSON value on the source; on the target it is its text representation, so
+    /// comparison is textual (whitespace and key order are not normalised).
+    JsonRepresentationAsText,
 }
 
 impl Allowance {
@@ -61,6 +69,9 @@ impl Allowance {
             Allowance::DivisionByZeroIsNull => "division_by_zero_is_null",
             Allowance::TextCollation => "text_collation",
             Allowance::BooleanAsInteger => "boolean_as_integer",
+            Allowance::TimestampArithmeticAsText => "timestamp_arithmetic_as_text",
+            Allowance::JsonScalarAffinity => "json_scalar_affinity",
+            Allowance::JsonRepresentationAsText => "json_representation_as_text",
         }
     }
 }
