@@ -22,6 +22,33 @@ that matters it is marked. Crate versions, licences and MSRVs come from the crat
 2026-10-12. Anything I could not establish is under **UNVERIFIED** (section 10) and marked inline.
 Nothing here was built or run.
 
+## 0.1 Direction from the session user, 2026-10-12 (verbatim; supersedes any conflicting text below)
+
+> "Each statement (or each project) declares the dialect it was written in; UniSQL parses with that
+> dialect and emits any target."
+
+> "SQLParser will likely be very useful for creating parsers for various SQL dialects but we will
+> likely want to avoid being vendor-locked into using it forever. SQLGlot is very similar to what
+> we're building in UniSQL so should be used heavily as an information source. After all, Python code
+> makes good pseudocode for writing code in other languages. jQQQ is also similar in goal to what
+> we're building but it being Java, I'm not sure how much we can directly glean from it...but it is
+> worth a look. Diesel and SQLx are different layers from this one but may be good to integrate with."
+
+> "UniSQL's goal is different from PersistAnt in that "a capability is added only when a consumer in
+> §1 needs it" doesn't really apply. We want comprehensive coverage over as many SQL dialects as
+> possible for parsing into our IR and emitting from our IR to them."
+
+("jQQQ" in the second message is taken to mean jOOQ; flagged to the PM.) Consequences, applied below:
+
+1. **Scope is comprehensive, not consumer-driven.** The first *shipped* source/target set (D1, D2:
+   Postgres + SQLite) is a sequencing ruling, not a boundary. UniSQL's own construct vocabulary is
+   not gated by a named consumer. PersistAnt's `rel.*` ids stay gated by PersistAnt (section 5).
+2. **`sqlparser` is replaceable.** It sits behind an adapter; the IR is ours and owns no sqlparser
+   type in its public surface. Parsers per dialect may be hand-written or swapped later.
+3. **SQLGlot is the primary reference** for dialect tables and generator structure (see section 4
+   for the licence step that must come before deriving anything).
+4. **Diesel and sqlx are integration targets** (sections 4 and 6), not prior art to avoid.
+
 ## 1. Scope: one canonical source dialect, or any?
 
 "Write any SQL dialect" admits two readings, and they cost very differently.
@@ -170,6 +197,16 @@ here and in the README.
 | 5 | **Diesel** 2.3.14 | `MultiConnection` derive combines Postgres/MySQL/SQLite into one enum connection, but "can only cover the common subset of all inner connection types"; non-core SQL types need hand-written impls per backend. | The warning: *common-subset-only* is the failure mode of "one type for all backends". Our answer is the tiers plus a per-target report, not the subset. | The ORM and schema DSL. | `MIT OR Apache-2.0`; MSRV 1.86.0 (crates.io API). |
 | 6 | **sqlx** 0.9.0 | Does not parse SQL; "any syntax that the development DB accepts" works; `query!` needs `DATABASE_URL` to a DB of "the same kind" as production; `Any` proxies to a driver chosen at runtime by URL scheme; placeholders differ (`$1` vs `?`). | The driver and the checking mechanism (section 6). | `Any` as a portability story: it moves the driver choice to runtime but changes no SQL. | `MIT OR Apache-2.0`; MSRV 1.94.0 (crates.io API). |
 
+**Standing of each row after the direction in section 0.1:**
+
+| Project | Role in UniSQL | Condition |
+|---|---|---|
+| sqlparser-rs | Parser *adapter* for the first dialects, behind our IR boundary; may be replaced per dialect. | The IR exposes no sqlparser type; a dialect's parser is a trait object or feature, so a hand-written parser can take over without an IR change. The corpus measurement already shows its limits (6 real statements it cannot parse: `DO`, `CREATE EVENT TRIGGER`, `DROP DATABASE .. WITH (FORCE)`, adjacent-literal concatenation). |
+| SQLGlot | **Primary information source**: dialect tables, per-dialect generator structure, the transformation catalogue, and its test corpus as a source of cases. | **Licence first.** Section 4 row 2 records it as UNVERIFIED. Before any file, table or test case is derived from it, read its repo `LICENSE`, record it here, and keep its notice and credit (EXPECTATIONS §6.4a). "Python as pseudocode" is a *reading* aid; a translated table or algorithm is a derived work and carries the licence. Not yet done. |
+| jOOQ | Read for the `@Support`-style capability annotations and its translating parser's behaviour; expect to glean concepts, not code. | Licence UNVERIFIED (jOOQ has historically had commercial editions for some databases); read before borrowing anything. |
+| Diesel | **Integration target**: a `diesel` feature that routes a UniSQL-translated statement through `sql_query` or a custom `QueryFragment`. | Not designed yet; needs a spike. Its `MultiConnection` is the common-subset trap (row 5), so UniSQL feeds it statements and does not adopt it as the abstraction. |
+| sqlx | **Integration target**: the prepare check (section 6.2) and a `sqlx` feature that hands translated text to `sqlx::query` per driver. | Bind order and placeholder style come from the report. |
+
 **Gap in this table, stated:** I did not read any of them beyond README/doc-page level, so the
 claim "none ships both a Rust parser and per-target emitters with a refusal-by-default policy" is
 **UNVERIFIED**; it is only "not found in the six read". Searching for others (for example other
@@ -192,24 +229,37 @@ own `Needs`**:
 2. **The program's statement catalogue is analysed at open**, so refusal is **at open with every unmet
    need named** (PersistAnt's gate: declare, report, refuse or open; `DESIGN-KINDS §2.1`), not at the
    first execution of an unusual query.
-3. **`rel.dialect` changes meaning.** In Option C it says "I write dialect d; anything else is
-   refused". With UniSQL it says "I write *source* dialect d, and translation is available to the
-   target's dialect": the refusal moves from "wrong dialect" to "needs a capability the target lacks".
-   This is the delta that "C+" names, and it needs PersistAnt's agreement because `DESIGN-KINDS §4.3`
-   currently records Humboldt's portability as "zero by declaration".
-4. **Probing and the matrix are one artifact.** PersistAnt probes capabilities live (temp-object probe
-   inside a rolled-back transaction, `DESIGN-KINDS §2.3`) and keeps a CI matrix of `backend, version
-   -> capability, status`. UniSQL's differential layer produces the *construct-level* half of the same
-   matrix. They should share one file format; which side owns it is D5.
-5. **New ids UniSQL would need** (and which PersistAnt's rule says wait for a named consumer): at
-   minimum `rel.distinct_on`, `rel.returning`, `rel.ilike`/case-insensitive comparison, and
-   `rel.window_functions`. **None is proposed now.** The point of the build phase's corpus run
-   (section 7) is to name the consumer for each before any id is added.
+3. **`rel.dialect` keeps its meaning; routed statements get a new id.** (Settled with the PersistAnt
+   lane 2026-10-12; lane-level, binding decisions stay CireSnave's.) `rel.dialect(d,min)` stays
+   "this SQL text runs as-is on d; any other engine is refused", which is what a `raw(postgres, ..)`
+   fragment yields and what keeps `DESIGN-KINDS §4.3` true for Humboldt's raw `query!` sites.
+   A statement routed through UniSQL yields a separate id, `rel.source_dialect(d)`: "written in d,
+   translated; the target must translate every statement in my catalogue to non-Refused". Neither
+   id is added to PersistAnt's list by this note. (My earlier text redefined `rel.dialect`; withdrawn.)
+4. **Matrix: one row schema, owned by PersistAnt; each repo checks in its own file.** Row =
+   `{subject_kind: capability|construct, subject, backend, version, how: native|emulated|absent,
+   evidence: proven|declared, note}`. UniSQL's file holds construct rows from its differential layer;
+   PersistAnt's holds capability rows from its probes; the reader (the open-time gate in
+   `persistant-relational`, which depends on `unisql`) merges them. Tier map: Exact -> native+proven,
+   Emulated -> emulated+proven, Refused -> absent+proven. **Conditional is a call-site allowance and
+   appears in the report, not as a matrix cell.** A missing row, or `evidence: declared`, is
+   `untested`, never `native+proven`. Construct ids and capability ids are separate namespaces; the
+   construct-to-capability mapping is what the report emits. (PersistAnt's own doc conflates
+   `Proven|Declared|Absent` with native/emulated; it will correct that in its next docs PR.)
+5. **Two vocabularies, two rules.** UniSQL's *construct* vocabulary is **comprehensive** (section
+   0.1: not gated by a consumer): every construct the supported dialects have is classified, with
+   or without a user today. PersistAnt's *capability* ids stay consumer-gated by PersistAnt: a
+   construct maps to a `rel.*` id only when PersistAnt has added that id. Candidates the mapping will
+   want (`rel.distinct_on`, `rel.returning`, `rel.ilike`, `rel.window_functions`) are PersistAnt's to
+   add; the measurement (docs/MEASUREMENT.md) supplies counts for that request. Until an id exists,
+   the report carries the construct and the open-time gate treats it as unmapped, which refuses.
 6. **Dependency direction.** `unisql` has no I/O and no database driver (it produces text and a
-   report). `persistant-relational` depends on `unisql`; the reverse never. To share capability ids
-   without a cycle, either `unisql` depends on `persistant-core` (which has no I/O, `DESIGN-KINDS §3`
-   rule 3) or ids are plain strings in a small shared spec (D5). One version number per project
-   applies to the `unisql` crates (CLAUDE.md §9).
+   report). `persistant-relational` depends on `unisql`; the reverse never. Capability ids are plain
+   strings `rel.<name>[(arg[,arg])]` (args lowercase); the id column of `DESIGN-KINDS §2.2` is the
+   normative list until a PersistAnt core crate ships it as data. `unisql` never imports
+   `persistant-core`; it may take a **dev-dependency** on it for a drift test (core never depends on
+   `unisql`, so no cycle). `unisql` emits no id outside the list except one marked `proposed:`.
+   One version number per project applies to the `unisql` crates (CLAUDE.md §9).
 7. **Transactions, pools, TLS, migrations, error classification stay in PersistAnt.** UniSQL is a
    function from `(text, source, target)` to `(text, report)` or an error. Keeping it that small is
    what keeps it testable.
@@ -292,7 +342,9 @@ Each is the PM's to route; none blocks the others except where noted.
 | D2 | First targets | Postgres + SQLite; add MySQL/MariaDB at once | Postgres + SQLite (an oracle exists, section 7) |
 | D3 | Compile-time story (section 6) | prepare-check only; prepare-check then a `unisql::query!` spike; macro first | prepare-check first, macro as a spike afterwards |
 | D4 | Emitter foundation | own emitters over sqlparser; sea-query as emitter; fork-and-extend a transpiler | evaluate sea-query against the corpus before choosing; default own emitters |
-| D5 | Capability ids shared with PersistAnt, and who owns the matrix file | `unisql` depends on `persistant-core`; plain-string spec in a third place; each owns its own | needs the PersistAnt lane: a shared spec, no cycle |
+| D5 | Capability ids shared with PersistAnt, and who owns the matrix file | `unisql` depends on `persistant-core`; plain-string spec in a third place; each owns its own | **Settled at lane level 2026-10-12** (section 5.3-5.6): plain strings, PersistAnt owns the vocabulary and the row schema, each repo checks in its own matrix file |
+| D8 | Parser independence | sqlparser as a hard dependency; sqlparser behind an adapter; own parsers from the start | adapter (section 0.1); own parser only per dialect where sqlparser is wrong or missing |
+| D9 | Coverage target | consumer-driven (PersistAnt's rule); comprehensive across dialects | comprehensive (section 0.1); sequencing by D1/D2/D6, not by consumer |
 | D6 | DDL in scope | DML only; DML + a stated DDL subset; full DDL | DML first, DDL subset second, triggers never |
 | D7 | Repo, name, owner | section 10 | see the `[ASK]` |
 

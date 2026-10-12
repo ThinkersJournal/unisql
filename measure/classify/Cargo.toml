@@ -1,0 +1,11 @@
+[package]
+name = "unisql-measure"
+version = "0.0.0"
+edition = "2021"
+publish = false
+description = "Throwaway corpus measurement for the UniSQL design phase. Not a library, not published."
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+sqlparser = { version = "0.63", features = ["visitor"] }
+serde_json = "1"

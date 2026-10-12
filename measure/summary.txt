@@ -1,0 +1,168 @@
+excluded as prose (parse failed, no SQL-shaped token): {'auth:other(src/storage/core.rs)': 9, 'auth:other(src/storage/encryption.rs)': 1, 'lightbulb:rust': 26, 'humboldt:src': 7, 'humboldt:tests': 8} total 51
+  by-category auth:migrations(.sql)                          {'ddl:conditional': 2, 'ddl:emulated': 1, 'ddl:refused': 1, 'other:refused': 4}
+  by-category auth:other(src/migrations/mod.rs)              {'ddl:conditional': 6, 'dml:exact': 2}
+  by-category auth:postgres.rs                               {'ddl:conditional': 3, 'ddl:emulated': 6, 'dml:conditional': 8, 'dml:emulated': 3, 'dml:exact': 8}
+  by-category auth:sqlite(auth-storage-sqlite/src/lib.rs)    {'ddl:emulated': 6, 'dml:emulated': 3, 'dml:exact': 18}
+  by-category auth:sqlite(src/storage/sqlite.rs)             {'ddl:emulated': 6, 'dml:emulated': 3, 'dml:exact': 15}
+  by-category humboldt:migrations(.sql)                      {'ddl:conditional': 6, 'ddl:emulated': 12, 'ddl:refused': 6, 'other:refused': 8, 'unparsed:unparsed': 1}
+  by-category humboldt:src                                   {'ddl:emulated': 6, 'dml:conditional': 34, 'dml:emulated': 28, 'dml:exact': 213, 'dml:refused': 64, 'other:exact': 6, 'other:refused': 7}
+  by-category humboldt:tests                                 {'ddl:emulated': 13, 'dml:conditional': 37, 'dml:emulated': 342, 'dml:exact': 569, 'dml:refused': 22, 'other:refused': 6, 'unparsed:unparsed': 4}
+  by-category lightbulb:rust                                 {'dml:conditional': 4, 'dml:emulated': 1, 'dml:exact': 2, 'dml:refused': 1, 'other:refused': 5, 'unparsed:unparsed': 1}
+  by-category lightbulb:sql                                  {'ddl:conditional': 3, 'ddl:emulated': 2}
+
+auth:migrations(.sql)                              total=8 exact=0 emulated=1 conditional=2 refused=5 unparsed=0 (templated)=0
+auth:other(src/migrations/mod.rs)                  total=8 exact=2 emulated=0 conditional=6 refused=0 unparsed=0 (templated)=0
+auth:postgres.rs                                   total=28 exact=8 emulated=9 conditional=11 refused=0 unparsed=0 (templated)=0
+auth:sqlite(auth-storage-sqlite/src/lib.rs)        total=27 exact=18 emulated=9 conditional=0 refused=0 unparsed=0 (templated)=0
+auth:sqlite(src/storage/sqlite.rs)                 total=24 exact=15 emulated=9 conditional=0 refused=0 unparsed=0 (templated)=0
+humboldt:migrations(.sql)                          total=33 exact=0 emulated=12 conditional=6 refused=14 unparsed=1 (templated)=1
+humboldt:src                                       total=358 exact=219 emulated=34 conditional=34 refused=71 unparsed=0 (templated)=15
+humboldt:tests                                     total=993 exact=569 emulated=355 conditional=37 refused=28 unparsed=4 (templated)=3
+lightbulb:rust                                     total=14 exact=2 emulated=1 conditional=4 refused=6 unparsed=1 (templated)=0
+lightbulb:sql                                      total=5 exact=0 emulated=2 conditional=3 refused=0 unparsed=0 (templated)=0
+
+## auth:migrations(.sql)
+      8 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      5 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+      5 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+      5 emulated    fn:gen_random_uuid -> randomblob-based expression
+      4 refused     trigger
+      3 refused     function/procedure
+      2 conditional fn:current_timestamp -> text, not timestamptz
+      2 emulated    DDL:CreateView (per-engine migration, section 3.3)
+      1 conditional INTERVAL arithmetic
+      1 conditional fn:date_trunc -> strftime composition
+      1 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+      1 refused     fn:access_token (no mapping)
+      1 refused     op:LongArrow (JSON/array/search operator)
+## auth:other(src/migrations/mod.rs)
+      6 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+      6 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      4 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+## auth:postgres.rs
+     11 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+      6 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+      3 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      3 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+      1 emulated    EXTRACT -> strftime
+      1 emulated    cast (type names differ)
+## auth:sqlite(auth-storage-sqlite/src/lib.rs)
+      3 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+      3 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      3 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+## auth:sqlite(src/storage/sqlite.rs)
+      3 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+      3 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      3 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+## humboldt:migrations(.sql)
+     18 emulated    DDL:AlterTable (per-engine migration, section 3.3)
+     14 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+     12 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+     10 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+     10 emulated    fn:gen_random_uuid -> randomblob-based expression
+      8 refused     function/procedure
+      6 refused     trigger
+      5 refused     DO block x1 (procedural)
+      2 emulated    DDL:CreateView (per-engine migration, section 3.3)
+      2 emulated    DDL:Drop (per-engine migration, section 3.3)
+      2 emulated    fn:btrim -> trim
+      1 conditional INTERVAL arithmetic
+      1 conditional || (NULL propagation differs)
+      1 emulated    cast (type names differ)
+      1 refused     fn:jsonb_typeof (engine/JSON function)
+      1 refused     fn:octet_length (no mapping)
+      1 refused     fn:people_backfill (no mapping)
+      1 refused     fn:uuid_send (no mapping)
+      1 refused     op:Arrow (JSON/array/search operator)
+      1 refused     op:LongArrow (JSON/array/search operator)
+## humboldt:src
+     35 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+     30 emulated    cast (type names differ)
+     24 emulated    RETURNING (needs SQLite >= 3.35)
+     19 refused     fn:current_schema (no mapping)
+     12 conditional || (NULL propagation differs)
+     12 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+      9 refused     fn:make_interval (no mapping)
+      6 refused     fn:pg_advisory_xact_lock (advisory lock)
+      6 refused     row lock (FOR UPDATE/SHARE)
+      5 conditional ILIKE (collation/case rule)
+      4 conditional INTERVAL arithmetic
+      4 emulated    DDL:Drop (per-engine migration, section 3.3)
+      4 emulated    fn:string_agg -> group_concat
+      4 refused     = ANY/ALL (array operand)
+      3 refused     SHOW
+      3 refused     fn:convert_to (no mapping)
+      3 refused     fn:encode (no mapping)
+      3 refused     fn:hashtext (no mapping)
+      3 refused     fn:hashtextextended (no mapping)
+      3 refused     fn:sha256 (no mapping)
+      3 refused     fn:to_regclass (no mapping)
+      2 emulated    DDL:AlterTable (per-engine migration, section 3.3)
+      2 emulated    fn:btrim -> trim
+      2 refused     COPY
+      2 refused     fn:array (no mapping)
+      2 refused     fn:array_agg (array)
+      2 refused     fn:current_database (no mapping)
+      2 refused     fn:forget_person (no mapping)
+      2 refused     fn:md5 (no mapping)
+      2 refused     fn:pg_backend_pid (engine/JSON function)
+      2 refused     fn:regexp_replace (no mapping)
+      1 conditional fn:to_char -> strftime
+      1 emulated    DISTINCT ON -> window function
+      1 emulated    fn:gen_random_uuid -> randomblob-based expression
+      1 refused     fn:clock_timestamp (no mapping)
+      1 refused     fn:current_user (no mapping)
+      1 refused     fn:octet_length (no mapping)
+      1 refused     fn:remove_sign_in_methods (no mapping)
+      1 refused     fn:set_config (session setting)
+      1 refused     fn:setval (no mapping)
+      1 refused     function/procedure
+      1 refused     transaction isolation/access mode
+## humboldt:tests
+    327 emulated    RETURNING (needs SQLite >= 3.35)
+     34 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+     16 conditional INTERVAL arithmetic
+     16 emulated    cast (type names differ)
+     11 emulated    fn:gen_random_uuid -> randomblob-based expression
+      7 emulated    DDL:AlterTable (per-engine migration, section 3.3)
+      7 refused     fn:current_date (no mapping)
+      6 conditional || (NULL propagation differs)
+      5 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+      5 refused     fn:md5 (no mapping)
+      4 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      4 emulated    fn:string_agg -> group_concat
+      4 refused     function/procedure
+      3 refused     fn:people_backfill (no mapping)
+      2 emulated    DDL:CreateSchema (per-engine migration, section 3.3)
+      2 refused     fn:current_schema (no mapping)
+      1 refused     = ANY/ALL (array operand)
+      1 refused     ARRAY[..] literal
+      1 refused     fn:current_database (no mapping)
+      1 refused     fn:decode (no mapping)
+      1 refused     fn:make_interval (no mapping)
+      1 refused     fn:split_part (no mapping)
+      1 refused     stmt:CreateDatabase (no mapping)
+      1 refused     trigger
+## lightbulb:rust
+      5 refused     SHOW
+      4 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+      3 emulated    ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+      3 emulated    RETURNING (needs SQLite >= 3.35)
+      3 emulated    cast (type names differ)
+      2 conditional fn:date_trunc -> strftime composition
+      1 conditional INTERVAL arithmetic
+      1 refused     fn:to_timestamp (no mapping)
+## lightbulb:sql
+      5 emulated    DDL:CreateIndex (per-engine migration, section 3.3)
+      5 emulated    DDL:CreateTable (per-engine migration, section 3.3)
+      3 conditional fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+      2 emulated    fn:gen_random_uuid -> randomblob-based expression
+
+## unparsed humboldt:migrations(.sql)
+      1 sql parser error: Expected: end of statement, found: ''oid_tid' (combi
+## unparsed humboldt:tests
+      2 sql parser error: Expected: an object type after CREATE, found: EVENT 
+      1 sql parser error: Expected: end of statement, found: WITH at Line: 1, 
+      1 sql parser error: Expected: =, found: WHERE at Line: 1, Column: 127
+## unparsed lightbulb:rust
+      1 sql parser error: Expected: end of statement, found: gpt2 at Line: 1, 

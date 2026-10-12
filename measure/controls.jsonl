@@ -1,0 +1,12 @@
+{"corpus":"control","expect":"exact","file":"ctl","line":1,"kind":"rust","sql":"SELECT id, name FROM users WHERE id = $1"}
+{"corpus":"control","expect":"exact","file":"ctl","line":2,"kind":"rust","sql":"DELETE FROM sessions WHERE session_id = $1"}
+{"corpus":"control","expect":"emulated","file":"ctl","line":3,"kind":"rust","sql":"SELECT DISTINCT ON (user_id) user_id, created_at FROM events ORDER BY user_id, created_at DESC"}
+{"corpus":"control","expect":"emulated","file":"ctl","line":4,"kind":"rust","sql":"INSERT INTO kv (k, v) VALUES ($1, $2) ON CONFLICT (k) DO UPDATE SET v = EXCLUDED.v"}
+{"corpus":"control","expect":"emulated","file":"ctl","line":5,"kind":"rust","sql":"UPDATE t SET a = 1 WHERE id = $1 RETURNING id"}
+{"corpus":"control","expect":"conditional","file":"ctl","line":6,"kind":"rust","sql":"SELECT * FROM users WHERE email ILIKE $1"}
+{"corpus":"control","expect":"refused","file":"ctl","line":7,"kind":"rust","sql":"SELECT id FROM jobs WHERE state = 'queued' ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED"}
+{"corpus":"control","expect":"refused","file":"ctl","line":8,"kind":"rust","sql":"SELECT pg_advisory_xact_lock(hashtext($1))"}
+{"corpus":"control","expect":"refused","file":"ctl","line":9,"kind":"rust","sql":"SELECT data->>'k' FROM docs WHERE data @> '{\"a\":1}'"}
+{"corpus":"control","expect":"refused","file":"ctl","line":10,"kind":"rust","sql":"CREATE TRIGGER t BEFORE UPDATE ON x FOR EACH ROW EXECUTE FUNCTION f()"}
+{"corpus":"control","expect":"refused","file":"ctl","line":11,"kind":"rust","sql":"SELECT * FROM t WHERE id = ANY($1)"}
+{"corpus":"control","expect":"unparsed","file":"ctl","line":12,"kind":"rust","sql":"SELEKT nonsense FROM"}

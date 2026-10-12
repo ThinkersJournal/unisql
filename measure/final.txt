@@ -1,0 +1,59 @@
+## DML
+  auth:other(src/migrations/mod.rs)                  n=   2 exact=2 emulated=0 conditional=0 unmapped=0 refused=0 unparsed=0
+  auth:postgres.rs                                   n=  19 exact=8 emulated=3 conditional=8 unmapped=0 refused=0 unparsed=0
+  auth:sqlite(auth-storage-sqlite/src/lib.rs)        n=  21 exact=18 emulated=3 conditional=0 unmapped=0 refused=0 unparsed=0
+  auth:sqlite(src/storage/sqlite.rs)                 n=  18 exact=15 emulated=3 conditional=0 unmapped=0 refused=0 unparsed=0
+  humboldt:src                                       n= 339 exact=213 emulated=28 conditional=34 unmapped=44 refused=20 unparsed=0
+  humboldt:tests                                     n= 970 exact=569 emulated=342 conditional=37 unmapped=20 refused=2 unparsed=0
+  lightbulb:rust                                     n=   8 exact=2 emulated=1 conditional=4 unmapped=1 refused=0 unparsed=0
+## DDL
+  auth:migrations(.sql)                              n=   4 exact=0 emulated=1 conditional=2 unmapped=1 refused=0 unparsed=0
+  auth:other(src/migrations/mod.rs)                  n=   6 exact=0 emulated=0 conditional=6 unmapped=0 refused=0 unparsed=0
+  auth:postgres.rs                                   n=   9 exact=0 emulated=6 conditional=3 unmapped=0 refused=0 unparsed=0
+  auth:sqlite(auth-storage-sqlite/src/lib.rs)        n=   6 exact=0 emulated=6 conditional=0 unmapped=0 refused=0 unparsed=0
+  auth:sqlite(src/storage/sqlite.rs)                 n=   6 exact=0 emulated=6 conditional=0 unmapped=0 refused=0 unparsed=0
+  humboldt:migrations(.sql)                          n=  24 exact=0 emulated=12 conditional=6 unmapped=1 refused=5 unparsed=0
+  humboldt:src                                       n=   6 exact=0 emulated=6 conditional=0 unmapped=0 refused=0 unparsed=0
+  humboldt:tests                                     n=  13 exact=0 emulated=13 conditional=0 unmapped=0 refused=0 unparsed=0
+  lightbulb:sql                                      n=   5 exact=0 emulated=2 conditional=3 unmapped=0 refused=0 unparsed=0
+## OTHER/UNPARSED
+  auth:migrations(.sql)                              n=   4 exact=0 emulated=0 conditional=0 unmapped=0 refused=4 unparsed=0
+  humboldt:migrations(.sql)                          n=   9 exact=0 emulated=0 conditional=0 unmapped=0 refused=8 unparsed=1
+  humboldt:src                                       n=  13 exact=6 emulated=0 conditional=0 unmapped=0 refused=7 unparsed=0
+  humboldt:tests                                     n=  10 exact=0 emulated=0 conditional=0 unmapped=1 refused=5 unparsed=4
+  lightbulb:rust                                     n=   6 exact=0 emulated=0 conditional=0 unmapped=0 refused=5 unparsed=1
+
+## unmapped function names (rule-table gaps), DML+DDL
+   19 current_schema (no mapping)
+   10 make_interval (no mapping)
+    7 md5 (no mapping)
+    7 current_date (no mapping)
+    3 to_regclass (no mapping)
+    3 convert_to (no mapping)
+    3 encode (no mapping)
+    3 sha256 (no mapping)
+    3 people_backfill (no mapping)
+    2 octet_length (no mapping)
+    2 forget_person (no mapping)
+    2 array (no mapping)
+    1 access_token (no mapping)
+    1 to_timestamp (no mapping)
+    1 uuid_send (no mapping)
+    1 current_user (no mapping)
+    1 regexp_replace (no mapping)
+    1 remove_sign_in_methods (no mapping)
+    1 clock_timestamp (no mapping)
+    1 setval (no mapping)
+    1 decode (no mapping)
+    1 current_database (no mapping)
+    1 split_part (no mapping)
+    1 CreateDatabase (no mapping)
+
+## refused-by-design reasons, DML statements only, distinct statements
+    6 fn:pg_advisory_xact_lock (advisory lock)
+    6 row lock (FOR UPDATE/SHARE)
+    5 = ANY/ALL (array operand)
+    2 fn:array_agg (array)
+    2 fn:pg_backend_pid (engine/JSON function)
+    1 fn:set_config (session setting)
+    1 ARRAY[..] literal

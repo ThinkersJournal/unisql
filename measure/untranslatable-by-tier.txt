@@ -1,0 +1,296 @@
+=== statements whose WORST tier is refused ===
+  statements: 124
+    21  fn:current_schema (no mapping)
+          humboldt:src backend/src/dbtools.rs:87 [dml]
+          humboldt:src backend/src/dbtools.rs:107 [dml]
+          humboldt:src backend/src/dbtools.rs:119 [dml]
+          humboldt:src backend/src/dbtools.rs:223 [dml]
+          humboldt:src backend/src/dbtools.rs:232 [dml]
+          humboldt:src backend/src/dbtools.rs:241 [dml]
+          ... +15 more
+    16  function/procedure
+          auth:migrations(.sql) src/migrations/001_create_users_table.sql:1 [other]
+          auth:migrations(.sql) src/migrations/003_create_sessions_table.sql:1 [other]
+          auth:migrations(.sql) src/migrations/005_create_mfa_table.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0010_dismissal_event_log.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0014_people.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0017_event_log_erasure.sql:1 [other]
+          ... +10 more
+    11  trigger
+          auth:migrations(.sql) src/migrations/001_create_users_table.sql:1 [other]
+          auth:migrations(.sql) src/migrations/002_create_roles_permissions.sql:1 [other]
+          auth:migrations(.sql) src/migrations/003_create_sessions_table.sql:1 [other]
+          auth:migrations(.sql) src/migrations/005_create_mfa_table.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0010_dismissal_event_log.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0014_people.sql:1 [other]
+          ... +5 more
+    10  fn:make_interval (no mapping)
+          humboldt:src backend/src/security.rs:57 [dml]
+          humboldt:src backend/src/security.rs:97 [dml]
+          humboldt:src backend/src/security.rs:108 [dml]
+          humboldt:src backend/src/security.rs:141 [dml]
+          humboldt:src backend/src/security.rs:173 [dml]
+          humboldt:src backend/src/security.rs:204 [dml]
+          ... +4 more
+     8  SHOW
+          lightbulb:rust src/engine/production_providers.rs:583 [other]
+          lightbulb:rust src/engine/production_providers.rs:594 [other]
+          lightbulb:rust src/engine/query_analysis.rs:819 [other]
+          lightbulb:rust tests/m4_integration.rs:290 [other]
+          lightbulb:rust tests/m5_integration_tests.rs:406 [other]
+          humboldt:src backend/src/dbtools.rs:72 [other]
+          ... +2 more
+     7  fn:md5 (no mapping)
+          humboldt:src backend/src/remove_accounts.rs:135 [dml]
+          humboldt:src backend/src/transfer.rs:378 [dml]
+          humboldt:tests backend/tests/db_remove_accounts.rs:47 [dml]
+          humboldt:tests backend/tests/db_remove_accounts.rs:63 [dml]
+          humboldt:tests backend/tests/db_remove_accounts.rs:86 [dml]
+          humboldt:tests backend/tests/db_remove_accounts.rs:105 [dml]
+          ... +1 more
+     7  fn:current_date (no mapping)
+          humboldt:tests backend/tests/bus_routes.rs:350 [dml]
+          humboldt:tests backend/tests/data_deletion.rs:84 [dml]
+          humboldt:tests backend/tests/data_deletion.rs:91 [dml]
+          humboldt:tests backend/tests/db_transfer.rs:47 [dml]
+          humboldt:tests backend/tests/db_transfer.rs:50 [dml]
+          humboldt:tests backend/tests/restrictions.rs:111 [dml]
+          ... +1 more
+     6  fn:pg_advisory_xact_lock (advisory lock)
+          humboldt:src backend/src/auth/session.rs:130 [dml]
+          humboldt:src backend/src/auth/session.rs:231 [dml]
+          humboldt:src backend/src/auth/session.rs:246 [dml]
+          humboldt:src backend/src/routes/email_auth.rs:306 [dml]
+          humboldt:src backend/src/routes/parent_auth.rs:143 [dml]
+          humboldt:src backend/src/security.rs:199 [dml]
+     6  row lock (FOR UPDATE/SHARE)
+          humboldt:src backend/src/remove_accounts.rs:154 [dml]
+          humboldt:src backend/src/routes/dismissal_events.rs:304 [dml]
+          humboldt:src backend/src/routes/dismissal_events.rs:451 [dml]
+          humboldt:src backend/src/routes/dismissal_events.rs:733 [dml]
+          humboldt:src backend/src/routes/dismissal_events.rs:848 [dml]
+          humboldt:src backend/src/routes/email_auth.rs:411 [dml]
+     5  DO block x1 (procedural)
+          humboldt:migrations(.sql) backend/migrations/0006_dismissal_zones_unique_name.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0008_bus_routes_unique_name.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0021_repoint_accounts_to_people.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0022_one_account_per_person.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0032_credential_id_unique.sql:1 [ddl]
+     5  = ANY/ALL (array operand)
+          humboldt:src backend/src/auth/mod.rs:113 [dml]
+          humboldt:src backend/src/remove_accounts.rs:154 [dml]
+          humboldt:src backend/src/routes/collectors.rs:41 [dml]
+          humboldt:src backend/src/routes/restrictions.rs:100 [dml]
+          humboldt:tests backend/tests/district_admin.rs:261 [dml]
+     4  fn:people_backfill (no mapping)
+          humboldt:migrations(.sql) backend/migrations/0014_people.sql:1 [other]
+          humboldt:tests backend/tests/people.rs:178 [dml]
+          humboldt:tests backend/tests/people.rs:180 [dml]
+          humboldt:tests backend/tests/people.rs:191 [dml]
+     3  fn:hashtextextended (no mapping)
+          humboldt:src backend/src/auth/session.rs:130 [dml]
+          humboldt:src backend/src/auth/session.rs:231 [dml]
+          humboldt:src backend/src/auth/session.rs:246 [dml]
+     3  fn:to_regclass (no mapping)
+          humboldt:src backend/src/dbtools.rs:73 [dml]
+          humboldt:src backend/src/transfer.rs:271 [dml]
+          humboldt:src backend/src/wipe.rs:72 [dml]
+     3  fn:convert_to (no mapping)
+          humboldt:src backend/src/routes/display.rs:45 [dml]
+          humboldt:src backend/src/routes/display.rs:81 [dml]
+          humboldt:src backend/src/routes/display.rs:121 [dml]
+     3  fn:encode (no mapping)
+          humboldt:src backend/src/routes/display.rs:45 [dml]
+          humboldt:src backend/src/routes/display.rs:81 [dml]
+          humboldt:src backend/src/routes/display.rs:121 [dml]
+     3  fn:sha256 (no mapping)
+          humboldt:src backend/src/routes/display.rs:45 [dml]
+          humboldt:src backend/src/routes/display.rs:81 [dml]
+          humboldt:src backend/src/routes/display.rs:121 [dml]
+     3  fn:hashtext (no mapping)
+          humboldt:src backend/src/routes/email_auth.rs:306 [dml]
+          humboldt:src backend/src/routes/parent_auth.rs:143 [dml]
+          humboldt:src backend/src/security.rs:199 [dml]
+     3  fn:current_database (no mapping)
+          humboldt:src backend/src/transfer.rs:583 [dml]
+          humboldt:src backend/src/wipe.rs:156 [dml]
+          humboldt:tests backend/tests/db_transfer.rs:70 [dml]
+     2  op:LongArrow (JSON/array/search operator)
+          auth:migrations(.sql) src/migrations/003_create_sessions_table.sql:1 [other]
+          humboldt:migrations(.sql) backend/migrations/0032_credential_id_unique.sql:1 [ddl]
+     2  fn:octet_length (no mapping)
+          humboldt:migrations(.sql) backend/migrations/0029_server_secrets.sql:1 [ddl]
+          humboldt:src backend/src/install.rs:469 [dml]
+     2  fn:forget_person (no mapping)
+          humboldt:src backend/src/remove_accounts.rs:193 [dml]
+          humboldt:src backend/src/routes/email_auth.rs:427 [dml]
+     2  fn:regexp_replace (no mapping)
+          humboldt:src backend/src/routes/collectors.rs:41 [dml]
+          humboldt:src backend/src/routes/collectors.rs:151 [dml]
+     2  fn:array (no mapping)
+          humboldt:src backend/src/routes/restrictions.rs:138 [dml]
+          humboldt:src backend/src/routes/restrictions.rs:169 [dml]
+     2  fn:array_agg (array)
+          humboldt:src backend/src/transfer.rs:284 [dml]
+          humboldt:src backend/src/transfer.rs:293 [dml]
+     2  COPY
+          humboldt:src backend/src/transfer.rs:392 [other]
+          humboldt:src backend/src/transfer.rs:403 [other]
+     2  fn:pg_backend_pid (engine/JSON function)
+          humboldt:src backend/src/transfer.rs:583 [dml]
+          humboldt:src backend/src/wipe.rs:156 [dml]
+     1  fn:access_token (no mapping)
+          auth:migrations(.sql) src/migrations/mysql/001_create_auth_tokens.sql:1 [ddl]
+     1  fn:to_timestamp (no mapping)
+          lightbulb:rust src/api/admin.rs:348 [dml]
+     1  fn:jsonb_typeof (engine/JSON function)
+          humboldt:migrations(.sql) backend/migrations/0011_students_placard_and_attributes.sql:1 [ddl]
+     1  fn:uuid_send (no mapping)
+          humboldt:migrations(.sql) backend/migrations/0029_server_secrets.sql:1 [ddl]
+     1  op:Arrow (JSON/array/search operator)
+          humboldt:migrations(.sql) backend/migrations/0032_credential_id_unique.sql:1 [ddl]
+     1  fn:current_user (no mapping)
+          humboldt:src backend/src/dbtools.rs:71 [dml]
+     1  fn:set_config (session setting)
+          humboldt:src backend/src/routes/data_deletion.rs:55 [dml]
+     1  fn:remove_sign_in_methods (no mapping)
+          humboldt:src backend/src/routes/email_auth.rs:353 [dml]
+     1  transaction isolation/access mode
+          humboldt:src backend/src/transfer.rs:564 [other]
+     1  fn:clock_timestamp (no mapping)
+          humboldt:src backend/src/transfer.rs:573 [dml]
+     1  fn:setval (no mapping)
+          humboldt:src backend/src/transfer.rs:816 [dml]
+     1  fn:decode (no mapping)
+          humboldt:tests backend/tests/db_remove_accounts.rs:47 [dml]
+     1  ARRAY[..] literal
+          humboldt:tests backend/tests/db_transfer.rs:59 [dml]
+     1  fn:split_part (no mapping)
+          humboldt:tests backend/tests/db_transfer.rs:73 [dml]
+     1  stmt:CreateDatabase (no mapping)
+          humboldt:tests backend/tests/db_transfer.rs:84 [other]
+
+=== statements whose WORST tier is conditional ===
+  statements: 103
+    88  fn:now -> CURRENT_TIMESTAMP (text, not timestamptz)
+          auth:migrations(.sql) src/migrations/004_create_audit_logs.sql:1 [ddl]
+          auth:other(src/migrations/mod.rs) src/migrations/mod.rs:48 [ddl]
+          auth:other(src/migrations/mod.rs) src/migrations/mod.rs:75 [ddl]
+          auth:other(src/migrations/mod.rs) src/migrations/mod.rs:93 [ddl]
+          auth:other(src/migrations/mod.rs) src/migrations/mod.rs:125 [ddl]
+          auth:other(src/migrations/mod.rs) src/migrations/mod.rs:145 [ddl]
+          ... +82 more
+    20  INTERVAL arithmetic
+          auth:migrations(.sql) src/migrations/004_create_audit_logs.sql:1 [ddl]
+          lightbulb:rust src/api/mod.rs:357 [dml]
+          humboldt:src backend/src/auth/oauth.rs:216 [dml]
+          humboldt:src backend/src/routes/email_auth.rs:395 [dml]
+          humboldt:src backend/src/routes/links.rs:118 [dml]
+          humboldt:src backend/src/routes/parent_auth.rs:218 [dml]
+          ... +14 more
+    10  || (NULL propagation differs)
+          humboldt:src backend/src/db.rs:17 [dml]
+          humboldt:src backend/src/roster_import.rs:200 [dml]
+          humboldt:src backend/src/roster_import.rs:245 [dml]
+          humboldt:src backend/src/security.rs:355 [dml]
+          humboldt:src backend/src/setup.rs:75 [dml]
+          humboldt:tests backend/tests/accounts_d2a.rs:15 [dml]
+          ... +4 more
+     5  ILIKE (collation/case rule)
+          humboldt:src backend/src/install.rs:556 [dml]
+          humboldt:src backend/src/routes/accounts.rs:290 [dml]
+          humboldt:src backend/src/routes/dismissal_events.rs:1134 [dml]
+          humboldt:src backend/src/routes/district.rs:317 [dml]
+          humboldt:src backend/src/setup.rs:75 [dml]
+     3  fn:date_trunc -> strftime composition
+          auth:migrations(.sql) src/migrations/004_create_audit_logs.sql:1 [ddl]
+          lightbulb:rust src/api/auth_middleware.rs:83 [dml]
+          lightbulb:rust src/api/auth_middleware.rs:304 [dml]
+     1  fn:current_timestamp -> text, not timestamptz
+          auth:migrations(.sql) src/migrations/mysql/003_create_sessions_table.sql:1 [ddl]
+
+=== statements whose WORST tier is emulated ===
+  statements: 432
+   341  RETURNING (needs SQLite >= 3.35)
+          humboldt:src backend/src/auth/mod.rs:87 [dml]
+          humboldt:src backend/src/auth/session.rs:33 [dml]
+          humboldt:src backend/src/bin/seed.rs:17 [dml]
+          humboldt:src backend/src/bin/seed.rs:146 [dml]
+          humboldt:src backend/src/bin/seed.rs:167 [dml]
+          humboldt:src backend/src/bin/seed.rs:181 [dml]
+          ... +335 more
+    24  ON CONFLICT upsert (WHERE form UNVERIFIED on SQLite)
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:81 [dml]
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:178 [dml]
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:249 [dml]
+          auth:postgres.rs src/storage/postgres.rs:150 [dml]
+          auth:postgres.rs src/storage/postgres.rs:294 [dml]
+          auth:postgres.rs src/storage/postgres.rs:376 [dml]
+          ... +18 more
+    19  DDL:AlterTable (per-engine migration, section 3.3)
+          humboldt:migrations(.sql) backend/migrations/0002_parent_users_password_email_verified.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0005_access_log_detail.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0007_staff_users_is_active.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0009_dismissal_events_arrival_confirmed.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0013_per_school_roles_and_district_admin.sql:1 [ddl]
+          humboldt:migrations(.sql) backend/migrations/0015_pickup_zones_need_a_location.sql:1 [ddl]
+          ... +13 more
+    16  DDL:CreateIndex (per-engine migration, section 3.3)
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:48 [ddl]
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:52 [ddl]
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:67 [ddl]
+          auth:postgres.rs src/storage/postgres.rs:72 [ddl]
+          auth:postgres.rs src/storage/postgres.rs:73 [ddl]
+          auth:postgres.rs src/storage/postgres.rs:74 [ddl]
+          ... +10 more
+    14  DDL:CreateTable (per-engine migration, section 3.3)
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:27 [ddl]
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:37 [ddl]
+          auth:sqlite(auth-storage-sqlite/src/lib.rs) auth-storage-sqlite/src/lib.rs:57 [ddl]
+          auth:migrations(.sql) src/migrations/mysql/006_create_kv_store.sql:1 [ddl]
+          auth:sqlite(src/storage/sqlite.rs) src/storage/sqlite.rs:26 [ddl]
+          auth:sqlite(src/storage/sqlite.rs) src/storage/sqlite.rs:37 [ddl]
+          ... +8 more
+    10  fn:gen_random_uuid -> randomblob-based expression
+          humboldt:migrations(.sql) backend/migrations/0012_staging_areas.sql:1 [ddl]
+          humboldt:src backend/src/auth/oauth.rs:254 [dml]
+          humboldt:tests backend/tests/accounts_d2a.rs:115 [dml]
+          humboldt:tests backend/tests/accounts_d2a.rs:116 [dml]
+          humboldt:tests backend/tests/accounts_d4.rs:150 [dml]
+          humboldt:tests backend/tests/accounts_d4.rs:515 [dml]
+          ... +4 more
+     8  cast (type names differ)
+          humboldt:src backend/src/routes/data_deletion.rs:89 [dml]
+          humboldt:src backend/src/routes/data_deletion.rs:130 [dml]
+          humboldt:src backend/src/routes/data_deletion.rs:145 [dml]
+          humboldt:tests backend/tests/collectors.rs:112 [dml]
+          humboldt:tests backend/tests/email_verification.rs:289 [dml]
+          humboldt:tests backend/tests/links.rs:135 [dml]
+          ... +2 more
+     5  DDL:Drop (per-engine migration, section 3.3)
+          humboldt:src backend/src/wipe.rs:367 [ddl]
+          humboldt:src backend/src/wipe.rs:370 [ddl]
+          humboldt:src backend/src/wipe.rs:380 [ddl]
+          humboldt:src backend/src/wipe.rs:399 [ddl]
+          humboldt:migrations(.sql) docs/rollback/0032_credential_id_unique.down.sql:1 [ddl]
+     2  DDL:CreateSchema (per-engine migration, section 3.3)
+          humboldt:tests backend/tests/db_wipe.rs:216 [ddl]
+          humboldt:tests backend/tests/db_wipe.rs:240 [ddl]
+     1  DDL:CreateView (per-engine migration, section 3.3)
+          humboldt:migrations(.sql) backend/migrations/0020_effective_parent_links.sql:1 [ddl]
+     1  DISTINCT ON -> window function
+          humboldt:src backend/src/routes/dismissal_events.rs:1049 [dml]
+
+=== statements whose WORST tier is unparsed ===
+  statements: 6
+     2  sql parser error: Expected: an object type after CREATE, found: EVENT at Line: 1
+          humboldt:tests backend/tests/db_wipe.rs:224 [unparsed]
+          humboldt:tests backend/tests/db_wipe.rs:248 [unparsed]
+     1  sql parser error: Expected: end of statement, found: gpt2 at Line: 1, Column: 40
+          lightbulb:rust tests/gguf_bpe_tokenizer_fidelity.rs:450 [unparsed]
+     1  sql parser error: Expected: end of statement, found: ''oid_tid' (combined "tpl_3
+          humboldt:migrations(.sql) backend/migrations/0004_oauth_identity_claim_type.sql:1 [unparsed]
+     1  sql parser error: Expected: end of statement, found: WITH at Line: 1, Column: 33
+          humboldt:tests backend/tests/db_transfer.rs:80 [unparsed]
+     1  sql parser error: Expected: =, found: WHERE at Line: 1, Column: 127
+          humboldt:tests backend/tests/restrictions.rs:202 [unparsed]
