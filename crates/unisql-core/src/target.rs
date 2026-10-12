@@ -35,7 +35,8 @@ impl<'a> Ctx<'a> {
             Tier::Refused => Err(self.refuse(&construct, &note, &[])),
             Tier::Conditional => {
                 let a = allowance.expect("a Conditional note must name its Allowance");
-                if !self.opts.allow.contains(&a) {
+                // Same dialect in and out is the identity: no assumption changes, so none is gated.
+                if self.source != self.target && !self.opts.allow.contains(&a) {
                     return Err(self.refuse(
                         &construct,
                         &format!("conditional: needs allowance `{}`: {}", a.name(), note),
@@ -65,6 +66,17 @@ impl<'a> Ctx<'a> {
 
 type R<T> = Result<T, Untranslatable>;
 
+/// The escape character of a `LIKE`, as the IR states it.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Escape<'a> {
+    /// No escape character at all (the SQLite default).
+    None,
+    /// A backslash (the PostgreSQL default).
+    Default,
+    /// An explicit printed expression.
+    Custom(&'a str),
+}
+
 /// What a target dialect supplies. Every method has a PostgreSQL default.
 pub trait Target {
     fn name(&self) -> &'static str;
@@ -87,20 +99,51 @@ pub trait Target {
     }
 
     /// `lhs [NOT] LIKE rhs` / `ILIKE`, operands already printed.
-    fn like(&self, lhs: &str, rhs: &str, negated: bool, ci: bool, ctx: &mut Ctx) -> R<String> {
+    fn like(
+        &self,
+        lhs: &str,
+        rhs: &str,
+        negated: bool,
+        ci: bool,
+        esc: Escape<'_>,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         let kw = if ci { "ILIKE" } else { "LIKE" };
         ctx.note(if ci { "ilike" } else { "like" }, Tier::Exact, "", None)?;
-        Ok(format!("{lhs} {}{kw} {rhs}", if negated { "NOT " } else { "" }))
+        let tail = match esc {
+            Escape::Default => String::new(), // PostgreSQL's default escape is a backslash
+            Escape::None => " ESCAPE ''".to_string(),
+            Escape::Custom(c) => format!(" ESCAPE {c}"),
+        };
+        Ok(format!("{lhs} {}{kw} {rhs}{tail}", if negated { "NOT " } else { "" }))
     }
 
     /// A function call with arguments already printed. Return the full call text.
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
+        // Same dialect in and out is the identity: the reader accepted the name. Otherwise the name
+        // must be on this target's verified list; a foreign function name is never passed through.
+        if ctx.source != self.name() && !PORTABLE_FUNCTIONS.contains(&f.name.as_str()) {
+            return Err(ctx.refuse(
+                &format!("fn:{}", f.name),
+                "no verified mapping for this function on this target yet",
+                &[],
+            ));
+        }
         ctx.note(format!("fn:{}", f.name), Tier::Exact, "", None)?;
         Ok(generic_call(&f.name, args, f.distinct, f.star))
     }
 
     fn cast(&self, expr: &str, ty: &SqlType, ctx: &mut Ctx) -> R<String> {
-        ctx.note("cast", Tier::Exact, "", None)?;
+        if ctx.source == "sqlite" {
+            ctx.note(
+                "cast",
+                Tier::Conditional,
+                "the source casts leniently (a malformed value becomes 0); PostgreSQL raises an error",
+                Some(Allowance::LenientCast),
+            )?;
+        } else {
+            ctx.note("cast", Tier::Exact, "", None)?;
+        }
         Ok(format!("CAST({expr} AS {})", pg_type_name(ty)))
     }
 
@@ -218,6 +261,13 @@ pub trait Target {
         }
     }
 }
+
+/// Functions with the same name and meaning on every dialect UniSQL targets so far.
+pub const PORTABLE_FUNCTIONS: &[&str] = &[
+    "count", "sum", "min", "max", "avg", "coalesce", "nullif", "abs", "lower", "upper", "length",
+    "replace", "substr", "row_number", "rank", "dense_rank", "percent_rank", "cume_dist", "ntile",
+    "lag", "lead", "first_value", "last_value", "nth_value",
+];
 
 pub fn generic_call(name: &str, args: &[String], distinct: bool, star: bool) -> String {
     if star {

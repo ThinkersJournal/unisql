@@ -164,8 +164,8 @@ PASS trim_leading                 same
        -> SELECT ltrim('xxhixx', 'x')
 PASS trim_trailing                same
        -> SELECT rtrim('xxhixx', 'x')
-PASS gap_trim_leading_from        parser gap (PostgreSQL accepts it): sql parser error: Expected: ), found: '  hi' at Line: 1, Column: 26
-PASS gap_trim_trailing_from       parser gap (PostgreSQL accepts it): sql parser error: Expected: ), found: 'hi  ' at Line: 1, Column: 27
+PASS gap_trim_leading_from        parser gap (the engine accepts it): sql parser error: Expected: ), found: '  hi' at Line: 1, Column: 26
+PASS gap_trim_trailing_from       parser gap (the engine accepts it): sql parser error: Expected: ), found: 'hi  ' at Line: 1, Column: 27
 PASS json_get_text                same
        -> SELECT "id", CAST("data" ->> 'a' AS TEXT) FROM "docs" ORDER BY "id" NULLS LAST
 PASS json_get_text_number         same

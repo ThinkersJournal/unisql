@@ -182,3 +182,20 @@ pub struct Translation {
     pub param_order: Vec<u32>,
     pub report: Report,
 }
+
+/// An assumption the *source* text carries that the target must honour or refuse: for example a
+/// SQLite `LIKE` is case-insensitive only while a connection setting is at its default. Recorded by
+/// the reader and checked against [`Options`] like any Conditional construct.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ReadNote {
+    pub construct: String,
+    pub note: String,
+    pub allowance: Allowance,
+}
+
+/// A successful read.
+#[derive(Clone, Debug, PartialEq)]
+pub struct Read {
+    pub stmt: crate::ast::Statement,
+    pub notes: Vec<ReadNote>,
+}

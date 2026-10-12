@@ -180,7 +180,15 @@ pub enum Expr {
     InList { expr: Box<Expr>, list: Vec<Expr>, negated: bool },
     InSubquery { expr: Box<Expr>, query: Box<Query>, negated: bool },
     Between { expr: Box<Expr>, low: Box<Expr>, high: Box<Expr>, negated: bool },
-    Like { expr: Box<Expr>, pattern: Box<Expr>, negated: bool, case_insensitive: bool },
+    /// `escape`: `None` = no escape character; `Some(literal "\\")` = the PostgreSQL default,
+    /// which a reader makes explicit so no engine's default leaks through the IR.
+    Like {
+        expr: Box<Expr>,
+        pattern: Box<Expr>,
+        negated: bool,
+        case_insensitive: bool,
+        escape: Option<Box<Expr>>,
+    },
     Case { operand: Option<Box<Expr>>, branches: Vec<(Expr, Expr)>, else_: Option<Box<Expr>> },
     Cast { expr: Box<Expr>, ty: SqlType },
     Function(Function),

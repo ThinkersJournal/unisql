@@ -1,15 +1,109 @@
-//! PostgreSQL reader: text -> IR, through `sqlparser` (an adapter; no parser type escapes this
-//! module). **Anything the IR cannot represent is `ReadError::NotInIr`, never a pass-through.**
+//! sqlparser adapter: text -> IR for the dialects that sqlparser can parse. The per-dialect
+//! differences are the [`Rules`]; no parser type escapes this crate. **Anything the IR cannot represent is `ReadError::NotInIr`, never a pass-through.**
 //!
 //! `Query`, `Select`, `Insert`, `Update` and `Delete` are destructured with every field named and no
 //! `..`: a sqlparser upgrade that adds a field fails the build here, forcing a decision rather than
 //! silently dropping a construct.
 
+use std::cell::RefCell;
+
 use sqlparser::ast as sp;
-use sqlparser::dialect::PostgreSqlDialect;
+use sqlparser::dialect::Dialect;
 use sqlparser::parser::Parser;
 use unisql_core::ast::*;
-use unisql_core::ReadError;
+use unisql_core::{Allowance, Read, ReadError, ReadNote};
+
+/// What differs between source dialects at the AST-to-IR step.
+pub struct Rules {
+    pub name: &'static str,
+    pub dialect: fn() -> Box<dyn Dialect>,
+    /// Quoted identifiers are case-insensitive too (SQLite): fold everything to lower case.
+    pub fold_quoted: bool,
+    /// `NULL` sorts as the smallest value (SQLite) rather than the largest (PostgreSQL).
+    pub nulls_smallest: bool,
+    /// Parameters: `$n` (PostgreSQL) or `?`, `?n`, `:name`, `@name`, `$name` (SQLite).
+    pub question_placeholders: bool,
+    /// `LIKE` is case-insensitive by default (SQLite, ASCII only).
+    pub like_ci_default: bool,
+    /// `LIKE` has a default escape character (PostgreSQL: backslash); otherwise none.
+    pub like_default_escape: bool,
+    /// A negative `LIMIT` means no limit (SQLite).
+    pub negative_limit_unlimited: bool,
+}
+
+pub static POSTGRES: Rules = Rules {
+    name: "postgres",
+    dialect: || Box::new(sqlparser::dialect::PostgreSqlDialect {}),
+    fold_quoted: false,
+    nulls_smallest: false,
+    question_placeholders: false,
+    like_ci_default: false,
+    like_default_escape: true,
+    negative_limit_unlimited: false,
+};
+
+pub static SQLITE: Rules = Rules {
+    name: "sqlite",
+    dialect: || Box::new(sqlparser::dialect::SQLiteDialect {}),
+    fold_quoted: true,
+    nulls_smallest: true,
+    question_placeholders: true,
+    like_ci_default: true,
+    like_default_escape: false,
+    negative_limit_unlimited: true,
+};
+
+struct Cx {
+    rules: &'static Rules,
+    max_param: u32,
+    names: Vec<(String, u32)>,
+    notes: Vec<ReadNote>,
+}
+
+thread_local! {
+    static CX: RefCell<Option<Cx>> = const { RefCell::new(None) };
+}
+
+fn rules() -> &'static Rules {
+    CX.with(|c| c.borrow().as_ref().expect("reader context").rules)
+}
+
+fn add_note(construct: &str, note: &str, allowance: Allowance) {
+    CX.with(|c| {
+        let mut b = c.borrow_mut();
+        let cx = b.as_mut().expect("reader context");
+        let n = ReadNote { construct: construct.into(), note: note.into(), allowance };
+        if !cx.notes.contains(&n) {
+            cx.notes.push(n);
+        }
+    });
+}
+
+fn bump_param(explicit: Option<u32>, name: Option<&str>) -> u32 {
+    CX.with(|c| {
+        let mut b = c.borrow_mut();
+        let cx = b.as_mut().expect("reader context");
+        match (explicit, name) {
+            (Some(n), _) => {
+                cx.max_param = cx.max_param.max(n);
+                n
+            }
+            (None, Some(nm)) => {
+                if let Some((_, n)) = cx.names.iter().find(|(k, _)| k == nm) {
+                    return *n;
+                }
+                cx.max_param += 1;
+                let n = cx.max_param;
+                cx.names.push((nm.to_string(), n));
+                n
+            }
+            (None, None) => {
+                cx.max_param += 1;
+                cx.max_param
+            }
+        }
+    })
+}
 
 type R<T> = Result<T, ReadError>;
 
@@ -17,14 +111,19 @@ fn no<T>(construct: &str, detail: &str) -> R<T> {
     Err(ReadError::NotInIr { construct: construct.to_string(), detail: detail.to_string() })
 }
 
-/// Read exactly one PostgreSQL statement.
-pub fn read(sql: &str) -> R<Statement> {
-    let mut stmts =
-        Parser::parse_sql(&PostgreSqlDialect {}, sql).map_err(|e| ReadError::Syntax(e.to_string()))?;
-    if stmts.len() != 1 {
-        return no("multiple_statements", &format!("expected one statement, found {}", stmts.len()));
-    }
-    statement(stmts.remove(0))
+/// Read exactly one statement written in the dialect described by `rules`.
+pub fn read(sql: &str, rules: &'static Rules) -> R<Read> {
+    CX.with(|c| *c.borrow_mut() = Some(Cx { rules, max_param: 0, names: vec![], notes: vec![] }));
+    let out = (|| {
+        let d = (rules.dialect)();
+        let mut stmts = Parser::parse_sql(d.as_ref(), sql).map_err(|e| ReadError::Syntax(e.to_string()))?;
+        if stmts.len() != 1 {
+            return no("multiple_statements", &format!("expected one statement, found {}", stmts.len()));
+        }
+        statement(stmts.remove(0))
+    })();
+    let cx = CX.with(|c| c.borrow_mut().take()).expect("reader context");
+    out.map(|stmt| Read { stmt, notes: cx.notes })
 }
 
 fn statement(s: sp::Statement) -> R<Statement> {
@@ -42,9 +141,10 @@ fn head(x: &impl std::fmt::Debug) -> String {
     s.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string()
 }
 
-/// PostgreSQL case folding: unquoted identifiers fold to lower case; quoted ones are exact.
+/// Identifier folding: unquoted identifiers fold to lower case; quoted ones are exact, except where
+/// the dialect treats quoted names case-insensitively too (SQLite).
 fn ident(i: &sp::Ident) -> String {
-    if i.quote_style.is_some() { i.value.clone() } else { i.value.to_lowercase() }
+    if i.quote_style.is_some() && !rules().fold_quoted { i.value.clone() } else { i.value.to_lowercase() }
 }
 
 fn object_name(n: &sp::ObjectName) -> R<Name> {
@@ -150,6 +250,14 @@ fn query(q: sp::Query) -> R<Query> {
                 return no("limit_by", "LIMIT .. BY");
             }
             limit = l.map(expr).transpose()?;
+            if rules().negative_limit_unlimited {
+                // SQLite: a negative LIMIT means "no limit".
+                let neg = matches!(&limit, Some(Expr::Unary { op: UnaryOp::Minus, expr })
+                    if matches!(**expr, Expr::Literal(Literal::Number(_))));
+                if neg {
+                    limit = None;
+                }
+            }
             if let Some(o) = o {
                 let sp::Offset { value, rows } = o;
                 if !matches!(rows, sp::OffsetRows::None) {
@@ -171,8 +279,10 @@ fn order_item(o: sp::OrderByExpr) -> R<OrderItem> {
         return no("order_by_with_fill", "WITH FILL");
     }
     let desc = matches!(options.sort, Some(sp::OrderBySort::Desc));
-    // PostgreSQL default: NULLs are the largest value. Made explicit so any target preserves it.
-    let nulls_first = options.nulls_first.unwrap_or(desc);
+    // The source's default NULL placement, made explicit so any target preserves it: NULL is the
+    // largest value on PostgreSQL (first when descending) and the smallest on SQLite (first ascending).
+    let default_first = if rules().nulls_smallest { !desc } else { desc };
+    let nulls_first = options.nulls_first.unwrap_or(default_first);
     Ok(OrderItem { expr: expr(e)?, desc, nulls_first: Some(nulls_first) })
 }
 
@@ -658,16 +768,24 @@ fn expr(e: sp::Expr) -> R<Expr> {
             negated,
         },
         E::Like { negated, any, expr: x, pattern, escape_char } => {
-            if any || escape_char.is_some() {
-                return no("like_option", "LIKE ANY / ESCAPE");
+            if any {
+                return no("like_option", "LIKE ANY");
             }
-            Expr::Like { expr: boxed(*x)?, pattern: boxed(*pattern)?, negated, case_insensitive: false }
+            let ci = rules().like_ci_default;
+            if ci {
+                add_note(
+                    "like",
+                    "the source LIKE is ASCII case-insensitive only while its connection setting is at the default",
+                    Allowance::LikeCaseSensitivityIsConnectionSetting,
+                );
+            }
+            like_expr(*x, *pattern, escape_char, negated, ci)?
         }
         E::ILike { negated, any, expr: x, pattern, escape_char } => {
-            if any || escape_char.is_some() {
-                return no("like_option", "ILIKE ANY / ESCAPE");
+            if any {
+                return no("like_option", "ILIKE ANY");
             }
-            Expr::Like { expr: boxed(*x)?, pattern: boxed(*pattern)?, negated, case_insensitive: true }
+            like_expr(*x, *pattern, escape_char, negated, true)?
         }
         E::UnaryOp { op, expr: x } => {
             let op = match op {
@@ -742,6 +860,21 @@ fn expr(e: sp::Expr) -> R<Expr> {
     })
 }
 
+fn like_expr(
+    x: sp::Expr,
+    pattern: sp::Expr,
+    escape_char: Option<Box<sp::Expr>>,
+    negated: bool,
+    case_insensitive: bool,
+) -> R<Expr> {
+    let escape = match escape_char {
+        Some(e) => Some(boxed(*e)?),
+        None if rules().like_default_escape => Some(Box::new(Expr::Literal(Literal::String("\\".into())))),
+        None => None,
+    };
+    Ok(Expr::Like { expr: boxed(x)?, pattern: boxed(pattern)?, negated, case_insensitive, escape })
+}
+
 fn value(v: sp::Value) -> R<Expr> {
     Ok(match v {
         sp::Value::Number(n, long) => {
@@ -754,15 +887,29 @@ fn value(v: sp::Value) -> R<Expr> {
         sp::Value::Boolean(b) => Expr::Literal(Literal::Bool(b)),
         sp::Value::Null => Expr::Literal(Literal::Null),
         sp::Value::Placeholder(p) => {
-            let n = p
-                .strip_prefix('$')
-                .and_then(|d| d.parse::<u32>().ok())
-                .filter(|n| *n >= 1)
-                .ok_or_else(|| ReadError::NotInIr {
-                    construct: "placeholder".into(),
-                    detail: format!("`{p}`: only $1, $2, .. are PostgreSQL placeholders"),
-                })?;
-            Expr::Param(n)
+            let bad = || ReadError::NotInIr {
+                construct: "placeholder".into(),
+                detail: format!("`{p}` is not a placeholder form of dialect `{}`", rules().name),
+            };
+            if rules().question_placeholders {
+                if p == "?" {
+                    Expr::Param(bump_param(None, None))
+                } else if let Some(d) = p.strip_prefix('?') {
+                    let n = d.parse::<u32>().ok().filter(|n| *n >= 1).ok_or_else(bad)?;
+                    Expr::Param(bump_param(Some(n), None))
+                } else if let Some(nm) = p.strip_prefix([':', '@', '$']) {
+                    Expr::Param(bump_param(None, Some(nm)))
+                } else {
+                    return Err(bad());
+                }
+            } else {
+                let n = p
+                    .strip_prefix('$')
+                    .and_then(|d| d.parse::<u32>().ok())
+                    .filter(|n| *n >= 1)
+                    .ok_or_else(bad)?;
+                Expr::Param(n)
+            }
         }
         other => return no("literal", &head(&other)),
     })
@@ -803,6 +950,13 @@ fn function(f: sp::Function) -> R<Expr> {
         // `CURRENT_TIMESTAMP` is a function without parentheses.
         sp::FunctionArguments::None => {
             if base == "current_timestamp" {
+                if rules().name == "sqlite" {
+                    add_note(
+                        "fn:now",
+                        "the source CURRENT_TIMESTAMP is text 'YYYY-MM-DD HH:MM:SS' (UTC), not a timestamptz",
+                        Allowance::NowAsText,
+                    );
+                }
                 return Ok(Expr::Function(Function {
                     name: "now".to_string(),
                     args: vec![],
@@ -846,8 +1000,21 @@ fn function(f: sp::Function) -> R<Expr> {
         }
     }
     let mut name = base;
+    let mut out = out;
     if name == "current_timestamp" {
         name = "now".to_string();
+    }
+    if rules().name == "sqlite" {
+        match name.as_str() {
+            "ifnull" => name = "coalesce".to_string(),
+            "group_concat" => {
+                name = "string_agg".to_string();
+                if out.len() == 1 {
+                    out.push(FunctionArg::Expr(Expr::Literal(Literal::String(",".into()))));
+                }
+            }
+            _ => {}
+        }
     }
     Ok(Expr::Function(Function { name, args: out, distinct, star, filter, over }))
 }

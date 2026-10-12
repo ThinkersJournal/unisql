@@ -890,8 +890,8 @@ version = "0.0.1"
 name = "unisql-dialect-postgres"
 version = "0.0.1"
 dependencies = [
- "sqlparser",
  "unisql-core",
+ "unisql-sqlparser-adapter",
 ]
 
 [[package]]
@@ -899,6 +899,7 @@ name = "unisql-dialect-sqlite"
 version = "0.0.1"
 dependencies = [
  "unisql-core",
+ "unisql-sqlparser-adapter",
 ]
 
 [[package]]
@@ -909,6 +910,14 @@ dependencies = [
  "rusqlite",
  "serde_json",
  "unisql",
+]
+
+[[package]]
+name = "unisql-sqlparser-adapter"
+version = "0.0.1"
+dependencies = [
+ "sqlparser",
+ "unisql-core",
 ]
 
 [[package]]

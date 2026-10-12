@@ -2,7 +2,7 @@
 
 use crate::ast::*;
 use crate::report::{Options, Translation, Untranslatable};
-use crate::target::{Ctx, Target};
+use crate::target::{Ctx, Escape, Target};
 
 type R<T> = Result<T, Untranslatable>;
 
@@ -452,10 +452,20 @@ impl Printer<'_> {
                 self.operand(high, c)?
                 )
             }
-            Expr::Like { expr, pattern, negated, case_insensitive } => {
+            Expr::Like { expr, pattern, negated, case_insensitive, escape } => {
                 let l = self.operand(expr, c)?;
                 let r = self.operand(pattern, c)?;
-                self.t.like(&l, &r, *negated, *case_insensitive, c)?
+                let esc_txt = match escape {
+                    Some(e) if !is_backslash(e) => Some(self.expr(e, c)?),
+                    _ => None,
+                };
+                let esc = match (escape, &esc_txt) {
+                    (None, _) => Escape::None,
+                    (Some(e), _) if is_backslash(e) => Escape::Default,
+                    (Some(_), Some(t)) => Escape::Custom(t),
+                    (Some(_), None) => Escape::None,
+                };
+                self.t.like(&l, &r, *negated, *case_insensitive, esc, c)?
             }
             Expr::Case { operand, branches, else_ } => {
                 let mut s = String::from("CASE");
@@ -530,4 +540,8 @@ fn is_numeric(e: &Expr) -> bool {
         ),
         _ => false,
     }
+}
+
+fn is_backslash(e: &Expr) -> bool {
+    matches!(e, Expr::Literal(Literal::String(s)) if s == "\\")
 }

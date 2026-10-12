@@ -3,6 +3,7 @@ resolver = "3"
 members = [
     "crates/unisql",
     "crates/unisql-core",
+    "crates/unisql-sqlparser-adapter",
     "crates/unisql-dialect-postgres",
     "crates/unisql-dialect-sqlite",
     "crates/unisql-differential",
@@ -21,5 +22,6 @@ rust-version = "1.94"
 [workspace.dependencies]
 unisql = { path = "crates/unisql", version = "0.0.1" }
 unisql-core = { path = "crates/unisql-core", version = "0.0.1" }
+unisql-sqlparser-adapter = { path = "crates/unisql-sqlparser-adapter", version = "0.0.1" }
 unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.0.1" }
 unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.0.1" }

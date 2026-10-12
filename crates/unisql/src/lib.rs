@@ -51,10 +51,10 @@ pub fn dialects() -> &'static [&'static str] {
     &["postgres", "sqlite"]
 }
 
-fn read(sql: &str, source: &str) -> Result<ast::Statement, Error> {
+fn read(sql: &str, source: &str) -> Result<unisql_core::Read, Error> {
     match source {
         "postgres" => unisql_dialect_postgres::read(sql).map_err(Error::Read),
-        "sqlite" => Err(Error::NoReader(source.to_string())),
+        "sqlite" => unisql_dialect_sqlite::read(sql).map_err(Error::Read),
         other => Err(Error::UnknownDialect(other.to_string())),
     }
 }
@@ -70,8 +70,29 @@ fn target(name: &str) -> Result<Box<dyn Target>, Error> {
 /// Translate one statement from `source` to `target`.
 pub fn translate(sql: &str, source: &str, target_dialect: &str, opts: &Options) -> Result<Translation, Error> {
     let tgt = target(target_dialect)?;
-    let stmt = read(sql, source)?;
-    unisql_core::write(&stmt, source, tgt.as_ref(), opts).map_err(Error::Untranslatable)
+    let read = read(sql, source)?;
+    // Assumptions the source text itself carries go through the same gate as target-side ones.
+    for n in &read.notes {
+        if source != target_dialect && !opts.allow.contains(&n.allowance) {
+            return Err(Error::Untranslatable(Untranslatable {
+                construct: n.construct.clone(),
+                source: source.to_string(),
+                target: target_dialect.to_string(),
+                reason: format!("conditional: needs allowance `{}`: {}", n.allowance.name(), n.note),
+                alternatives: vec![],
+            }));
+        }
+    }
+    let mut t = unisql_core::write(&read.stmt, source, tgt.as_ref(), opts).map_err(Error::Untranslatable)?;
+    for n in read.notes {
+        t.report.push(Entry {
+            construct: n.construct,
+            tier: Tier::Conditional,
+            note: n.note,
+            allowance: Some(n.allowance),
+        });
+    }
+    Ok(t)
 }
 
 /// Like [`translate`], returning only the text. Still errors on refusal.

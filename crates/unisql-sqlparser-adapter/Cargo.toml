@@ -1,0 +1,12 @@
+[package]
+name = "unisql-sqlparser-adapter"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+description = "Internal: sqlparser AST -> UniSQL IR, parameterised by per-dialect Rules. Replaceable."
+
+[dependencies]
+unisql-core.workspace = true
+sqlparser = "0.63"

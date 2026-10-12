@@ -1,0 +1,129 @@
+sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=52
+PASS ph_question                  same
+       -> SELECT "id", "name" FROM "users" WHERE "id" = $1
+PASS ph_numbered_reorder          same
+       -> SELECT "id" FROM "users" WHERE (("id" = $2) OR ("id" = $1)) OR ("id" = $2)
+PASS ph_named                     same
+       -> SELECT "id" FROM "users" WHERE (("id" = $1) OR ("id" = $2)) OR ("id" = $1)
+PASS ph_mixed_anon                same
+       -> SELECT "id" FROM "users" WHERE ("age" > $1) AND ("city" = $2)
+PASS select_where                 same
+       -> SELECT "id" FROM "users" WHERE ("city" = 'Oslo') AND ("active" = 1)
+PASS is_null                      same
+       -> SELECT "id" FROM "users" WHERE ("age" IS NULL) OR ("city" IS NULL)
+PASS in_between                   same
+       -> SELECT "id" FROM "users" WHERE ("id" IN (1, 3, 5)) AND ("age" BETWEEN 25 AND 41)
+PASS arith_case                   same
+       -> SELECT "id", ("age" * 2) + 1, CASE WHEN "age" >= 40 THEN 'senior' ELSE 'adult' END FROM "users" WHERE "age" IS NOT NULL
+PASS aggregates                   same
+       -> SELECT COUNT(*), SUM("amount"), MIN("amount"), MAX("amount") FROM "orders"
+PASS group_having                 same
+       -> SELECT "user_id", COUNT(*), SUM("amount") FROM "orders" GROUP BY "user_id" HAVING SUM("amount") > 100
+PASS join                         same
+       -> SELECT "u"."name", "o"."amount" FROM "users" AS "u" INNER JOIN "orders" AS "o" ON "o"."user_id" = "u"."id" WHERE "o"."status" = 'paid'
+PASS left_join                    same
+       -> SELECT "u"."id", "o"."id" FROM "users" AS "u" LEFT JOIN "orders" AS "o" ON "o"."user_id" = "u"."id"
+PASS subquery_in                  same
+       -> SELECT "name" FROM "users" WHERE "id" IN (SELECT "user_id" FROM "orders" WHERE "amount" > 100)
+PASS cte                          same
+       -> WITH "big" AS (SELECT "user_id", SUM("amount") AS "t" FROM "orders" GROUP BY "user_id") SELECT "u"."name", "big"."t" FROM "users" AS "u" INNER JOIN "big" ON "big"."user_id" = "u"."id"
+PASS with_recursive               same
+       -> WITH RECURSIVE "t" ("n") AS (SELECT 1 UNION ALL SELECT "n" + 1 FROM "t" WHERE "n" < 5) SELECT "n" FROM "t" ORDER BY "n" NULLS FIRST
+PASS window_rank                  same
+       -> SELECT "id", RANK() OVER (PARTITION BY "city" ORDER BY "age" NULLS FIRST) FROM "users" ORDER BY "id" NULLS FIRST
+PASS agg_filter                   same
+       -> SELECT COUNT(*) FILTER (WHERE "status" = 'paid'), COUNT(*) FROM "orders"
+PASS set_ops                      same
+       -> SELECT "id" FROM "users" EXCEPT SELECT "user_id" FROM "orders"
+PASS nulls_asc_default            same
+       -> SELECT "id", "age" FROM "users" ORDER BY "age" NULLS FIRST, "id" NULLS FIRST
+PASS nulls_desc_default           same
+       -> SELECT "id", "age" FROM "users" ORDER BY "age" DESC NULLS LAST, "id" NULLS FIRST
+PASS nulls_explicit_last          same
+       -> SELECT "id", "age" FROM "users" ORDER BY "age", "id" NULLS FIRST
+PASS limit_minus_one_offset       same
+       -> SELECT "id" FROM "users" ORDER BY "id" NULLS FIRST OFFSET 4
+PASS limit_offset                 same
+       -> SELECT "id" FROM "users" ORDER BY "id" NULLS FIRST LIMIT 2 OFFSET 1
+PASS like_ci_default              same
+       -> SELECT "name" FROM "users" WHERE "name" ILIKE 'BOB' ESCAPE ''
+PASS like_prefix_ci               same
+       -> SELECT "name" FROM "users" WHERE "name" ILIKE 'A%' ESCAPE ''
+PASS like_no_escape_backslash     same
+       -> SELECT "name" FROM "users" WHERE "name" ILIKE 'frank\%' ESCAPE ''
+PASS like_custom_escape           same
+       -> SELECT "name" FROM "users" WHERE "name" ILIKE 'Eve!_X' ESCAPE '!'
+PASS not_like                     same
+       -> SELECT "id" FROM "users" WHERE "name" NOT ILIKE '%A%' ESCAPE ''
+PASS ifnull_coalesce              same
+       -> SELECT "id", COALESCE("city", 'none') FROM "users"
+PASS group_concat_sep             same
+       -> SELECT STRING_AGG("name", ',') FROM "users" WHERE "id" = 1
+PASS group_concat_default         same
+       -> SELECT STRING_AGG("name", ',') FROM "users" WHERE "id" = 1
+PASS string_funcs                 same
+       -> SELECT LENGTH("name"), REPLACE("name", 'a', 'A'), TRIM('  x '), LTRIM('  x'), LOWER("name"), UPPER("name") FROM "users"
+PASS current_timestamp            same
+       -> SELECT "id" FROM "users" WHERE (NOW() IS NOT NULL) AND ("id" = 1)
+PASS int_division                 same
+       -> SELECT 7 / 2, (-7) / 2, 7 % 3, (-7) % 3 FROM "users" WHERE "id" = 1
+PASS cast_ok                      same
+       -> SELECT CAST("id" AS TEXT), CAST('12' AS INTEGER) FROM "users" WHERE "id" = 1
+PASS insert_values                same
+       -> INSERT INTO "users" ("id", "name", "active") VALUES ($1, $2, 1)
+PASS insert_returning             same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('d', 'w', 9) RETURNING "key", "n"
+PASS upsert                       same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ($1, $2, $3) ON CONFLICT ("key") DO UPDATE SET "value" = "excluded"."value", "n" = "excluded"."n"
+PASS upsert_do_nothing            same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'x', 0) ON CONFLICT ("key") DO NOTHING
+PASS update_returning             same
+       -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo' RETURNING "id", "age"
+PASS delete_where                 same
+       -> DELETE FROM "orders" WHERE "amount" < 100
+PASS gate_like_source             refused without allowance: conditional: needs allowance `like_case_sensitivity_is_connection_setting`: the source LIKE is ASCII case-insensitive only while its connection setting is at the default
+PASS gate_current_timestamp       refused without allowance: conditional: needs allowance `now_as_text`: the source CURRENT_TIMESTAMP is text 'YYYY-MM-DD HH:MM:SS' (UTC), not a timestamptz
+PASS gate_division                refused without allowance: conditional: needs allowance `division_by_zero_is_null`: the source yields NULL on a zero divisor; PostgreSQL raises an error
+PASS diverge_division_by_zero     diverges: sqlite returns [[Null]]; postgres errors (query: db error)
+       -> SELECT 1 / 0
+PASS diverge_bad_cast             diverges: sqlite returns [[Int(0)]]; postgres errors (prepare: db error)
+       -> SELECT CAST('abc' AS INTEGER)
+PASS refuse_random                refused `fn:random`: no verified mapping for this function on PostgreSQL yet
+PASS refuse_typeof                refused `fn:typeof`: no verified mapping for this function on PostgreSQL yet
+PASS refuse_strftime              refused `fn:strftime`: no verified mapping for this function on PostgreSQL yet
+PASS refuse_instr                 refused `fn:instr`: no verified mapping for this function on PostgreSQL yet
+PASS ir_insert_or_replace         not in IR `insert_option`: an INSERT form other than INSERT INTO t [(cols)] VALUES|query
+PASS ir_glob                      not in IR `binary_operator`: Glob (JSON/array/regex/bitwise operators are not in the IR)
+
+MATRIX (construct, tier) from 43 passing translated cases:
+  cast                         conditional
+  division                     conditional
+  filter_clause                exact
+  fn:coalesce                  exact
+  fn:count                     exact
+  fn:length                    exact
+  fn:lower                     exact
+  fn:ltrim                     exact
+  fn:max                       exact
+  fn:min                       exact
+  fn:now                       conditional
+  fn:now                       exact
+  fn:rank                      exact
+  fn:replace                   exact
+  fn:string_agg                exact
+  fn:sum                       exact
+  fn:upper                     exact
+  ilike                        exact
+  join:inner_join              exact
+  join:left_join               exact
+  like                         conditional
+  limit                        exact
+  null_ordering                exact
+  offset                       exact
+  order_by                     conditional
+  ordered_comparison           conditional
+  recursive_cte                exact
+  returning                    exact
+  trim                         exact
+  upsert                       exact
+  window_function              exact

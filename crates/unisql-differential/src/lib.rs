@@ -64,6 +64,13 @@ impl Engines {
     /// Connect to PostgreSQL (must be reachable; this fails loudly otherwise) and open an in-memory
     /// SQLite, then load the same fixture into both.
     pub fn open(pg_fixture: &str, lite_fixture: &str) -> Result<Engines, String> {
+        Engines::open_with(pg_fixture, lite_fixture, true)
+    }
+
+    /// As [`Engines::open`], choosing SQLite's `case_sensitive_like` setting. SQLite's default is OFF
+    /// (case-insensitive `LIKE`); the PostgreSQL->SQLite suite turns it ON because PostgreSQL's
+    /// `LIKE` is case-sensitive, and the SQLite->PostgreSQL suite leaves it at the default.
+    pub fn open_with(pg_fixture: &str, lite_fixture: &str, case_sensitive_like: bool) -> Result<Engines, String> {
         let mut pg = Client::connect(&pg_url(), NoTls)
             .map_err(|e| format!("cannot reach PostgreSQL at `{}`: {e}", pg_url()))?;
         pg.batch_execute("DROP SCHEMA IF EXISTS uni CASCADE; CREATE SCHEMA uni; SET search_path = uni;")
@@ -72,7 +79,9 @@ impl Engines {
         let lite = rusqlite::Connection::open_in_memory().map_err(|e| e.to_string())?;
         // LIKE case sensitivity is a connection setting on SQLite (allowance
         // `like_case_sensitivity_is_connection_setting`); PostgreSQL's LIKE is case-sensitive.
-        lite.execute_batch("PRAGMA case_sensitive_like = ON;").map_err(|e| e.to_string())?;
+        if case_sensitive_like {
+            lite.execute_batch("PRAGMA case_sensitive_like = ON;").map_err(|e| e.to_string())?;
+        }
         lite.execute_batch(lite_fixture).map_err(|e| format!("sqlite fixture: {e}"))?;
         Ok(Engines { pg, lite })
     }
@@ -277,10 +286,47 @@ pub struct Outcome {
     pub rows: usize,
 }
 
+/// Which way a suite translates.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Dir {
+    PgToSqlite,
+    SqliteToPg,
+}
+
+impl Dir {
+    pub fn source(self) -> &'static str {
+        match self {
+            Dir::PgToSqlite => "postgres",
+            Dir::SqliteToPg => "sqlite",
+        }
+    }
+    pub fn target(self) -> &'static str {
+        match self {
+            Dir::PgToSqlite => "sqlite",
+            Dir::SqliteToPg => "postgres",
+        }
+    }
+}
+
+impl Engines {
+    fn run_on(&mut self, engine: &str, sql: &str, params: &[Param], after: Option<&str>) -> Result<(Rows, Rows), String> {
+        match engine {
+            "postgres" => self.run_pg(sql, params, after),
+            "sqlite" => self.run_sqlite(sql, params, after),
+            other => Err(format!("no engine `{other}`")),
+        }
+    }
+}
+
 pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
+    run_case_dir(e, c, Dir::PgToSqlite)
+}
+
+pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
+    let (src, tgt) = (dir.source(), dir.target());
     let opts = c.allow.iter().fold(Options::default(), |o, a| o.with(*a));
     let mut out = Outcome { name: c.name, passed: false, detail: String::new(), translated: None, constructs: vec![], rows: 0 };
-    let tr = unisql::translate(c.sql, "postgres", "sqlite", &opts);
+    let tr = unisql::translate(c.sql, src, tgt, &opts);
     match (&c.expect, tr) {
         (Expect::Refused(construct), Err(unisql::Error::Untranslatable(u))) => {
             out.passed = u.construct == *construct || u.construct.starts_with(construct);
@@ -294,12 +340,12 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
             out.detail = format!("refused without allowance: {}", u.reason);
         }
         (Expect::ParserGap, Err(unisql::Error::Read(unisql::ReadError::Syntax(msg)))) => {
-            match e.run_pg(c.sql, &c.params, None) {
+            match e.run_on(src, c.sql, &c.params, None) {
                 Ok(_) => {
                     out.passed = true;
-                    out.detail = format!("parser gap (PostgreSQL accepts it): {msg}");
+                    out.detail = format!("parser gap (the engine accepts it): {msg}");
                 }
-                Err(pe) => out.detail = format!("PostgreSQL also rejects it, so this is not a parser gap: {pe}"),
+                Err(pe) => out.detail = format!("the engine also rejects it, so this is not a parser gap: {pe}"),
             }
         }
         (Expect::NotInIr(construct), Err(unisql::Error::Read(unisql::ReadError::NotInIr { construct: got, detail }))) => {
@@ -308,16 +354,20 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
         }
         (Expect::Diverges, Ok(t)) => {
             out.translated = Some(t.sql.clone());
-            let orig = e.run_pg(c.sql, &c.params, c.after);
-            let lite = e.run_sqlite(&t.sql, &c.params, c.after);
-            match (orig, lite) {
+            let orig = e.run_on(src, c.sql, &c.params, c.after);
+            let other = e.run_on(tgt, &t.sql, &c.params, c.after);
+            match (orig, other) {
                 (Err(pe), Ok(l)) => {
                     out.passed = true;
-                    out.detail = format!("diverges: postgres errors ({pe}); sqlite returns {:?}", l.0);
+                    out.detail = format!("diverges: {src} errors ({pe}); {tgt} returns {:?}", l.0);
+                }
+                (Ok(o), Err(le)) => {
+                    out.passed = true;
+                    out.detail = format!("diverges: {src} returns {:?}; {tgt} errors ({le})", o.0);
                 }
                 (Ok(o), Ok(l)) if !rows_equal(&o.0, &l.0, c.ordered) || !rows_equal(&o.1, &l.1, c.ordered) => {
                     out.passed = true;
-                    out.detail = format!("diverges: postgres {:?} vs sqlite {:?}", o.0, l.0);
+                    out.detail = format!("diverges: {src} {:?} vs {tgt} {:?}", o.0, l.0);
                 }
                 (o, l) => out.detail = format!("expected a divergence but engines agree/failed alike: {:?} / {:?}", o.map(|x| x.0), l.map(|x| x.0)),
             }
@@ -330,33 +380,40 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
         (Expect::Same, Ok(t)) => {
             out.translated = Some(t.sql.clone());
             out.constructs = t.report.entries.iter().map(|x| (x.construct.clone(), x.tier)).collect();
-            // Identity check: Postgres -> Postgres must give the same results as the original.
-            let pg_self = unisql::translate(c.sql, "postgres", "postgres", &Options::default());
-            let pg_text = match pg_self {
+            // Identity check: source -> source must give the same results as the original.
+            let self_t = unisql::translate(c.sql, src, src, &Options::default());
+            let self_text = match self_t {
                 Ok(p) => p.sql,
                 Err(err) => {
-                    out.detail = format!("postgres->postgres failed: {err}");
+                    out.detail = format!("{src}->{src} failed: {err}");
                     return out;
                 }
             };
-            let orig = e.run_pg(c.sql, &c.params, c.after);
-            let ident = e.run_pg(&pg_text, &c.params, c.after);
-            let lite = e.run_sqlite(&t.sql, &c.params, c.after);
-            match (orig, ident, lite) {
+            let orig = e.run_on(src, c.sql, &c.params, c.after);
+            let ident = e.run_on(src, &self_text, &c.params, c.after);
+            let other = e.run_on(tgt, &t.sql, &c.params, c.after);
+            match (orig, ident, other) {
                 (Ok(o), Ok(i), Ok(l)) => {
                     out.rows = o.0.len();
                     if !rows_equal(&o.0, &i.0, c.ordered) || !rows_equal(&o.1, &i.1, c.ordered) {
-                        out.detail = format!("postgres->postgres differs from original; text: {pg_text}");
+                        out.detail = format!("{src}->{src} differs from original; text: {self_text}");
                     } else if !rows_equal(&o.0, &l.0, c.ordered) {
-                        out.detail = format!("RESULT DIFFERS\n  postgres: {:?}\n  sqlite:   {:?}\n  sql: {}", o.0, l.0, t.sql);
+                        out.detail = format!("RESULT DIFFERS
+  {src}: {:?}
+  {tgt}: {:?}
+  sql: {}", o.0, l.0, t.sql);
                     } else if !rows_equal(&o.1, &l.1, c.ordered) {
-                        out.detail = format!("STATE DIFFERS\n  postgres: {:?}\n  sqlite:   {:?}\n  sql: {}", o.1, l.1, t.sql);
+                        out.detail = format!("STATE DIFFERS
+  {src}: {:?}
+  {tgt}: {:?}
+  sql: {}", o.1, l.1, t.sql);
                     } else {
                         out.passed = true;
                         out.detail = "same".into();
                     }
                 }
-                (o, i, l) => out.detail = format!("engine error: pg={:?} pg2pg={:?} sqlite={:?}\n  sql: {}", o.err(), i.err(), l.err(), t.sql),
+                (o, i, l) => out.detail = format!("engine error: {src}={:?} {src}->{src}={:?} {tgt}={:?}
+  sql: {}", o.err(), i.err(), l.err(), t.sql),
             }
         }
     }

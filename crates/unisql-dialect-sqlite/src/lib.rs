@@ -1,4 +1,4 @@
-//! SQLite dialect module: a writer (the [`Sqlite`] target). A reader is a later slice.
+//! SQLite dialect module: a reader (text -> IR) and a writer (the [`Sqlite`] target).
 //!
 //! Every deviation from PostgreSQL semantics is a named [`Allowance`] or a refusal; the
 //! differential tests in `unisql-differential` are what justify each tier. Minimum engine
@@ -7,8 +7,13 @@
 use unisql_core::ast::*;
 use unisql_core::rewrite;
 use unisql_core::report::{Allowance, Tier, Untranslatable};
-use unisql_core::target::{generic_call, Ctx};
-use unisql_core::Target;
+use unisql_core::target::{generic_call, Ctx, Escape};
+use unisql_core::{Read, ReadError, Target};
+
+/// Read exactly one SQLite statement.
+pub fn read(sql: &str) -> Result<Read, ReadError> {
+    unisql_sqlparser_adapter::read(sql, &unisql_sqlparser_adapter::SQLITE)
+}
 
 #[derive(Clone, Copy, Debug, Default)]
 pub struct Sqlite;
@@ -35,8 +40,22 @@ impl Target for Sqlite {
         Ok(if b { "1" } else { "0" }.to_string())
     }
 
-    fn like(&self, lhs: &str, rhs: &str, negated: bool, ci: bool, ctx: &mut Ctx) -> R<String> {
+    fn like(
+        &self,
+        lhs: &str,
+        rhs: &str,
+        negated: bool,
+        ci: bool,
+        esc: Escape<'_>,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         let not = if negated { "NOT " } else { "" };
+        // SQLite has no default escape character, so the IR's choice is always stated explicitly.
+        let tail = match esc {
+            Escape::None => String::new(),
+            Escape::Default => " ESCAPE '\\'".to_string(),
+            Escape::Custom(c) => format!(" ESCAPE {c}"),
+        };
         if ci {
             // PostgreSQL's default LIKE escape is a backslash; SQLite has none, so state it.
             ctx.note(
@@ -51,7 +70,7 @@ impl Target for Sqlite {
                 "the target's LIKE case sensitivity is a connection setting (PRAGMA case_sensitive_like)",
                 Some(Allowance::LikeCaseSensitivityIsConnectionSetting),
             )?;
-            Ok(format!("lower({lhs}) {not}LIKE lower({rhs}) ESCAPE '\\'"))
+            Ok(format!("lower({lhs}) {not}LIKE lower({rhs}){tail}"))
         } else {
             ctx.note(
                 "like",
@@ -60,7 +79,7 @@ impl Target for Sqlite {
                  an ESCAPE clause is added to match PostgreSQL's default escape character",
                 Some(Allowance::LikeCaseSensitivityIsConnectionSetting),
             )?;
-            Ok(format!("{lhs} {not}LIKE {rhs} ESCAPE '\\'"))
+            Ok(format!("{lhs} {not}LIKE {rhs}{tail}"))
         }
     }
 
@@ -177,6 +196,16 @@ impl Target for Sqlite {
 
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
+        if ctx.source == "sqlite" {
+            if n == "now" {
+                // The reader normalised CURRENT_TIMESTAMP to now(); SQLite spells it back.
+                ctx.note("fn:now", Tier::Exact, "", None)?;
+                return Ok("CURRENT_TIMESTAMP".to_string());
+            }
+            // Same dialect in and out: the reader accepted the name, so this is the identity.
+            ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+            return Ok(generic_call(n, args, f.distinct, f.star));
+        }
         if f.over.is_some()
             && matches!(
                 n,
