@@ -6,3 +6,4 @@ target/
 measure/docker-pull.log
 measure/docker-pull-mysql.log
 measure/corpus-*.json
+HANDOFF.md
