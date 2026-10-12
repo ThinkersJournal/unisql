@@ -67,6 +67,12 @@ impl<'a> Ctx<'a> {
         self.array_params.insert(n, binding);
     }
 
+    /// True for sources whose casts, division and comparisons are lenient or collation-dependent
+    /// in ways PostgreSQL's are not.
+    pub fn lenient_source(&self) -> bool {
+        matches!(self.source, "sqlite" | "mysql" | "mariadb")
+    }
+
     pub fn refuse(&self, construct: &str, reason: &str, alternatives: &[&str]) -> Untranslatable {
         Untranslatable {
             construct: construct.to_string(),
@@ -157,11 +163,11 @@ pub trait Target {
     }
 
     fn cast(&self, expr: &str, ty: &SqlType, ctx: &mut Ctx) -> R<String> {
-        if ctx.source == "sqlite" {
+        if ctx.lenient_source() {
             ctx.note(
                 "cast",
                 Tier::Conditional,
-                "the source casts leniently (a malformed value becomes 0); PostgreSQL raises an error",
+                "the source casts leniently (a malformed value becomes 0); the target raises an error",
                 Some(Allowance::LenientCast),
             )?;
         } else {
@@ -287,6 +293,13 @@ pub trait Target {
         _first_insert_col: &str,
         ctx: &mut Ctx,
     ) -> R<String> {
+        if !do_nothing && conflict_cols.is_empty() {
+            return Err(ctx.refuse(
+                "upsert",
+                "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns",
+                &["state the conflict key columns in the statement"],
+            ));
+        }
         ctx.note(if where_.is_some() { "upsert_where" } else { "upsert" }, Tier::Exact, "", None)?;
         let mut s = String::from(" ON CONFLICT");
         if !conflict_cols.is_empty() {

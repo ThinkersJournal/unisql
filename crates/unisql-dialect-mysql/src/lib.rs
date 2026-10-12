@@ -33,6 +33,11 @@ impl Mysql {
     pub fn mariadb() -> Self {
         Mysql { flavor: Flavor::MariaDb }
     }
+
+    /// Read exactly one MySQL / MariaDB statement.
+    pub fn read(sql: &str) -> Result<unisql_core::Read, unisql_core::ReadError> {
+        unisql_sqlparser_adapter::read(sql, &unisql_sqlparser_adapter::MYSQL)
+    }
 }
 
 impl Default for Mysql {
@@ -457,6 +462,12 @@ impl Target for Mysql {
                 ctx.note("concat", Tier::Exact, "|| is OR in MySQL, so CONCAT() is used", None)?;
                 Ok(Some(format!("CONCAT({l}, {r})")))
             }
+            BinaryOp::IntDivide => {
+                ctx.note("division_integer", Tier::Exact, "DIV", None)?;
+                Ok(Some(format!("{l} DIV {r}")))
+            }
+            // A MySQL/MariaDB source's `/` is already MySQL division (exact decimal).
+            BinaryOp::Divide if matches!(ctx.source, "mysql" | "mariadb") => Ok(None),
             BinaryOp::Divide => {
                 let _ = numeric;
                 ctx.note(

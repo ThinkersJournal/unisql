@@ -8,7 +8,7 @@ use unisql_core::{Read, ReadError, Target};
 type R<T> = Result<T, Untranslatable>;
 
 /// Functions PostgreSQL has with the meaning a foreign source's reader gives them.
-const FROM_OTHER: &[&str] = &["string_agg", "now", "ltrim", "rtrim", "trim", "char_length", "octet_length"];
+const FROM_OTHER: &[&str] = &["string_agg", "now", "ltrim", "rtrim", "trim", "char_length", "octet_length", "coalesce"];
 
 /// Read exactly one PostgreSQL statement.
 pub fn read(sql: &str) -> Result<Read, ReadError> {
@@ -46,15 +46,29 @@ impl Target for Postgres {
     }
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {
-        if ctx.source != "sqlite" {
+        if op == BinaryOp::IntDivide {
+            return ctx.note(
+                "division_integer",
+                Tier::Conditional,
+                "DIV becomes `/`, which is integer division only if both operands are integers",
+                Some(Allowance::IntegerDivisionAssumed),
+            );
+        }
+        if !ctx.lenient_source() {
             return Ok(());
         }
         match op {
-            BinaryOp::Divide | BinaryOp::Modulo => ctx.note(
+            BinaryOp::Divide | BinaryOp::Modulo | BinaryOp::IntDivide => ctx.note(
                 "division",
                 Tier::Conditional,
                 "the source yields NULL on a zero divisor; PostgreSQL raises an error",
                 Some(Allowance::DivisionByZeroIsNull),
+            ),
+            BinaryOp::Eq | BinaryOp::NotEq if !numeric && ctx.source != "sqlite" => ctx.note(
+                "text_comparison",
+                Tier::Conditional,
+                "text equality follows the source column collation; the target compares by its own",
+                Some(Allowance::TextCollation),
             ),
             BinaryOp::Lt | BinaryOp::LtEq | BinaryOp::Gt | BinaryOp::GtEq if !numeric => ctx.note(
                 "ordered_comparison",
@@ -67,7 +81,7 @@ impl Target for Postgres {
     }
 
     fn between(&self, numeric: bool, ctx: &mut Ctx) -> R<()> {
-        if ctx.source == "sqlite" && !numeric {
+        if ctx.lenient_source() && !numeric {
             return ctx.note(
                 "ordered_comparison",
                 Tier::Conditional,
@@ -79,7 +93,7 @@ impl Target for Postgres {
     }
 
     fn nulls_order(&self, desc: bool, nulls_first: bool, ctx: &mut Ctx) -> R<String> {
-        if ctx.source == "sqlite" {
+        if ctx.lenient_source() {
             ctx.note(
                 "order_by",
                 Tier::Conditional,

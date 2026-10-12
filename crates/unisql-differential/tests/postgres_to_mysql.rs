@@ -238,7 +238,7 @@ fn run(maria: bool) {
     let v = myv.split_whitespace().next().unwrap_or("").split('-').next().unwrap_or("").to_string();
     let _ = std::fs::write(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
-            .join(format!("../unisql-dialect-mysql/matrix-{}.tsv", dir.target())),
+            .join(format!("../unisql-dialect-mysql/matrix-{}-from-postgres.tsv", dir.target())),
         unisql_differential::matrix_tsv(&outcomes, dir.target(), &v, "postgres"),
     );
     println!("{log}");

@@ -253,7 +253,7 @@ fn postgres_to_sqlite_differential() {
     // The SQLite dialect module's matrix: how SQLite gives each construct, from PostgreSQL text.
     let v = litev.split_whitespace().next().unwrap_or("").to_string();
     let _ = std::fs::write(
-        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../unisql-dialect-sqlite/matrix.tsv"),
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../unisql-dialect-sqlite/matrix-sqlite-from-postgres.tsv"),
         unisql_differential::matrix_tsv(&outcomes, "sqlite", &v, "postgres"),
     );
     println!("{log}");

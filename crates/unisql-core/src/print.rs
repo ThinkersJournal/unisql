@@ -436,6 +436,7 @@ impl Printer<'_> {
                     BinaryOp::Divide => "/",
                     BinaryOp::Modulo => "%",
                     BinaryOp::Concat => "||",
+                    BinaryOp::IntDivide => "/",
                     BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
                 };
                 let numeric = is_numeric(left) || is_numeric(right);

@@ -57,7 +57,7 @@ fn read(sql: &str, source: &str) -> Result<unisql_core::Read, Error> {
     match source {
         "postgres" => unisql_dialect_postgres::read(sql).map_err(Error::Read),
         "sqlite" => unisql_dialect_sqlite::read(sql).map_err(Error::Read),
-        "mysql" | "mariadb" => Err(Error::NoReader(source.to_string())),
+        "mysql" | "mariadb" => Mysql::read(sql).map_err(Error::Read),
         other => Err(Error::UnknownDialect(other.to_string())),
     }
 }

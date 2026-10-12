@@ -128,7 +128,7 @@ PASS int_division                 same
        -> SELECT 7 / 2, (-7) / 2, 7 % 3, (-7) % 3 FROM "users" WHERE "id" = 1
 PASS gate_now                     refused without allowance: conditional: needs allowance `now_as_text`: -> CURRENT_TIMESTAMP; text 'YYYY-MM-DD HH:MM:SS' in UTC, not a timestamptz
 PASS gate_like                    refused without allowance: conditional: needs allowance `like_case_sensitivity_is_connection_setting`: SQLite LIKE is ASCII case-insensitive unless PRAGMA case_sensitive_like=ON; an ESCAPE clause is added to match PostgreSQL's default escape character
-PASS gate_division                refused without allowance: conditional: needs allowance `division_by_zero_is_null`: division/modulo by zero is NULL on SQLite and an error on PostgreSQL
+PASS gate_division                refused without allowance: conditional: needs allowance `division_by_zero_is_null`: division/modulo by zero is NULL on SQLite (an error on PostgreSQL)
 PASS gate_bool_literal            refused without allowance: conditional: needs allowance `boolean_as_integer`: SQLite has no boolean type; TRUE/FALSE are 1/0 and results come back as integers
 PASS diverge_division_by_zero     diverges: postgres errors (query: db error); sqlite returns [[Null]]
        -> SELECT 1 / 0

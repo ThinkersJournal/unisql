@@ -380,6 +380,13 @@ impl Target for Sqlite {
         _first_insert_col: &str,
         ctx: &mut Ctx,
     ) -> R<String> {
+        if !do_nothing && conflict_cols.is_empty() {
+            return Err(ctx.refuse(
+                "upsert",
+                "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns",
+                &["state the conflict key columns in the statement"],
+            ));
+        }
         ctx.note(
             if where_.is_some() { "upsert_where" } else { "upsert" },
             Tier::Exact,
@@ -451,10 +458,22 @@ impl Target for Sqlite {
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {
         match op {
+            BinaryOp::IntDivide => ctx.note(
+                "division_integer",
+                Tier::Conditional,
+                "DIV becomes `/`, which is integer division only if both operands are integers",
+                Some(Allowance::IntegerDivisionAssumed),
+            ),
+            BinaryOp::Eq | BinaryOp::NotEq if !numeric && matches!(ctx.source, "mysql" | "mariadb") => ctx.note(
+                "text_comparison",
+                Tier::Conditional,
+                "text equality follows the source column collation; SQLite compares bytes (BINARY)",
+                Some(Allowance::TextCollation),
+            ),
             BinaryOp::Divide | BinaryOp::Modulo => ctx.note(
                 "division",
                 Tier::Conditional,
-                "division/modulo by zero is NULL on SQLite and an error on PostgreSQL",
+                "division/modulo by zero is NULL on SQLite (an error on PostgreSQL)",
                 Some(Allowance::DivisionByZeroIsNull),
             ),
             BinaryOp::Lt | BinaryOp::LtEq | BinaryOp::Gt | BinaryOp::GtEq if numeric => {

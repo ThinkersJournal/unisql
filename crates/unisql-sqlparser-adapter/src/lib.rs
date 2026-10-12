@@ -42,6 +42,17 @@ pub static POSTGRES: Rules = Rules {
     negative_limit_unlimited: false,
 };
 
+pub static MYSQL: Rules = Rules {
+    name: "mysql",
+    dialect: || Box::new(sqlparser::dialect::MySqlDialect {}),
+    fold_quoted: true,
+    nulls_smallest: true,
+    question_placeholders: true,
+    like_ci_default: false,
+    like_default_escape: true,
+    negative_limit_unlimited: false,
+};
+
 pub static SQLITE: Rules = Rules {
     name: "sqlite",
     dialect: || Box::new(sqlparser::dialect::SQLiteDialect {}),
@@ -266,8 +277,9 @@ fn query(q: sp::Query) -> R<Query> {
                 offset = Some(expr(value)?);
             }
         }
-        Some(sp::LimitClause::OffsetCommaLimit { .. }) => {
-            return no("limit_comma", "MySQL LIMIT a, b is not PostgreSQL");
+        Some(sp::LimitClause::OffsetCommaLimit { offset: o, limit: l }) => {
+            offset = Some(expr(o)?);
+            limit = Some(expr(l)?);
         }
     }
     Ok(Query { with: ctes, recursive, body, order_by: order, limit, offset })
@@ -660,6 +672,14 @@ fn insert(i: sp::Insert) -> R<Statement> {
             };
             Some(OnConflict { target, action })
         }
+        Some(sp::OnInsert::DuplicateKeyUpdate(a)) => {
+            // No conflict target: MySQL fires on ANY unique key. `VALUES(c)` is `excluded.c`.
+            let set = assignments(a)?
+                .into_iter()
+                .map(|asg| Assignment { column: asg.column, value: excluded_refs(asg.value) })
+                .collect();
+            Some(OnConflict { target: vec![], action: ConflictAction::DoUpdate { set, where_: None } })
+        }
         Some(other) => return no("on_insert", &head(&other)),
     };
     Ok(Statement::Insert(Insert { table, columns, source, on_conflict, returning: returning(ret)? }))
@@ -779,6 +799,13 @@ fn expr(e: sp::Expr) -> R<Expr> {
                     Allowance::LikeCaseSensitivityIsConnectionSetting,
                 );
             }
+            if rules().name == "mysql" {
+                add_note(
+                    "like",
+                    "the source LIKE follows the column collation; read as case-sensitive (a binary collation)",
+                    Allowance::LikeCaseSensitivityIsConnectionSetting,
+                );
+            }
             like_expr(*x, *pattern, escape_char, negated, ci)?
         }
         E::ILike { negated, any, expr: x, pattern, escape_char } => {
@@ -812,7 +839,17 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 B::Multiply => BinaryOp::Multiply,
                 B::Divide => BinaryOp::Divide,
                 B::Modulo => BinaryOp::Modulo,
+                // MySQL's default sql_mode makes `||` a logical OR with OR's (lowest) precedence, but
+                // sqlparser parses it as concatenation with concatenation's precedence, so the tree
+                // is wrong either way: refuse instead of guessing.
+                B::StringConcat if rules().name == "mysql" => {
+                    return no(
+                        "pipes_operator",
+                        "MySQL `||` is logical OR (default sql_mode) but the parser gives it concatenation precedence; write OR, or CONCAT()",
+                    );
+                }
                 B::StringConcat => BinaryOp::Concat,
+                B::MyIntegerDivide => BinaryOp::IntDivide,
                 B::Arrow => BinaryOp::JsonGet,
                 B::LongArrow => BinaryOp::JsonGetText,
                 other => {
@@ -822,6 +859,15 @@ fn expr(e: sp::Expr) -> R<Expr> {
                     );
                 }
             };
+            if op == BinaryOp::Divide && rules().name == "mysql" {
+                add_note(
+                    "division",
+                    "the source `/` is exact (DECIMAL) division; the target divides as double precision",
+                    Allowance::DecimalDivisionAsFloat,
+                );
+                let l = Expr::Cast { expr: boxed(*left)?, ty: SqlType::Double };
+                return Ok(Expr::Binary { op, left: Box::new(l), right: boxed(*right)? });
+            }
             Expr::Binary { op, left: boxed(*left)?, right: boxed(*right)? }
         }
         E::Case { case_token: _, end_token: _, operand, conditions, else_result } => Expr::Case {
@@ -854,6 +900,9 @@ fn expr(e: sp::Expr) -> R<Expr> {
             Expr::Trim { expr: boxed(*x)?, side, chars }
         }
         E::Substring { expr: x, substring_from, substring_for, special: _, shorthand: _ } => {
+            if rules().name == "mysql" {
+                return no("substring", "MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite");
+            }
             // `substring(x FROM a FOR b)` and `substring(x, a, b)` are `substr(x, a, b)`.
             let mut args = vec![FunctionArg::Expr(expr(*x)?)];
             match (substring_from, substring_for) {
@@ -926,6 +975,34 @@ fn quantified(left: sp::Expr, right: sp::Expr, negated: bool) -> R<Expr> {
     }
 }
 
+/// MySQL's `VALUES(col)` inside `ON DUPLICATE KEY UPDATE` refers to the row proposed for insertion.
+fn excluded_refs(e: Expr) -> Expr {
+    match e {
+        Expr::Function(f) if f.name == "values" && f.args.len() == 1 => match f.args.into_iter().next() {
+            Some(FunctionArg::Expr(Expr::Column(n))) => {
+                Expr::Column(Name(vec!["excluded".to_string(), n.last().to_string()]))
+            }
+            other => Expr::Function(Function {
+                name: "values".into(),
+                args: other.into_iter().collect(),
+                distinct: false,
+                star: false,
+                filter: None,
+                over: None,
+                order_by: vec![],
+            }),
+        },
+        Expr::Binary { op, left, right } => Expr::Binary {
+            op,
+            left: Box::new(excluded_refs(*left)),
+            right: Box::new(excluded_refs(*right)),
+        },
+        Expr::Nested(x) => Expr::Nested(Box::new(excluded_refs(*x))),
+        Expr::Unary { op, expr } => Expr::Unary { op, expr: Box::new(excluded_refs(*expr)) },
+        other => other,
+    }
+}
+
 fn like_expr(
     x: sp::Expr,
     pattern: sp::Expr,
@@ -950,6 +1027,10 @@ fn value(v: sp::Value) -> R<Expr> {
             Expr::Literal(Literal::Number(n))
         }
         sp::Value::SingleQuotedString(s) => Expr::Literal(Literal::String(s)),
+        sp::Value::Boolean(b) if rules().name == "mysql" => {
+            // MySQL TRUE/FALSE are the integers 1 and 0.
+            Expr::Literal(Literal::Number(if b { "1" } else { "0" }.into()))
+        }
         sp::Value::Boolean(b) => Expr::Literal(Literal::Bool(b)),
         sp::Value::Null => Expr::Literal(Literal::Null),
         sp::Value::Placeholder(p) => {
@@ -1040,6 +1121,7 @@ fn function(f: sp::Function) -> R<Expr> {
     };
     let sp::FunctionArgumentList { duplicate_treatment, args, clauses } = args;
     let mut agg_order = Vec::new();
+    let mut separator: Option<String> = None;
     for cl in clauses {
         match cl {
             sp::FunctionArgumentClause::OrderBy(items) => {
@@ -1047,6 +1129,10 @@ fn function(f: sp::Function) -> R<Expr> {
                     agg_order.push(order_item(it)?);
                 }
             }
+            sp::FunctionArgumentClause::Separator(v) => match v.value {
+                sp::Value::SingleQuotedString(s) => separator = Some(s),
+                other => return no("separator", &head(&other)),
+            },
             other => return no("function_clause", &format!("{} inside a function call", head(&other))),
         }
     }
@@ -1078,6 +1164,50 @@ fn function(f: sp::Function) -> R<Expr> {
     let mut out = out;
     if name == "current_timestamp" {
         name = "now".to_string();
+    }
+    if rules().name == "mysql" {
+        match name.as_str() {
+            "ifnull" => name = "coalesce".to_string(),
+            "group_concat" => {
+                name = "string_agg".to_string();
+                out.push(FunctionArg::Expr(Expr::Literal(Literal::String(
+                    separator.clone().unwrap_or_else(|| ",".to_string()),
+                ))));
+                add_note(
+                    "fn:string_agg",
+                    "the source GROUP_CONCAT truncates silently at group_concat_max_len",
+                    Allowance::AggregateStringTruncation,
+                );
+            }
+            // MySQL LENGTH() counts bytes.
+            "length" => name = "octet_length".to_string(),
+            "concat" if out.len() >= 2 => {
+                let mut it = out.into_iter().map(|a| match a {
+                    FunctionArg::Expr(e) => e,
+                    FunctionArg::Named { value, .. } => value,
+                });
+                let first = it.next().expect("two arguments");
+                let chain = it.fold(first, |l, r| Expr::Binary {
+                    op: BinaryOp::Concat,
+                    left: Box::new(l),
+                    right: Box::new(r),
+                });
+                return Ok(chain);
+            }
+            "if" if out.len() == 3 => {
+                let mut it = out.into_iter().map(|a| match a {
+                    FunctionArg::Expr(e) => e,
+                    FunctionArg::Named { value, .. } => value,
+                });
+                let (c, t, f) = (it.next().unwrap(), it.next().unwrap(), it.next().unwrap());
+                return Ok(Expr::Case {
+                    operand: None,
+                    branches: vec![(c, t)],
+                    else_: Some(Box::new(f)),
+                });
+            }
+            _ => {}
+        }
     }
     if rules().name == "sqlite" {
         match name.as_str() {
@@ -1149,6 +1279,9 @@ fn data_type_to_ir(t: &sp::DataType) -> R<SqlType> {
             }
         },
         D::Text => SqlType::Text,
+        D::Signed | D::SignedInteger | D::Unsigned | D::UnsignedInteger => SqlType::BigInt,
+        D::Char(None) | D::Character(None) => SqlType::Text,
+        D::Datetime(None) => SqlType::Timestamp { with_tz: false },
         D::Varchar(None) | D::CharVarying(None) => SqlType::Varchar(None),
         D::Varchar(Some(sp::CharacterLength::IntegerLength { length, unit: None }))
         | D::CharVarying(Some(sp::CharacterLength::IntegerLength { length, unit: None })) => {

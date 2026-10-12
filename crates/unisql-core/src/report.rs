@@ -55,6 +55,8 @@ pub enum Allowance {
     /// JSON `->` yields a JSON value on the source; on the target it is its text representation, so
     /// comparison is textual (whitespace and key order are not normalised).
     JsonRepresentationAsText,
+    /// The source `/` is exact (DECIMAL) division; the target divides as double precision.
+    DecimalDivisionAsFloat,
     /// An array parameter used for membership: a `NULL` array, `NULL` elements or a `NULL` operand
     /// give an unknown result on the source but a definite true/false on the target.
     ArrayNullSemantics,
@@ -82,6 +84,7 @@ impl Allowance {
             Allowance::JsonScalarAffinity => "json_scalar_affinity",
             Allowance::JsonRepresentationAsText => "json_representation_as_text",
             Allowance::ArrayNullSemantics => "array_null_semantics",
+            Allowance::DecimalDivisionAsFloat => "decimal_division_as_float",
             Allowance::IntegerDivisionAssumed => "integer_division_assumed",
             Allowance::UpsertAnyUniqueKey => "upsert_any_unique_key",
             Allowance::AggregateStringTruncation => "aggregate_string_truncation",

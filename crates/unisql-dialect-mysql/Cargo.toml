@@ -9,3 +9,4 @@ description = "MySQL / MariaDB target for UniSQL."
 
 [dependencies]
 unisql-core.workspace = true
+unisql-sqlparser-adapter.workspace = true

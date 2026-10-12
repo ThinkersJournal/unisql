@@ -295,6 +295,8 @@ pub enum BinaryOp {
     Modulo,
     /// `||`
     Concat,
+    /// MySQL `DIV`: integer division (operands assumed integers on other targets).
+    IntDivide,
     /// JSON `->` (returns JSON)
     JsonGet,
     /// JSON `->>` (returns text)

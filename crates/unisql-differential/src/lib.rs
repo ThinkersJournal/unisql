@@ -109,7 +109,19 @@ impl Engines {
     /// PostgreSQL + a MySQL/MariaDB at `UNISQL_MYSQL_URL` (or `UNISQL_MARIADB_URL` when `maria`).
     /// The MySQL database is recreated and loaded with `mysql_fixture`.
     pub fn open_mysql(pg_fixture: &str, mysql_fixture: &str, maria: bool) -> Result<Engines, String> {
-        let mut e = Engines::open_with(pg_fixture, "", true)?;
+        Engines::open_mysql_with(pg_fixture, "", mysql_fixture, maria, true)
+    }
+
+    /// As [`Engines::open_mysql`] with a SQLite fixture too, for suites that read MySQL and write
+    /// either PostgreSQL or SQLite. `case_sensitive_like` is SQLite's setting for that connection.
+    pub fn open_mysql_with(
+        pg_fixture: &str,
+        lite_fixture: &str,
+        mysql_fixture: &str,
+        maria: bool,
+        case_sensitive_like: bool,
+    ) -> Result<Engines, String> {
+        let mut e = Engines::open_with(pg_fixture, lite_fixture, case_sensitive_like)?;
         let (var, default) = if maria {
             ("UNISQL_MARIADB_URL", "mysql://root:unisql@127.0.0.1:53307/uni")
         } else {
@@ -119,9 +131,22 @@ impl Engines {
         let opts = mysql::Opts::from_url(&url).map_err(|e| format!("bad {var}: {e}"))?;
         let mut conn = mysql::Conn::new(opts).map_err(|e| format!("cannot reach MySQL/MariaDB at `{url}`: {e}"))?;
         use mysql::prelude::Queryable;
-        conn.query_drop("DROP DATABASE IF EXISTS uni_t").map_err(|e| e.to_string())?;
-        conn.query_drop("CREATE DATABASE uni_t").map_err(|e| e.to_string())?;
-        conn.query_drop("USE uni_t").map_err(|e| e.to_string())?;
+        // One database per test (named after its thread), so suites can run in parallel.
+        let db: String = format!(
+            "uni_{}",
+            std::thread::current()
+                .name()
+                .unwrap_or("main")
+                .chars()
+                .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+                .collect::<String>()
+        )
+        .chars()
+        .take(60)
+        .collect();
+        conn.query_drop(format!("DROP DATABASE IF EXISTS {db}")).map_err(|e| e.to_string())?;
+        conn.query_drop(format!("CREATE DATABASE {db}")).map_err(|e| e.to_string())?;
+        conn.query_drop(format!("USE {db}")).map_err(|e| e.to_string())?;
         for stmt in mysql_fixture.split(";\n").map(str::trim).filter(|s| !s.is_empty()) {
             conn.query_drop(stmt).map_err(|e| format!("mysql fixture: {e}\n  in: {stmt}"))?;
         }
@@ -425,6 +450,9 @@ pub enum Dir {
     SqliteToPg,
     PgToMysql,
     PgToMariadb,
+    MysqlToPg,
+    MysqlToSqlite,
+    MariadbToPg,
 }
 
 impl Dir {
@@ -432,6 +460,8 @@ impl Dir {
         match self {
             Dir::PgToSqlite | Dir::PgToMysql | Dir::PgToMariadb => "postgres",
             Dir::SqliteToPg => "sqlite",
+            Dir::MysqlToPg | Dir::MysqlToSqlite => "mysql",
+            Dir::MariadbToPg => "mariadb",
         }
     }
     pub fn target(self) -> &'static str {
@@ -440,6 +470,8 @@ impl Dir {
             Dir::SqliteToPg => "postgres",
             Dir::PgToMysql => "mysql",
             Dir::PgToMariadb => "mariadb",
+            Dir::MysqlToPg | Dir::MariadbToPg => "postgres",
+            Dir::MysqlToSqlite => "sqlite",
         }
     }
 }

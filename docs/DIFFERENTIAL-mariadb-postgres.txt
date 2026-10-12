@@ -1,0 +1,103 @@
+mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=41
+PASS ph_question                same
+       -> SELECT "id", "name" FROM "users" WHERE "id" = $1
+PASS ph_two                     same
+       -> SELECT "id" FROM "users" WHERE ("age" > $1) AND ("city" = $2)
+PASS backticks                  same
+       -> SELECT "id", "name" FROM "users" WHERE "age" BETWEEN 25 AND 41
+PASS select_where               same
+       -> SELECT "id" FROM "users" WHERE ("city" = 'Oslo') AND ("active" = 1)
+PASS is_null                    same
+       -> SELECT "id" FROM "users" WHERE ("age" IS NULL) OR ("city" IS NULL)
+PASS in_list                    same
+       -> SELECT "id" FROM "users" WHERE ("id" IN (1, 3, 5)) AND ("id" NOT IN (5))
+PASS aggregates                 same
+       -> SELECT COUNT(*), COUNT("status"), SUM("amount"), MIN("amount"), MAX("amount") FROM "orders"
+PASS group_having               same
+       -> SELECT "user_id", COUNT(*), SUM("amount") FROM "orders" GROUP BY "user_id" HAVING SUM("amount") > 100
+PASS join                       same
+       -> SELECT "u"."name", "o"."amount" FROM "users" AS "u" INNER JOIN "orders" AS "o" ON "o"."user_id" = "u"."id" WHERE "o"."status" = 'paid'
+PASS left_join                  same
+       -> SELECT "u"."id", "o"."id" FROM "users" AS "u" LEFT JOIN "orders" AS "o" ON "o"."user_id" = "u"."id"
+PASS subquery_in                same
+       -> SELECT "name" FROM "users" WHERE "id" IN (SELECT "user_id" FROM "orders" WHERE "amount" > 100)
+PASS exists                     same
+       -> SELECT "name" FROM "users" AS "u" WHERE EXISTS (SELECT 1 FROM "orders" AS "o" WHERE ("o"."user_id" = "u"."id") AND ("o"."status" = 'open'))
+PASS cte                        same
+       -> WITH "big" AS (SELECT "user_id", SUM("amount") AS "t" FROM "orders" GROUP BY "user_id") SELECT "u"."name", "big"."t" FROM "users" AS "u" INNER JOIN "big" ON "big"."user_id" = "u"."id"
+PASS with_recursive             same
+       -> WITH RECURSIVE "t" ("n") AS (SELECT 1 UNION ALL SELECT "n" + 1 FROM "t" WHERE "n" < 5) SELECT "n" FROM "t" ORDER BY "n" NULLS FIRST
+PASS window_rank                same
+       -> SELECT "id", RANK() OVER (PARTITION BY "city" ORDER BY "age" NULLS FIRST) FROM "users" ORDER BY "id" NULLS FIRST
+PASS set_ops                    same
+       -> SELECT "id" FROM "users" EXCEPT SELECT "user_id" FROM "orders"
+PASS nulls_asc                  same
+       -> SELECT "id", "age" FROM "users" ORDER BY "age" NULLS FIRST, "id" NULLS FIRST
+PASS nulls_desc                 same
+       -> SELECT "id", "age" FROM "users" ORDER BY "age" DESC NULLS LAST, "id" NULLS FIRST
+PASS limit_comma                same
+       -> SELECT "id" FROM "users" ORDER BY "id" NULLS FIRST LIMIT 3 OFFSET 2
+PASS limit_offset               same
+       -> SELECT "id" FROM "users" ORDER BY "id" NULLS FIRST LIMIT 3 OFFSET 2
+PASS or_keyword                 same
+       -> SELECT "id" FROM "users" WHERE ("id" = 1) OR ("id" = 2)
+PASS div_decimal                same
+       -> SELECT CAST(7 AS DOUBLE PRECISION) / 2, CAST(1 AS DOUBLE PRECISION) / 4 FROM "users" WHERE "id" = 1
+PASS div_integer                same
+       -> SELECT 7 / 2, (-7) / 2, 7 % 3, (-7) % 3 FROM "users" WHERE "id" = 1
+PASS ifnull_concat_if           same
+       -> SELECT ("name" || '-') || COALESCE("city", '?'), CASE WHEN "age" >= 40 THEN 'senior' ELSE 'adult' END FROM "users"
+PASS length_is_bytes            same
+       -> SELECT OCTET_LENGTH("name"), CHAR_LENGTH("name") FROM "users" WHERE "id" IN (1, 7)
+PASS group_concat_sep           same
+       -> SELECT STRING_AGG("name", '|' ORDER BY "age" NULLS FIRST, "id" NULLS FIRST) FROM "users"
+PASS group_concat_default       same
+       -> SELECT STRING_AGG("name", ',') FROM "users" WHERE "id" = 1
+PASS cast_forms                 same
+       -> SELECT CAST("id" AS BIGINT), CAST("id" AS TEXT) FROM "users" WHERE "id" = 1
+PASS like_prefix                same
+       -> SELECT "name" FROM "users" WHERE "name" LIKE 'a%'
+PASS like_escape                same
+       -> SELECT "name" FROM "users" WHERE "name" LIKE 'frank\%'
+PASS insert_values              same
+       -> INSERT INTO "users" ("id", "name", "active") VALUES ($1, $2, 1)
+PASS delete_where               same
+       -> DELETE FROM "orders" WHERE "amount" < 100
+PASS update_where               same
+       -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo'
+PASS gate_div_decimal           refused without allowance: conditional: needs allowance `decimal_division_as_float`: the source `/` is exact (DECIMAL) division; the target divides as double precision
+PASS refuse_odku                refused `upsert`: the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns
+PASS ir_insert_ignore           not in IR `insert_option`: an INSERT form other than INSERT INTO t [(cols)] VALUES|query
+PASS ir_pipes_operator          not in IR `pipes_operator`: MySQL `||` is logical OR (default sql_mode) but the parser gives it concatenation precedence; write OR, or CONCAT()
+PASS ir_null_safe_eq            not in IR `binary_operator`: Spaceship (JSON/array/regex/bitwise operators are not in the IR)
+PASS ir_substring               not in IR `substring`: MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite
+PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on PostgreSQL yet
+PASS diverge_div_zero           diverges: mariadb returns [[Null]]; postgres errors (query: db error)
+       -> SELECT CAST(1 AS DOUBLE PRECISION) / 0
+
+MATRIX (construct, tier) from 34 passing translated cases:
+  cast                         conditional
+  division                     conditional
+  division_integer             conditional
+  fn:char_length               exact
+  fn:coalesce                  exact
+  fn:count                     exact
+  fn:max                       exact
+  fn:min                       exact
+  fn:octet_length              exact
+  fn:rank                      exact
+  fn:string_agg                conditional
+  fn:string_agg                exact
+  fn:sum                       exact
+  join:inner_join              exact
+  join:left_join               exact
+  like                         conditional
+  like                         exact
+  limit                        exact
+  null_ordering                exact
+  offset                       exact
+  order_by                     conditional
+  ordered_comparison           conditional
+  recursive_cte                exact
+  text_comparison              conditional
+  window_function              exact
