@@ -53,6 +53,8 @@ pub enum Param {
 pub struct Engines {
     pub pg: Client,
     pub lite: rusqlite::Connection,
+    /// Present only for the PostgreSQL -> MySQL/MariaDB suites.
+    pub mysql: Option<mysql::Conn>,
 }
 
 pub fn pg_url() -> String {
@@ -73,8 +75,21 @@ impl Engines {
     pub fn open_with(pg_fixture: &str, lite_fixture: &str, case_sensitive_like: bool) -> Result<Engines, String> {
         let mut pg = Client::connect(&pg_url(), NoTls)
             .map_err(|e| format!("cannot reach PostgreSQL at `{}`: {e}", pg_url()))?;
-        pg.batch_execute("DROP SCHEMA IF EXISTS uni CASCADE; CREATE SCHEMA uni; SET search_path = uni;")
-            .map_err(|e| format!("pg schema: {e}"))?;
+        // One schema per test (named after its thread), so suites can run in parallel.
+        let schema: String = format!(
+            "uni_{}",
+            std::thread::current()
+                .name()
+                .unwrap_or("main")
+                .chars()
+                .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+                .collect::<String>()
+        );
+        let schema: String = schema.chars().take(60).collect();
+        pg.batch_execute(&format!(
+            "DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema}; SET search_path = {schema};"
+        ))
+        .map_err(|e| format!("pg schema: {e}"))?;
         pg.batch_execute(pg_fixture).map_err(|e| format!("pg fixture: {e}"))?;
         let lite = rusqlite::Connection::open_in_memory().map_err(|e| e.to_string())?;
         // LIKE case sensitivity is a connection setting on SQLite (allowance
@@ -83,7 +98,71 @@ impl Engines {
             lite.execute_batch("PRAGMA case_sensitive_like = ON;").map_err(|e| e.to_string())?;
         }
         lite.execute_batch(lite_fixture).map_err(|e| format!("sqlite fixture: {e}"))?;
-        Ok(Engines { pg, lite })
+        Ok(Engines { pg, lite, mysql: None })
+    }
+
+    /// PostgreSQL + a MySQL/MariaDB at `UNISQL_MYSQL_URL` (or `UNISQL_MARIADB_URL` when `maria`).
+    /// The MySQL database is recreated and loaded with `mysql_fixture`.
+    pub fn open_mysql(pg_fixture: &str, mysql_fixture: &str, maria: bool) -> Result<Engines, String> {
+        let mut e = Engines::open_with(pg_fixture, "", true)?;
+        let (var, default) = if maria {
+            ("UNISQL_MARIADB_URL", "mysql://root:unisql@127.0.0.1:53307/uni")
+        } else {
+            ("UNISQL_MYSQL_URL", "mysql://root:unisql@127.0.0.1:53306/uni")
+        };
+        let url = std::env::var(var).unwrap_or_else(|_| default.to_string());
+        let opts = mysql::Opts::from_url(&url).map_err(|e| format!("bad {var}: {e}"))?;
+        let mut conn = mysql::Conn::new(opts).map_err(|e| format!("cannot reach MySQL/MariaDB at `{url}`: {e}"))?;
+        use mysql::prelude::Queryable;
+        conn.query_drop("DROP DATABASE IF EXISTS uni_t").map_err(|e| e.to_string())?;
+        conn.query_drop("CREATE DATABASE uni_t").map_err(|e| e.to_string())?;
+        conn.query_drop("USE uni_t").map_err(|e| e.to_string())?;
+        for stmt in mysql_fixture.split(";\n").map(str::trim).filter(|s| !s.is_empty()) {
+            conn.query_drop(stmt).map_err(|e| format!("mysql fixture: {e}\n  in: {stmt}"))?;
+        }
+        e.mysql = Some(conn);
+        Ok(e)
+    }
+
+    pub fn mysql_version(&mut self) -> String {
+        use mysql::prelude::Queryable;
+        self.mysql
+            .as_mut()
+            .and_then(|c| c.query_first::<String, _>("SELECT VERSION()").ok().flatten())
+            .unwrap_or_default()
+    }
+
+    pub fn run_mysql(&mut self, sql: &str, params: &[Param], after: Option<&str>) -> Result<(Rows, Rows), String> {
+        use mysql::prelude::Queryable;
+        let conn = self.mysql.as_mut().ok_or("no MySQL connection")?;
+        let binds: Vec<mysql::Value> = params
+            .iter()
+            .map(|p| match p {
+                Param::Null => mysql::Value::NULL,
+                Param::Int(i) => mysql::Value::Int(*i),
+                Param::Real(r) => mysql::Value::Double(*r),
+                Param::Text(t) => mysql::Value::Bytes(t.as_bytes().to_vec()),
+            })
+            .collect();
+        let mut tx = conn.start_transaction(mysql::TxOpts::default()).map_err(|e| e.to_string())?;
+        let out = (|| {
+            let stmt = tx.prep(sql).map_err(|e| format!("prepare: {e}"))?;
+            let rs: Vec<mysql::Row> =
+                tx.exec(&stmt, binds.clone()).map_err(|e| format!("execute: {e}"))?;
+            let rows = rs.iter().map(mysql_row).collect::<Result<Rows, String>>()?;
+            let post = match after {
+                None => Vec::new(),
+                Some(q) => {
+                    // Binary protocol (prepared), so integers arrive as integers, not text.
+                    let st = tx.prep(q).map_err(|e| format!("after: {e}"))?;
+                    let rs: Vec<mysql::Row> = tx.exec(&st, ()).map_err(|e| format!("after: {e}"))?;
+                    rs.iter().map(mysql_row).collect::<Result<Rows, String>>()?
+                }
+            };
+            Ok((rows, post))
+        })();
+        let _ = tx.rollback();
+        out
     }
 
     pub fn sqlite_version(&self) -> String {
@@ -217,6 +296,38 @@ fn pg_row(r: &postgres::Row) -> Result<Vec<Cell>, String> {
     Ok(out)
 }
 
+fn mysql_row(r: &mysql::Row) -> Result<Vec<Cell>, String> {
+    use mysql::consts::ColumnType as T;
+    let mut out = Vec::new();
+    for (i, col) in r.columns_ref().iter().enumerate() {
+        let v: mysql::Value = r.as_ref(i).cloned().ok_or("missing column")?;
+        out.push(match v {
+            mysql::Value::NULL => Cell::Null,
+            mysql::Value::Int(x) => Cell::Int(x),
+            mysql::Value::UInt(x) => Cell::Int(x as i64),
+            mysql::Value::Float(x) => Cell::Real(x as f64),
+            mysql::Value::Double(x) => Cell::Real(x),
+            mysql::Value::Bytes(b) => {
+                let t = String::from_utf8_lossy(&b).into_owned();
+                match col.column_type() {
+                    // DECIMAL arrives as text: SUM(int) is `850`, AVG is `283.3333`. This is the
+                    // engine's value codec, the same kind of per-engine mapping as booleans.
+                    T::MYSQL_TYPE_NEWDECIMAL | T::MYSQL_TYPE_DECIMAL => {
+                        if t.contains('.') {
+                            Cell::Real(t.parse::<f64>().map_err(|e| format!("decimal `{t}`: {e}"))?)
+                        } else {
+                            Cell::Int(t.parse::<i64>().map_err(|e| format!("decimal `{t}`: {e}"))?)
+                        }
+                    }
+                    _ => Cell::Text(t),
+                }
+            }
+            other => Cell::Text(format!("{other:?}")),
+        });
+    }
+    Ok(out)
+}
+
 fn sqlite_row(r: &rusqlite::Row, n: usize) -> Result<Vec<Cell>, String> {
     let mut out = Vec::new();
     for i in 0..n {
@@ -283,6 +394,8 @@ pub struct Outcome {
     pub translated: Option<String>,
     /// Construct -> worst tier recorded by the report, when it translated.
     pub constructs: Vec<(String, Tier)>,
+    /// `(construct, reason)` when the case passed by being refused.
+    pub refusal: Option<(String, String)>,
     pub rows: usize,
 }
 
@@ -291,12 +404,14 @@ pub struct Outcome {
 pub enum Dir {
     PgToSqlite,
     SqliteToPg,
+    PgToMysql,
+    PgToMariadb,
 }
 
 impl Dir {
     pub fn source(self) -> &'static str {
         match self {
-            Dir::PgToSqlite => "postgres",
+            Dir::PgToSqlite | Dir::PgToMysql | Dir::PgToMariadb => "postgres",
             Dir::SqliteToPg => "sqlite",
         }
     }
@@ -304,6 +419,8 @@ impl Dir {
         match self {
             Dir::PgToSqlite => "sqlite",
             Dir::SqliteToPg => "postgres",
+            Dir::PgToMysql => "mysql",
+            Dir::PgToMariadb => "mariadb",
         }
     }
 }
@@ -313,8 +430,19 @@ impl Engines {
         match engine {
             "postgres" => self.run_pg(sql, params, after),
             "sqlite" => self.run_sqlite(sql, params, after),
+            "mysql" | "mariadb" => self.run_mysql(sql, params, after),
             other => Err(format!("no engine `{other}`")),
         }
+    }
+}
+
+/// Bind values for the target: numbered-placeholder targets use the caller's order; positional `?`
+/// targets (MySQL) bind in `param_order`, repeating a value used twice.
+fn target_params(target: &str, params: &[Param], order: &[u32]) -> Vec<Param> {
+    if matches!(target, "mysql" | "mariadb") {
+        order.iter().map(|n| params[(*n - 1) as usize].clone()).collect()
+    } else {
+        params.to_vec()
     }
 }
 
@@ -325,11 +453,12 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
 pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
     let (src, tgt) = (dir.source(), dir.target());
     let opts = c.allow.iter().fold(Options::default(), |o, a| o.with(*a));
-    let mut out = Outcome { name: c.name, passed: false, detail: String::new(), translated: None, constructs: vec![], rows: 0 };
+    let mut out = Outcome { name: c.name, passed: false, detail: String::new(), translated: None, constructs: vec![], refusal: None, rows: 0 };
     let tr = unisql::translate(c.sql, src, tgt, &opts);
     match (&c.expect, tr) {
         (Expect::Refused(construct), Err(unisql::Error::Untranslatable(u))) => {
             out.passed = u.construct == *construct || u.construct.starts_with(construct);
+            out.refusal = Some((u.construct.clone(), u.reason.clone()));
             out.detail = format!("refused `{}`: {}", u.construct, u.reason);
             if !out.passed {
                 out.detail = format!("expected refusal of `{construct}`, got {}", out.detail);
@@ -354,8 +483,9 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         }
         (Expect::Diverges, Ok(t)) => {
             out.translated = Some(t.sql.clone());
+            let tparams = target_params(tgt, &c.params, &t.param_order);
             let orig = e.run_on(src, c.sql, &c.params, c.after);
-            let other = e.run_on(tgt, &t.sql, &c.params, c.after);
+            let other = e.run_on(tgt, &t.sql, &tparams, c.after);
             match (orig, other) {
                 (Err(pe), Ok(l)) => {
                     out.passed = true;
@@ -389,9 +519,10 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
                     return out;
                 }
             };
+            let tparams = target_params(tgt, &c.params, &t.param_order);
             let orig = e.run_on(src, c.sql, &c.params, c.after);
             let ident = e.run_on(src, &self_text, &c.params, c.after);
-            let other = e.run_on(tgt, &t.sql, &c.params, c.after);
+            let other = e.run_on(tgt, &t.sql, &tparams, c.after);
             match (orig, ident, other) {
                 (Ok(o), Ok(i), Ok(l)) => {
                     out.rows = o.0.len();
@@ -429,4 +560,62 @@ pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
         }
     }
     m
+}
+
+/// Matrix rows in PersistAnt's agreed schema (DESIGN.md section 5.4):
+/// `subject_kind, subject, backend, version, how, evidence, note, from`.
+///
+/// - `how`: `native` (Exact), `emulated` (Emulated, and Conditional: a Conditional construct is a
+///   call-site allowance, never a native cell, so it is recorded conservatively as `emulated`),
+///   `absent` (refused).
+/// - `evidence`: `proven` only for a construct that translated and whose result matched on the real
+///   engines; a refusal is `declared` (the translator refuses; the engine's lack is not itself tested).
+pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str) -> String {
+    let mut rows: std::collections::BTreeMap<String, (String, String, String)> = Default::default();
+    let mut worse = |k: String, how: &str, ev: &str, note: String| {
+        let rank = |h: &str| match h {
+            "native" => 0,
+            "emulated" => 1,
+            _ => 2,
+        };
+        match rows.get(&k) {
+            Some((h, _, _)) if rank(h) >= rank(how) => {}
+            _ => {
+                rows.insert(k, (how.to_string(), ev.to_string(), note));
+            }
+        }
+    };
+    for o in outcomes.iter().filter(|o| o.passed) {
+        for (c, t) in &o.constructs {
+            let how = match t {
+                Tier::Exact => "native",
+                _ => "emulated",
+            };
+            let note = if matches!(t, Tier::Conditional) { "conditional: needs a named allowance" } else { "" };
+            worse(c.clone(), how, "proven", note.to_string());
+        }
+        // refusals are handled after the translated rows, below
+    }
+    // Refusals last: a construct with a proven translation keeps it and records the refused form.
+    for o in outcomes.iter().filter(|o| o.passed) {
+        if let Some((c, why)) = &o.refusal {
+            let why = why.replace(['\t', '\n'], " ");
+            match rows.get_mut(c) {
+                Some((_, _, note)) => {
+                    if !note.is_empty() {
+                        note.push_str("; ");
+                    }
+                    note.push_str(&format!("refused in one form: {why}"));
+                }
+                None => {
+                    rows.insert(c.clone(), ("absent".into(), "declared".into(), why));
+                }
+            }
+        }
+    }
+    let mut out = String::from("subject_kind\tsubject\tbackend\tversion\thow\tevidence\tnote\tfrom\n");
+    for (k, (how, ev, note)) in rows {
+        out.push_str(&format!("construct\t{k}\t{backend}\t{version}\t{how}\t{ev}\t{note}\t{from}\n"));
+    }
+    out
 }

@@ -81,15 +81,11 @@ impl Printer<'_> {
     fn order_items(&self, items: &[OrderItem], c: &mut Ctx) -> R<String> {
         let mut parts = Vec::new();
         for it in items {
-            let mut s = self.expr(&it.expr, c)?;
-            if it.desc {
-                s.push_str(" DESC");
-            }
+            let e = self.expr(&it.expr, c)?;
             // The reader fills in the source default, so `nulls_first` is always `Some` here; a
             // hand-built IR with `None` is treated as the PostgreSQL default.
             let nf = it.nulls_first.unwrap_or(it.desc);
-            s.push_str(&self.t.nulls_order(it.desc, nf, c)?);
-            parts.push(s);
+            parts.push(self.t.order_item(&e, it.desc, nf, c)?);
         }
         Ok(parts.join(", "))
     }
@@ -229,25 +225,19 @@ impl Printer<'_> {
             }
         }
         if let Some(oc) = &i.on_conflict {
-            let has_where = matches!(&oc.action, ConflictAction::DoUpdate { where_: Some(_), .. });
-            self.t.upsert(has_where, c)?;
-            out.push_str(" ON CONFLICT");
-            if !oc.target.is_empty() {
-                out.push_str(&format!(
-                    " ({})",
-                    oc.target.iter().map(|x| self.id(x)).collect::<Vec<_>>().join(", ")
-                ));
-            }
-            match &oc.action {
-                ConflictAction::DoNothing => out.push_str(" DO NOTHING"),
+            let cols: Vec<String> = oc.target.iter().map(|x| self.id(x)).collect();
+            let first = i.columns.first().map(|x| self.id(x)).unwrap_or_default();
+            let (do_nothing, set, where_) = match &oc.action {
+                ConflictAction::DoNothing => (true, String::new(), None),
                 ConflictAction::DoUpdate { set, where_ } => {
-                    out.push_str(" DO UPDATE SET ");
-                    out.push_str(&self.assignments(set, c)?);
-                    if let Some(w) = where_ {
-                        out.push_str(&format!(" WHERE {}", self.expr(w, c)?));
-                    }
+                    c.in_upsert = true;
+                    let s = self.assignments(set, c);
+                    let w = where_.as_ref().map(|w| self.expr(w, c)).transpose();
+                    c.in_upsert = false;
+                    (false, s?, w?)
                 }
-            }
+            };
+            out.push_str(&self.t.upsert_clause(&cols, do_nothing, &set, where_.as_deref(), &first, c)?);
         }
         out.push_str(&self.returning(&i.returning, c)?);
         Ok(out)
@@ -350,6 +340,9 @@ impl Printer<'_> {
 
     fn expr(&self, e: &Expr, c: &mut Ctx) -> R<String> {
         Ok(match e {
+            Expr::Column(n) if c.in_upsert && n.0.len() == 2 && n.0[0] == "excluded" => {
+                self.t.excluded_ref(&self.id(&n.0[1]))
+            }
             Expr::Column(n) => self.name(n),
             Expr::Literal(l) => match l {
                 Literal::Null => "NULL".to_string(),
@@ -421,8 +414,13 @@ impl Printer<'_> {
                     BinaryOp::Concat => "||",
                     BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
                 };
-                self.t.binary_op(*op, is_numeric(left) || is_numeric(right), c)?;
-                format!("{} {sym} {}", self.operand(left, c)?, self.operand(right, c)?)
+                let numeric = is_numeric(left) || is_numeric(right);
+                self.t.binary_op(*op, numeric, c)?;
+                let (l, r) = (self.operand(left, c)?, self.operand(right, c)?);
+                match self.t.binary_override(*op, &l, &r, numeric, c)? {
+                    Some(text) => text,
+                    None => format!("{l} {sym} {r}"),
+                }
             }
             Expr::IsNull { expr, negated } => {
                 format!("{} IS {}NULL", self.operand(expr, c)?, if *negated { "NOT " } else { "" })

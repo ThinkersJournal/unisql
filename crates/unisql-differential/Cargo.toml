@@ -12,6 +12,7 @@ unisql.workspace = true
 postgres = "0.19.14"
 rusqlite = { version = "0.40.2", features = ["bundled"] }
 serde_json = "1.0.154"
+mysql = "28.0.3"
 
 [[bin]]
 name = "corpus"

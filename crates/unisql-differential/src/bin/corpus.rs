@@ -19,16 +19,20 @@ const ALL: &[Allowance] = &[
     Allowance::TimestampArithmeticAsText,
     Allowance::JsonScalarAffinity,
     Allowance::JsonRepresentationAsText,
+    Allowance::IntegerDivisionAssumed,
+    Allowance::UpsertAnyUniqueKey,
+    Allowance::AggregateStringTruncation,
 ];
 
 fn main() {
     let all = ALL.iter().fold(Options::default(), |o, a| o.with(*a));
+    let target = std::env::args().nth(1).unwrap_or_else(|| "sqlite".to_string());
     for line in std::io::stdin().lock().lines() {
         let line = line.unwrap();
         let mut rec: serde_json::Value = serde_json::from_str(&line).unwrap();
         let sql = rec["sql"].as_str().unwrap_or("").to_string();
         let (status, detail, allowances): (&str, String, Vec<String>) =
-            match unisql::translate(&sql, "postgres", "sqlite", &all) {
+            match unisql::translate(&sql, "postgres", &target, &all) {
                 Ok(t) => {
                     let needed: Vec<String> = t
                         .report

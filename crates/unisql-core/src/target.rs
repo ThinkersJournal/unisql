@@ -13,11 +13,13 @@ pub struct Ctx<'a> {
     pub target: &'a str,
     pub max_param: u32,
     pub param_order: Vec<u32>,
+    /// True while printing the SET list of an upsert (so `excluded.c` can be spelled per target).
+    pub in_upsert: bool,
 }
 
 impl<'a> Ctx<'a> {
     pub fn new(opts: &'a Options, source: &'a str, target: &'a str) -> Self {
-        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new() }
+        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new(), in_upsert: false }
     }
 
     /// Record how the target gives `construct`. `Refused` and an *ungranted* `Conditional` return an
@@ -159,10 +161,6 @@ pub trait Target {
         ctx.note("returning", Tier::Exact, "", None)
     }
 
-    fn upsert(&self, has_where: bool, ctx: &mut Ctx) -> R<()> {
-        ctx.note(if has_where { "upsert_where" } else { "upsert" }, Tier::Exact, "", None)
-    }
-
     /// `LIMIT`/`OFFSET` tail; operands already printed. Returns `""` when neither is present.
     fn limit_offset(&self, limit: Option<&str>, offset: Option<&str>, ctx: &mut Ctx) -> R<String> {
         let mut s = String::new();
@@ -234,6 +232,54 @@ pub trait Target {
     fn json_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
         ctx.note(if text { "json_get_text" } else { "json_get" }, Tier::Exact, "", None)?;
         Ok(format!("{lhs} {} {rhs}", if text { "->>" } else { "->" }))
+    }
+
+    /// Replace the default `l OP r` text for a binary operator (for example `||` -> `CONCAT`,
+    /// `/` -> `DIV`). Operands are already printed. Return `None` for the default.
+    fn binary_override(&self, _op: BinaryOp, _l: &str, _r: &str, _numeric: bool, _ctx: &mut Ctx) -> R<Option<String>> {
+        Ok(None)
+    }
+
+    /// One ORDER BY item with its direction and NULL placement. `nulls_first` is explicit.
+    fn order_item(&self, expr: &str, desc: bool, nulls_first: bool, ctx: &mut Ctx) -> R<String> {
+        let mut s = expr.to_string();
+        if desc {
+            s.push_str(" DESC");
+        }
+        s.push_str(&self.nulls_order(desc, nulls_first, ctx)?);
+        Ok(s)
+    }
+
+    /// How the SET list of an upsert refers to the value that was proposed for insertion.
+    fn excluded_ref(&self, column_quoted: &str) -> String {
+        format!("EXCLUDED.{column_quoted}")
+    }
+
+    /// The whole `ON CONFLICT ..` clause. `set` and `where_` are printed; `columns` are quoted.
+    #[allow(clippy::too_many_arguments)]
+    fn upsert_clause(
+        &self,
+        conflict_cols: &[String],
+        do_nothing: bool,
+        set: &str,
+        where_: Option<&str>,
+        _first_insert_col: &str,
+        ctx: &mut Ctx,
+    ) -> R<String> {
+        ctx.note(if where_.is_some() { "upsert_where" } else { "upsert" }, Tier::Exact, "", None)?;
+        let mut s = String::from(" ON CONFLICT");
+        if !conflict_cols.is_empty() {
+            s.push_str(&format!(" ({})", conflict_cols.join(", ")));
+        }
+        if do_nothing {
+            s.push_str(" DO NOTHING");
+        } else {
+            s.push_str(&format!(" DO UPDATE SET {set}"));
+            if let Some(w) = where_ {
+                s.push_str(&format!(" WHERE {w}"));
+            }
+        }
+        Ok(s)
     }
 
     /// Hook for `[NOT] BETWEEN`. `numeric` is true when an operand is syntactically numeric (so no

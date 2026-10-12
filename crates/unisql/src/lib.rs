@@ -18,6 +18,7 @@ pub use unisql_core::ast;
 pub use unisql_core::{
     Allowance, Entry, Options, ReadError, Report, Target, Tier, Translation, Untranslatable,
 };
+use unisql_dialect_mysql::Mysql;
 use unisql_dialect_postgres::Postgres;
 use unisql_dialect_sqlite::Sqlite;
 
@@ -48,13 +49,14 @@ impl std::error::Error for Error {}
 
 /// Names of the dialects compiled in.
 pub fn dialects() -> &'static [&'static str] {
-    &["postgres", "sqlite"]
+    &["postgres", "sqlite", "mysql", "mariadb"]
 }
 
 fn read(sql: &str, source: &str) -> Result<unisql_core::Read, Error> {
     match source {
         "postgres" => unisql_dialect_postgres::read(sql).map_err(Error::Read),
         "sqlite" => unisql_dialect_sqlite::read(sql).map_err(Error::Read),
+        "mysql" | "mariadb" => Err(Error::NoReader(source.to_string())),
         other => Err(Error::UnknownDialect(other.to_string())),
     }
 }
@@ -63,6 +65,8 @@ fn target(name: &str) -> Result<Box<dyn Target>, Error> {
     match name {
         "postgres" => Ok(Box::new(Postgres)),
         "sqlite" => Ok(Box::new(Sqlite)),
+        "mysql" => Ok(Box::new(Mysql::mysql())),
+        "mariadb" => Ok(Box::new(Mysql::mariadb())),
         other => Err(Error::UnknownDialect(other.to_string())),
     }
 }

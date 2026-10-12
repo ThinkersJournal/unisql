@@ -55,6 +55,12 @@ pub enum Allowance {
     /// JSON `->` yields a JSON value on the source; on the target it is its text representation, so
     /// comparison is textual (whitespace and key order are not normalised).
     JsonRepresentationAsText,
+    /// `a / b` becomes integer division (`DIV`), valid only if both operands are integers.
+    IntegerDivisionAssumed,
+    /// An upsert fires on any unique key of the target, not only the stated conflict target.
+    UpsertAnyUniqueKey,
+    /// An aggregated string is silently truncated at a server setting (`group_concat_max_len`).
+    AggregateStringTruncation,
 }
 
 impl Allowance {
@@ -72,6 +78,9 @@ impl Allowance {
             Allowance::TimestampArithmeticAsText => "timestamp_arithmetic_as_text",
             Allowance::JsonScalarAffinity => "json_scalar_affinity",
             Allowance::JsonRepresentationAsText => "json_representation_as_text",
+            Allowance::IntegerDivisionAssumed => "integer_division_assumed",
+            Allowance::UpsertAnyUniqueKey => "upsert_any_unique_key",
+            Allowance::AggregateStringTruncation => "aggregate_string_truncation",
         }
     }
 }

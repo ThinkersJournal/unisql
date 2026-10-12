@@ -6,6 +6,7 @@ members = [
     "crates/unisql-sqlparser-adapter",
     "crates/unisql-dialect-postgres",
     "crates/unisql-dialect-sqlite",
+    "crates/unisql-dialect-mysql",
     "crates/unisql-differential",
 ]
 # measure/classify is a throwaway tool with its own manifest; keep it out of the workspace.
@@ -25,3 +26,4 @@ unisql-core = { path = "crates/unisql-core", version = "0.0.1" }
 unisql-sqlparser-adapter = { path = "crates/unisql-sqlparser-adapter", version = "0.0.1" }
 unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.0.1" }
 unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.0.1" }
+unisql-dialect-mysql = { path = "crates/unisql-dialect-mysql", version = "0.0.1" }

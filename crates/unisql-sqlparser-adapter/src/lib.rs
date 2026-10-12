@@ -853,6 +853,24 @@ fn expr(e: sp::Expr) -> R<Expr> {
             };
             Expr::Trim { expr: boxed(*x)?, side, chars }
         }
+        E::Substring { expr: x, substring_from, substring_for, special: _, shorthand: _ } => {
+            // `substring(x FROM a FOR b)` and `substring(x, a, b)` are `substr(x, a, b)`.
+            let mut args = vec![FunctionArg::Expr(expr(*x)?)];
+            match (substring_from, substring_for) {
+                (Some(f), Some(l)) => {
+                    args.push(FunctionArg::Expr(expr(*f)?));
+                    args.push(FunctionArg::Expr(expr(*l)?));
+                }
+                (Some(f), None) => args.push(FunctionArg::Expr(expr(*f)?)),
+                (None, Some(l)) => {
+                    // FOR without FROM starts at position 1.
+                    args.push(FunctionArg::Expr(Expr::Literal(Literal::Number("1".into()))));
+                    args.push(FunctionArg::Expr(expr(*l)?));
+                }
+                (None, None) => return no("substring_form", "SUBSTRING without FROM or FOR"),
+            }
+            Expr::Function(Function { name: "substr".into(), args, distinct: false, star: false, filter: None, over: None })
+        }
         E::Exists { subquery, negated } => Expr::Exists { query: Box::new(query(*subquery)?), negated },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
         E::Function(f) => function(f)?,

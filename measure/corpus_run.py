@@ -41,7 +41,8 @@ for c in ('auth', 'lightbulb', 'humboldt'):
             raw = HOLE.sub(rep, raw)
         jobs.append({'id': len(jobs), 'group': group(r), 'sha': r['sha'], 'file': r['file'], 'line': r['line'], 'sql': raw})
 
-p = subprocess.run([exe], input='\n'.join(json.dumps(j) for j in jobs) + '\n', capture_output=True, text=True)
+target = sys.argv_saved[3] if len(sys.argv_saved) > 3 else 'sqlite'
+p = subprocess.run([exe, target], input='\n'.join(json.dumps(j) for j in jobs) + '\n', capture_output=True, text=True)
 if p.returncode != 0:
     print(p.stderr[-2000:])
     raise SystemExit(1)
@@ -61,7 +62,7 @@ for r in res:
     for a in r['allowances']:
         al[g][a] += 1
 shas = sorted({(j['group'].split(':')[0], j['sha'][:8]) for j in jobs})
-print(f'## {label}: PostgreSQL -> SQLite, real translator, all allowances granted; SHAs {shas}')
+print(f'## {label}: PostgreSQL -> {target}, real translator, all allowances granted; SHAs {shas}')
 for g in sorted(by):
     c = by[g]
     print(f"  {g:34s} n={c['n']:4d} translated={c['translated']:4d} conditional={c['conditional']:4d} "

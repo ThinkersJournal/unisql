@@ -74,7 +74,7 @@ PASS insert_values                same
 PASS insert_returning             same
        -> INSERT INTO "kv" ("key", "value", "n") VALUES ('d', 'w', 9) RETURNING "key", "n"
 PASS upsert                       same
-       -> INSERT INTO "kv" ("key", "value", "n") VALUES ($1, $2, $3) ON CONFLICT ("key") DO UPDATE SET "value" = "excluded"."value", "n" = "excluded"."n"
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ($1, $2, $3) ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "n" = EXCLUDED."n"
 PASS upsert_do_nothing            same
        -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'x', 0) ON CONFLICT ("key") DO NOTHING
 PASS update_returning             same

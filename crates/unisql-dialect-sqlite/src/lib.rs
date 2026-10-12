@@ -369,13 +369,34 @@ impl Target for Sqlite {
         ctx.note("returning", Tier::Exact, "requires SQLite >= 3.35", None)
     }
 
-    fn upsert(&self, has_where: bool, ctx: &mut Ctx) -> R<()> {
+    fn upsert_clause(
+        &self,
+        conflict_cols: &[String],
+        do_nothing: bool,
+        set: &str,
+        where_: Option<&str>,
+        _first_insert_col: &str,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         ctx.note(
-            if has_where { "upsert_where" } else { "upsert" },
+            if where_.is_some() { "upsert_where" } else { "upsert" },
             Tier::Exact,
             "requires SQLite >= 3.24",
             None,
-        )
+        )?;
+        let mut s = String::from(" ON CONFLICT");
+        if !conflict_cols.is_empty() {
+            s.push_str(&format!(" ({})", conflict_cols.join(", ")));
+        }
+        if do_nothing {
+            s.push_str(" DO NOTHING");
+        } else {
+            s.push_str(&format!(" DO UPDATE SET {set}"));
+            if let Some(w) = where_ {
+                s.push_str(&format!(" WHERE {w}"));
+            }
+        }
+        Ok(s)
     }
 
     fn limit_offset(&self, limit: Option<&str>, offset: Option<&str>, ctx: &mut Ctx) -> R<String> {

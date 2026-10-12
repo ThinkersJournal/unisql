@@ -232,6 +232,12 @@ fn postgres_to_sqlite_differential() {
     }
     let dir = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs");
     let _ = std::fs::write(dir.join("DIFFERENTIAL-postgres-sqlite.txt"), &log);
+    // The SQLite dialect module's matrix: how SQLite gives each construct, from PostgreSQL text.
+    let v = litev.split_whitespace().next().unwrap_or("").to_string();
+    let _ = std::fs::write(
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../unisql-dialect-sqlite/matrix.tsv"),
+        unisql_differential::matrix_tsv(&outcomes, "sqlite", &v, "postgres"),
+    );
     println!("{log}");
     if !failed.is_empty() {
         for o in &failed {

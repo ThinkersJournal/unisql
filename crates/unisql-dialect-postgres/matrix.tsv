@@ -1,0 +1,35 @@
+subject_kind	subject	backend	version	how	evidence	note	from
+construct	cast	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	division	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	filter_clause	postgres	16.15	native	proven		sqlite
+construct	fn:coalesce	postgres	16.15	native	proven		sqlite
+construct	fn:count	postgres	16.15	native	proven		sqlite
+construct	fn:instr	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:length	postgres	16.15	native	proven		sqlite
+construct	fn:lower	postgres	16.15	native	proven		sqlite
+construct	fn:ltrim	postgres	16.15	native	proven		sqlite
+construct	fn:max	postgres	16.15	native	proven		sqlite
+construct	fn:min	postgres	16.15	native	proven		sqlite
+construct	fn:now	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	fn:random	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:rank	postgres	16.15	native	proven		sqlite
+construct	fn:replace	postgres	16.15	native	proven		sqlite
+construct	fn:strftime	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:string_agg	postgres	16.15	native	proven		sqlite
+construct	fn:sum	postgres	16.15	native	proven		sqlite
+construct	fn:typeof	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:upper	postgres	16.15	native	proven		sqlite
+construct	ilike	postgres	16.15	native	proven		sqlite
+construct	join:inner_join	postgres	16.15	native	proven		sqlite
+construct	join:left_join	postgres	16.15	native	proven		sqlite
+construct	like	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	limit	postgres	16.15	native	proven		sqlite
+construct	null_ordering	postgres	16.15	native	proven		sqlite
+construct	offset	postgres	16.15	native	proven		sqlite
+construct	order_by	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	ordered_comparison	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	recursive_cte	postgres	16.15	native	proven		sqlite
+construct	returning	postgres	16.15	native	proven		sqlite
+construct	trim	postgres	16.15	native	proven		sqlite
+construct	upsert	postgres	16.15	native	proven		sqlite
+construct	window_function	postgres	16.15	native	proven		sqlite

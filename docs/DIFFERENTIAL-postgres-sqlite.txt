@@ -88,13 +88,13 @@ PASS insert_values                same
 PASS insert_returning             same
        -> INSERT INTO "kv" ("key", "value", "n") VALUES ('d', 'w', 9) RETURNING "key", "n"
 PASS upsert_do_update             same
-       -> INSERT INTO "kv" ("key", "value", "n") VALUES (?1, ?2, ?3) ON CONFLICT ("key") DO UPDATE SET "value" = "excluded"."value", "n" = "excluded"."n"
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES (?1, ?2, ?3) ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "n" = EXCLUDED."n"
 PASS upsert_insert_path           same
-       -> INSERT INTO "kv" ("key", "value", "n") VALUES (?1, ?2, ?3) ON CONFLICT ("key") DO UPDATE SET "value" = "excluded"."value"
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES (?1, ?2, ?3) ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value"
 PASS upsert_do_nothing            same
        -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'ignored', 0) ON CONFLICT ("key") DO NOTHING
 PASS upsert_where                 same
-       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'w', 5) ON CONFLICT ("key") DO UPDATE SET "n" = "excluded"."n" WHERE "kv"."n" < "excluded"."n"
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'w', 5) ON CONFLICT ("key") DO UPDATE SET "n" = EXCLUDED."n" WHERE "kv"."n" < EXCLUDED."n"
 PASS update_returning             same
        -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo' RETURNING "id", "age"
 PASS update_subquery              same

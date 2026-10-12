@@ -1,0 +1,55 @@
+## C-mysql: PostgreSQL -> mysql, real translator, all allowances granted; SHAs [('auth', '4582a64f'), ('humboldt', 'b7cd95e7'), ('lightbulb', '34e5432b')]
+  auth:other(src/migrations/mod.rs)  n=   2 translated=   1 conditional=   1 refused=  0 not_in_ir=  0 syntax=  0 error=0
+  auth:postgres.rs                   n=  19 translated=   0 conditional=  18 refused=  0 not_in_ir=  1 syntax=  0 error=0
+  humboldt:src                       n= 339 translated=  24 conditional= 233 refused= 42 not_in_ir= 40 syntax=  0 error=0
+  humboldt:tests                     n= 970 translated= 214 conditional= 376 refused=338 not_in_ir= 42 syntax=  0 error=0
+  lightbulb:rust                     n=   8 translated=   2 conditional=   2 refused=  1 not_in_ir=  3 syntax=  0 error=0
+
+## auth:postgres.rs
+      1 not_in_ir  expression
+## humboldt:src
+     19 refused    returning
+     19 not_in_ir  data_type
+      9 not_in_ir  expression
+      6 not_in_ir  function_clause
+      3 refused    fn:to_regclass
+      3 refused    fn:convert_to
+      3 refused    fn:hashtext
+      2 refused    cast
+      2 refused    fn:forget_person
+      2 refused    upsert_where
+      2 not_in_ir  function_subquery
+      2 refused    fn:current_database
+      1 refused    fn:gen_random_uuid
+      1 refused    fn:hashtextextended
+      1 not_in_ir  bare_function
+      1 refused    fn:regexp_replace
+      1 refused    fn:set_config
+      1 refused    filter_clause
+      1 not_in_ir  derived_option
+      1 refused    fn:remove_sign_in_methods
+      1 not_in_ir  row_lock_option
+      1 not_in_ir  table_option
+## humboldt:tests
+    319 refused    returning
+     18 not_in_ir  expression
+     11 refused    fn:gen_random_uuid
+      7 not_in_ir  bare_function
+      6 not_in_ir  set_expr
+      4 not_in_ir  data_type
+      4 not_in_ir  function_clause
+      3 refused    cast
+      3 not_in_ir  table_option
+      3 refused    fn:people_backfill
+      1 refused    fn:current_database
+      1 refused    fn:substr
+## lightbulb:rust
+      2 not_in_ir  expression
+      1 not_in_ir  data_type
+      1 refused    fn:date_trunc
+
+## allowances needed auth:other(src/migrations/mod.rs) {'text_collation': 1}
+## allowances needed auth:postgres.rs {'text_collation': 15, 'now_as_text': 7, 'upsert_any_unique_key': 3, 'like_case_sensitivity_is_connection_setting': 1}
+## allowances needed humboldt:src {'text_collation': 218, 'ascii_only_case_folding': 25, 'now_as_text': 25, 'boolean_as_integer': 12, 'timestamp_arithmetic_as_text': 8, 'upsert_any_unique_key': 7, 'like_case_sensitivity_is_connection_setting': 5, 'lenient_cast': 3}
+## allowances needed humboldt:tests {'text_collation': 320, 'boolean_as_integer': 89, 'like_case_sensitivity_is_connection_setting': 23, 'now_as_text': 13, 'ascii_only_case_folding': 7, 'upsert_any_unique_key': 5, 'lenient_cast': 3}
+## allowances needed lightbulb:rust {'now_as_text': 1, 'text_collation': 1, 'upsert_any_unique_key': 1}

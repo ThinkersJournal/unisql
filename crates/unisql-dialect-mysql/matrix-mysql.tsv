@@ -1,0 +1,42 @@
+subject_kind	subject	backend	version	how	evidence	note	from
+construct	boolean_literal	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	cast	mysql	8.4.11	emulated	proven	conditional: needs a named allowance; refused in one form: CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
+construct	concat	mysql	8.4.11	native	proven		postgres
+construct	distinct_on	mysql	8.4.11	emulated	proven		postgres
+construct	division	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	division_integer	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	filter_clause	mysql	8.4.11	absent	declared	MySQL has no FILTER (WHERE ..) on aggregates	postgres
+construct	fn:avg	mysql	8.4.11	native	proven		postgres
+construct	fn:btrim	mysql	8.4.11	emulated	proven		postgres
+construct	fn:coalesce	mysql	8.4.11	native	proven		postgres
+construct	fn:concat	mysql	8.4.11	absent	declared	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
+construct	fn:count	mysql	8.4.11	native	proven		postgres
+construct	fn:length	mysql	8.4.11	emulated	proven		postgres
+construct	fn:ltrim	mysql	8.4.11	native	proven		postgres
+construct	fn:max	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	fn:min	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	fn:now	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	fn:nullif	mysql	8.4.11	native	proven		postgres
+construct	fn:replace	mysql	8.4.11	native	proven		postgres
+construct	fn:row_number	mysql	8.4.11	native	proven		postgres
+construct	fn:string_agg	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	fn:substr	mysql	8.4.11	absent	declared	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
+construct	fn:sum	mysql	8.4.11	native	proven		postgres
+construct	ilike	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	interval_arithmetic	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	join:inner_join	mysql	8.4.11	native	proven		postgres
+construct	join:left_join	mysql	8.4.11	native	proven		postgres
+construct	json_get_text	mysql	8.4.11	absent	declared	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
+construct	like	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	limit	mysql	8.4.11	native	proven		postgres
+construct	null_ordering	mysql	8.4.11	emulated	proven		postgres
+construct	offset	mysql	8.4.11	emulated	proven		postgres
+construct	order_by	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	recursive_cte	mysql	8.4.11	native	proven		postgres
+construct	returning	mysql	8.4.11	absent	declared	MySQL has no RETURNING clause	postgres
+construct	text_comparison	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	trim	mysql	8.4.11	native	proven	refused in one form: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
+construct	update_from	mysql	8.4.11	absent	declared		postgres
+construct	upsert	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
+construct	upsert_where	mysql	8.4.11	absent	declared	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
+construct	window_function	mysql	8.4.11	native	proven		postgres
