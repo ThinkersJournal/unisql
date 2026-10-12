@@ -65,3 +65,19 @@ tag was **not** byte-read in this pass; do that before shipping a binary that li
 |---|---|---|---|
 | SQLGlot | MIT | yes | keep MIT notice (Toby Mao) with derived portions; separate BSD-2 for `tests/fixtures/jsonpath` |
 | jOOQ | Apache-2.0 (commercial alternative for commercial integrations) | yes, open repo content | keep notices, state changes, carry NOTICE; verify which dialects are in the open repo |
+
+## The logo (`assets/Unicycle*.png`, `assets/Unicycle.svg`)
+
+Source given by the project owner 2026-10-12: https://openclipart.org/detail/221146/unicycle
+
+| | |
+|---|---|
+| Page read | 2026-10-12, saved at `measure/licences/openclipart-221146.html` (12,901 bytes) |
+| Title / artist | "Unicycle" by **GDJ**, uploaded June 21, 2015 (page text) |
+| Licence statement | The site footer states **"Openclipart is 100% Public Domain"** (page text); the licence link is the site's `/share` page, which was not separately read |
+| File check | `assets/Unicycle.svg` is **byte-identical** to `https://openclipart.org/download/221146/Unicycle.svg` (14,157 bytes, same SHA-256; the download is saved in `measure/licences/`) |
+| Not verified | The three PNGs were not byte-compared to anything; they look like renders of the SVG at 807x1406, 323x563 and 162x283. Their licence follows the SVG only if they are derived from it |
+
+Public-domain dedication needs no notice, but credit costs nothing: **Unicycle, by GDJ, Openclipart.**
+Whether the dedication on the site is valid for this specific upload is the site's claim, not
+something this record can establish.

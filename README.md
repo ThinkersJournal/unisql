@@ -55,5 +55,6 @@ allowance.
 
 ## Licence
 
-`MIT OR Apache-2.0` for the code. The logo in `assets/` was added by the project owner; its origin
-and licence are not yet recorded here (provenance to be confirmed before any release).
+`MIT OR Apache-2.0` for the code. The logo in `assets/` is "Unicycle" by GDJ from
+[Openclipart](https://openclipart.org/detail/221146/unicycle) (public domain per the site; see
+`docs/LICENCES.md`).
