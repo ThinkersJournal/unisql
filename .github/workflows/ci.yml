@@ -1,0 +1,143 @@
+# Same required-check shape as PersistAnt's CI (job names and action pins taken from PersistAnt
+# origin/main cc934e10), plus one job UniSQL needs: the differential suites against real engines.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build-test:
+    name: Build, test, clippy, fmt (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+          components: clippy, rustfmt
+
+      - name: cargo fmt --check
+        run: cargo fmt --all --check
+
+      - name: cargo clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+
+      - name: cargo build
+        run: cargo build --workspace --all-targets
+
+      # The differential crate's suites need real engines and fail (never skip) without them; they
+      # run in the `differential` job. Everything else runs here, on both operating systems.
+      - name: cargo test (everything that needs no engine)
+        run: cargo test --workspace --exclude unisql-differential --no-fail-fast
+
+  msrv:
+    name: MSRV (rust-version in Cargo.toml)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      # Read the floor from the manifest so the job cannot drift from it.
+      - name: Read rust-version
+        id: msrv
+        run: |
+          v=$(sed -n 's/^rust-version = "\(.*\)"/\1/p' Cargo.toml)
+          test -n "$v"
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Install Rust ${{ steps.msrv.outputs.version }}
+        uses: dtolnay/rust-toolchain@e2a55d2ffb04f378e9626c28d38b36d230d1e12f # master
+        with:
+          toolchain: ${{ steps.msrv.outputs.version }}
+
+      - name: cargo check on the MSRV toolchain
+        run: |
+          rustc --version
+          cargo check --workspace --all-targets
+
+  deny:
+    name: cargo deny (advisories, licences, bans, sources)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2
+        with:
+          command: check advisories licenses bans sources
+
+  spdx:
+    name: Every source file declares the licence
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Self-test the gate (it must be able to fail)
+        run: bash .github/spdx_gate.sh --self-test
+      - name: Every tracked source file declares the licence
+        run: bash .github/spdx_gate.sh
+
+  differential:
+    name: Differential suites against real PostgreSQL, SQLite, MySQL, MariaDB
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@686976e191b89faba57d3206551f0f330d8cb249 # stable
+        with:
+          toolchain: stable
+
+      # Engines are pinned by digest. The collations are the premise of the `text_collation`
+      # allowance: PostgreSQL's C locale and MySQL/MariaDB's utf8mb4_bin make text equality,
+      # ordering and LIKE agree. SQLite is bundled into the test binary (rusqlite).
+      - name: Start PostgreSQL 16, MySQL 8.4, MariaDB 11.4
+        run: |
+          docker run -d --name unisql-pg -e POSTGRES_PASSWORD=unisql \
+            -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" \
+            -p 127.0.0.1:55432:5432 \
+            postgres@sha256:ca0bd484cb98bf4b24eb1010e73fb3fcbd6714d240fbc1a10eea5b7dbecb641d
+          docker run -d --name unisql-mysql -e MYSQL_ROOT_PASSWORD=unisql -e MYSQL_DATABASE=uni \
+            -p 127.0.0.1:53306:3306 \
+            mysql@sha256:6ea90827b1100f8f2ae306a539f86d2c264a26ed435a2a9f75551dd5c3aeb242 \
+            --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+          docker run -d --name unisql-mariadb -e MARIADB_ROOT_PASSWORD=unisql -e MARIADB_DATABASE=uni \
+            -p 127.0.0.1:53307:3306 \
+            mariadb@sha256:1292844148b311e4ed4300022a996d39083f415a963e970cf47cad1b3b18e3a6 \
+            --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
+
+      - name: Wait until every engine accepts queries
+        run: |
+          wait_for() { # name, command...
+            local name=$1; shift
+            for i in $(seq 1 90); do
+              if "$@" >/dev/null 2>&1; then echo "$name ready after ${i}s"; return 0; fi
+              sleep 1
+            done
+            echo "$name never became ready" >&2
+            docker logs "$name" | tail -30 >&2
+            return 1
+          }
+          wait_for unisql-pg docker exec unisql-pg pg_isready -U postgres
+          wait_for unisql-mysql docker exec unisql-mysql mysql -uroot -punisql -e 'select 1'
+          wait_for unisql-mariadb docker exec unisql-mariadb mariadb -uroot -punisql -e 'select 1'
+          # pg_isready can answer before the init scripts finish; require a real query.
+          wait_for unisql-pg docker exec unisql-pg psql -U postgres -c 'select 1'
+
+      - name: cargo test -p unisql-differential
+        run: cargo test -p unisql-differential --no-fail-fast
+
+      # The suites regenerate the matrix files and run logs; they must match what is checked in.
+      - name: Checked-in matrix files and run logs are current
+        run: git diff --exit-code -- 'crates/*/matrix-*.tsv' 'docs/DIFFERENTIAL-*.txt'

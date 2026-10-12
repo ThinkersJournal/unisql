@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Differential harness. The only layer of UniSQL that tests *meaning* (DESIGN.md section 2.5).
 //!
 //! For each case: read the PostgreSQL text, translate it, run the **original on a real PostgreSQL**
@@ -77,7 +78,11 @@ impl Engines {
     /// As [`Engines::open`], choosing SQLite's `case_sensitive_like` setting. SQLite's default is OFF
     /// (case-insensitive `LIKE`); the PostgreSQL->SQLite suite turns it ON because PostgreSQL's
     /// `LIKE` is case-sensitive, and the SQLite->PostgreSQL suite leaves it at the default.
-    pub fn open_with(pg_fixture: &str, lite_fixture: &str, case_sensitive_like: bool) -> Result<Engines, String> {
+    pub fn open_with(
+        pg_fixture: &str,
+        lite_fixture: &str,
+        case_sensitive_like: bool,
+    ) -> Result<Engines, String> {
         let mut pg = Client::connect(&pg_url(), NoTls)
             .map_err(|e| format!("cannot reach PostgreSQL at `{}`: {e}", pg_url()))?;
         // One schema per test (named after its thread), so suites can run in parallel.
@@ -87,7 +92,11 @@ impl Engines {
                 .name()
                 .unwrap_or("main")
                 .chars()
-                .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+                .map(|c| if c.is_ascii_alphanumeric() {
+                    c.to_ascii_lowercase()
+                } else {
+                    '_'
+                })
                 .collect::<String>()
         );
         let schema: String = schema.chars().take(60).collect();
@@ -95,20 +104,31 @@ impl Engines {
             "DROP SCHEMA IF EXISTS {schema} CASCADE; CREATE SCHEMA {schema}; SET search_path = {schema};"
         ))
         .map_err(|e| format!("pg schema: {e}"))?;
-        pg.batch_execute(pg_fixture).map_err(|e| format!("pg fixture: {e}"))?;
+        pg.batch_execute(pg_fixture)
+            .map_err(|e| format!("pg fixture: {e}"))?;
         let lite = rusqlite::Connection::open_in_memory().map_err(|e| e.to_string())?;
         // LIKE case sensitivity is a connection setting on SQLite (allowance
         // `like_case_sensitivity_is_connection_setting`); PostgreSQL's LIKE is case-sensitive.
         if case_sensitive_like {
-            lite.execute_batch("PRAGMA case_sensitive_like = ON;").map_err(|e| e.to_string())?;
+            lite.execute_batch("PRAGMA case_sensitive_like = ON;")
+                .map_err(|e| e.to_string())?;
         }
-        lite.execute_batch(lite_fixture).map_err(|e| format!("sqlite fixture: {e}"))?;
-        Ok(Engines { pg, lite, mysql: None })
+        lite.execute_batch(lite_fixture)
+            .map_err(|e| format!("sqlite fixture: {e}"))?;
+        Ok(Engines {
+            pg,
+            lite,
+            mysql: None,
+        })
     }
 
     /// PostgreSQL + a MySQL/MariaDB at `UNISQL_MYSQL_URL` (or `UNISQL_MARIADB_URL` when `maria`).
     /// The MySQL database is recreated and loaded with `mysql_fixture`.
-    pub fn open_mysql(pg_fixture: &str, mysql_fixture: &str, maria: bool) -> Result<Engines, String> {
+    pub fn open_mysql(
+        pg_fixture: &str,
+        mysql_fixture: &str,
+        maria: bool,
+    ) -> Result<Engines, String> {
         Engines::open_mysql_with(pg_fixture, "", mysql_fixture, maria, true)
     }
 
@@ -123,13 +143,20 @@ impl Engines {
     ) -> Result<Engines, String> {
         let mut e = Engines::open_with(pg_fixture, lite_fixture, case_sensitive_like)?;
         let (var, default) = if maria {
-            ("UNISQL_MARIADB_URL", "mysql://root:unisql@127.0.0.1:53307/uni")
+            (
+                "UNISQL_MARIADB_URL",
+                "mysql://root:unisql@127.0.0.1:53307/uni",
+            )
         } else {
-            ("UNISQL_MYSQL_URL", "mysql://root:unisql@127.0.0.1:53306/uni")
+            (
+                "UNISQL_MYSQL_URL",
+                "mysql://root:unisql@127.0.0.1:53306/uni",
+            )
         };
         let url = std::env::var(var).unwrap_or_else(|_| default.to_string());
         let opts = mysql::Opts::from_url(&url).map_err(|e| format!("bad {var}: {e}"))?;
-        let mut conn = mysql::Conn::new(opts).map_err(|e| format!("cannot reach MySQL/MariaDB at `{url}`: {e}"))?;
+        let mut conn = mysql::Conn::new(opts)
+            .map_err(|e| format!("cannot reach MySQL/MariaDB at `{url}`: {e}"))?;
         use mysql::prelude::Queryable;
         // One database per test (named after its thread), so suites can run in parallel.
         let db: String = format!(
@@ -138,17 +165,29 @@ impl Engines {
                 .name()
                 .unwrap_or("main")
                 .chars()
-                .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '_' })
+                .map(|c| if c.is_ascii_alphanumeric() {
+                    c.to_ascii_lowercase()
+                } else {
+                    '_'
+                })
                 .collect::<String>()
         )
         .chars()
         .take(60)
         .collect();
-        conn.query_drop(format!("DROP DATABASE IF EXISTS {db}")).map_err(|e| e.to_string())?;
-        conn.query_drop(format!("CREATE DATABASE {db}")).map_err(|e| e.to_string())?;
-        conn.query_drop(format!("USE {db}")).map_err(|e| e.to_string())?;
-        for stmt in mysql_fixture.split(";\n").map(str::trim).filter(|s| !s.is_empty()) {
-            conn.query_drop(stmt).map_err(|e| format!("mysql fixture: {e}\n  in: {stmt}"))?;
+        conn.query_drop(format!("DROP DATABASE IF EXISTS {db}"))
+            .map_err(|e| e.to_string())?;
+        conn.query_drop(format!("CREATE DATABASE {db}"))
+            .map_err(|e| e.to_string())?;
+        conn.query_drop(format!("USE {db}"))
+            .map_err(|e| e.to_string())?;
+        for stmt in mysql_fixture
+            .split(";\n")
+            .map(str::trim)
+            .filter(|s| !s.is_empty())
+        {
+            conn.query_drop(stmt)
+                .map_err(|e| format!("mysql fixture: {e}\n  in: {stmt}"))?;
         }
         e.mysql = Some(conn);
         Ok(e)
@@ -158,11 +197,20 @@ impl Engines {
         use mysql::prelude::Queryable;
         self.mysql
             .as_mut()
-            .and_then(|c| c.query_first::<String, _>("SELECT VERSION()").ok().flatten())
+            .and_then(|c| {
+                c.query_first::<String, _>("SELECT VERSION()")
+                    .ok()
+                    .flatten()
+            })
             .unwrap_or_default()
     }
 
-    pub fn run_mysql(&mut self, sql: &str, params: &[Param], after: Option<&str>) -> Result<(Rows, Rows), String> {
+    pub fn run_mysql(
+        &mut self,
+        sql: &str,
+        params: &[Param],
+        after: Option<&str>,
+    ) -> Result<(Rows, Rows), String> {
         use mysql::prelude::Queryable;
         let conn = self.mysql.as_mut().ok_or("no MySQL connection")?;
         let binds: Vec<mysql::Value> = params
@@ -176,18 +224,22 @@ impl Engines {
                 Param::Text(t) => mysql::Value::Bytes(t.as_bytes().to_vec()),
             })
             .collect();
-        let mut tx = conn.start_transaction(mysql::TxOpts::default()).map_err(|e| e.to_string())?;
+        let mut tx = conn
+            .start_transaction(mysql::TxOpts::default())
+            .map_err(|e| e.to_string())?;
         let out = (|| {
             let stmt = tx.prep(sql).map_err(|e| format!("prepare: {e}"))?;
-            let rs: Vec<mysql::Row> =
-                tx.exec(&stmt, binds.clone()).map_err(|e| format!("execute: {e}"))?;
+            let rs: Vec<mysql::Row> = tx
+                .exec(&stmt, binds.clone())
+                .map_err(|e| format!("execute: {e}"))?;
             let rows = rs.iter().map(mysql_row).collect::<Result<Rows, String>>()?;
             let post = match after {
                 None => Vec::new(),
                 Some(q) => {
                     // Binary protocol (prepared), so integers arrive as integers, not text.
                     let st = tx.prep(q).map_err(|e| format!("after: {e}"))?;
-                    let rs: Vec<mysql::Row> = tx.exec(&st, ()).map_err(|e| format!("after: {e}"))?;
+                    let rs: Vec<mysql::Row> =
+                        tx.exec(&st, ()).map_err(|e| format!("after: {e}"))?;
                     rs.iter().map(mysql_row).collect::<Result<Rows, String>>()?
                 }
             };
@@ -213,14 +265,20 @@ impl Engines {
     /// Run on PostgreSQL inside a transaction that is always rolled back; the statement's own result
     /// rows (SELECT or RETURNING) are returned, then `after` is run (still inside the transaction)
     /// to observe the resulting table state.
-    pub fn run_pg(&mut self, sql: &str, params: &[Param], after: Option<&str>) -> Result<(Rows, Rows), String> {
+    pub fn run_pg(
+        &mut self,
+        sql: &str,
+        params: &[Param],
+        after: Option<&str>,
+    ) -> Result<(Rows, Rows), String> {
         let mut tx = self.pg.transaction().map_err(|e| e.to_string())?;
         let out = (|| {
             let stmt = tx.prepare(sql).map_err(|e| format!("prepare: {e}"))?;
             let owned = pg_params(stmt.params(), params)?;
             let refs: Vec<&(dyn ToSql + Sync)> = owned.iter().map(|b| b.as_ref()).collect();
             let rows = if stmt.columns().is_empty() {
-                tx.execute(&stmt, &refs).map_err(|e| format!("execute: {e}"))?;
+                tx.execute(&stmt, &refs)
+                    .map_err(|e| format!("execute: {e}"))?;
                 Vec::new()
             } else {
                 let rs = tx.query(&stmt, &refs).map_err(|e| format!("query: {e}"))?;
@@ -239,7 +297,12 @@ impl Engines {
         out
     }
 
-    pub fn run_sqlite(&mut self, sql: &str, params: &[Param], after: Option<&str>) -> Result<(Rows, Rows), String> {
+    pub fn run_sqlite(
+        &mut self,
+        sql: &str,
+        params: &[Param],
+        after: Option<&str>,
+    ) -> Result<(Rows, Rows), String> {
         let tx = self.lite.transaction().map_err(|e| e.to_string())?;
         let out = (|| {
             let mut stmt = tx.prepare(sql).map_err(|e| format!("prepare: {e}"))?;
@@ -256,11 +319,14 @@ impl Engines {
                 .collect();
             let ncols = stmt.column_count();
             let rows = if ncols == 0 {
-                stmt.execute(rusqlite::params_from_iter(binds.iter())).map_err(|e| format!("execute: {e}"))?;
+                stmt.execute(rusqlite::params_from_iter(binds.iter()))
+                    .map_err(|e| format!("execute: {e}"))?;
                 Vec::new()
             } else {
                 let mut out = Vec::new();
-                let mut q = stmt.query(rusqlite::params_from_iter(binds.iter())).map_err(|e| format!("query: {e}"))?;
+                let mut q = stmt
+                    .query(rusqlite::params_from_iter(binds.iter()))
+                    .map_err(|e| format!("query: {e}"))?;
                 while let Some(r) = q.next().map_err(|e| format!("row: {e}"))? {
                     out.push(sqlite_row(r, ncols)?);
                 }
@@ -288,7 +354,11 @@ impl Engines {
 
 fn pg_params(types: &[Type], params: &[Param]) -> Result<Vec<Box<dyn ToSql + Sync>>, String> {
     if types.len() != params.len() {
-        return Err(format!("statement has {} parameters, case supplies {}", types.len(), params.len()));
+        return Err(format!(
+            "statement has {} parameters, case supplies {}",
+            types.len(),
+            params.len()
+        ));
     }
     let mut out: Vec<Box<dyn ToSql + Sync>> = Vec::new();
     for (t, p) in types.iter().zip(params) {
@@ -302,7 +372,9 @@ fn pg_params(types: &[Type], params: &[Param]) -> Result<Vec<Box<dyn ToSql + Syn
             (Type::FLOAT8, Param::Real(r)) => Box::new(*r),
             (Type::FLOAT8, Param::Int(i)) => Box::new(*i as f64),
             (Type::FLOAT8, Param::Null) => Box::new(None::<f64>),
-            (Type::INT4_ARRAY, Param::IntArray(v)) => Box::new(v.iter().map(|x| *x as i32).collect::<Vec<i32>>()),
+            (Type::INT4_ARRAY, Param::IntArray(v)) => {
+                Box::new(v.iter().map(|x| *x as i32).collect::<Vec<i32>>())
+            }
             (Type::INT8_ARRAY, Param::IntArray(v)) => Box::new(v.clone()),
             (Type::TEXT_ARRAY | Type::VARCHAR_ARRAY, Param::TextArray(v)) => {
                 Box::new(v.iter().map(|s| s.to_string()).collect::<Vec<String>>())
@@ -310,7 +382,9 @@ fn pg_params(types: &[Type], params: &[Param]) -> Result<Vec<Box<dyn ToSql + Syn
             (Type::INT4_ARRAY, Param::Null) => Box::new(None::<Vec<i32>>),
             (Type::INT8_ARRAY, Param::Null) => Box::new(None::<Vec<i64>>),
             (Type::TEXT_ARRAY | Type::VARCHAR_ARRAY, Param::Null) => Box::new(None::<Vec<String>>),
-            (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Text(s)) => Box::new((*s).to_string()),
+            (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Text(s)) => {
+                Box::new((*s).to_string())
+            }
             (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Null) => Box::new(None::<String>),
             (t, p) => return Err(format!("harness cannot bind {p:?} to PostgreSQL type {t}")),
         };
@@ -330,8 +404,14 @@ fn pg_row(r: &postgres::Row) -> Result<Vec<Cell>, String> {
             Type::FLOAT4 => r.get::<_, Option<f32>>(i).map(|v| Cell::Real(v as f64)),
             Type::FLOAT8 => r.get::<_, Option<f64>>(i).map(Cell::Real),
             Type::BOOL => r.get::<_, Option<bool>>(i).map(|v| Cell::Int(v as i64)),
-            Type::TEXT | Type::VARCHAR | Type::NAME | Type::BPCHAR => r.get::<_, Option<String>>(i).map(Cell::Text),
-            ref other => return Err(format!("harness cannot read PostgreSQL type {other} (cast it in the statement)")),
+            Type::TEXT | Type::VARCHAR | Type::NAME | Type::BPCHAR => {
+                r.get::<_, Option<String>>(i).map(Cell::Text)
+            }
+            ref other => {
+                return Err(format!(
+                    "harness cannot read PostgreSQL type {other} (cast it in the statement)"
+                ));
+            }
         };
         out.push(cell.unwrap_or(Cell::Null));
     }
@@ -356,9 +436,15 @@ fn mysql_row(r: &mysql::Row) -> Result<Vec<Cell>, String> {
                     // engine's value codec, the same kind of per-engine mapping as booleans.
                     T::MYSQL_TYPE_NEWDECIMAL | T::MYSQL_TYPE_DECIMAL => {
                         if t.contains('.') {
-                            Cell::Real(t.parse::<f64>().map_err(|e| format!("decimal `{t}`: {e}"))?)
+                            Cell::Real(
+                                t.parse::<f64>()
+                                    .map_err(|e| format!("decimal `{t}`: {e}"))?,
+                            )
                         } else {
-                            Cell::Int(t.parse::<i64>().map_err(|e| format!("decimal `{t}`: {e}"))?)
+                            Cell::Int(
+                                t.parse::<i64>()
+                                    .map_err(|e| format!("decimal `{t}`: {e}"))?,
+                            )
                         }
                     }
                     _ => Cell::Text(t),
@@ -396,7 +482,9 @@ pub fn rows_equal(a: &Rows, b: &Rows, ordered: bool) -> bool {
         a.sort_by_key(key);
         b.sort_by_key(key);
     }
-    a.iter().zip(&b).all(|(x, y)| x.len() == y.len() && x.iter().zip(y).all(|(p, q)| cells_equal(p, q)))
+    a.iter()
+        .zip(&b)
+        .all(|(x, y)| x.len() == y.len() && x.iter().zip(y).all(|(p, q)| cells_equal(p, q)))
 }
 
 /// What a case expects of the translation.
@@ -477,7 +565,13 @@ impl Dir {
 }
 
 impl Engines {
-    fn run_on(&mut self, engine: &str, sql: &str, params: &[Param], after: Option<&str>) -> Result<(Rows, Rows), String> {
+    fn run_on(
+        &mut self,
+        engine: &str,
+        sql: &str,
+        params: &[Param],
+        after: Option<&str>,
+    ) -> Result<(Rows, Rows), String> {
         match engine {
             "postgres" => self.run_pg(sql, params, after),
             "sqlite" => self.run_sqlite(sql, params, after),
@@ -489,13 +583,22 @@ impl Engines {
 
 /// Bind values for the target: numbered-placeholder targets use the caller's order; positional `?`
 /// targets (MySQL) bind in `param_order`, repeating a value used twice.
-fn target_params(target: &str, params: &[Param], order: &[u32], bindings: &[ParamBinding]) -> Vec<Param> {
+fn target_params(
+    target: &str,
+    params: &[Param],
+    order: &[u32],
+    bindings: &[ParamBinding],
+) -> Vec<Param> {
     let conv = |n: usize| -> Param {
         let p = &params[n];
         match (p, bindings.get(n).copied().unwrap_or(ParamBinding::Scalar)) {
-            (Param::IntArray(v), ParamBinding::JsonArrayText) => {
-                Param::Json(format!("[{}]", v.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(",")))
-            }
+            (Param::IntArray(v), ParamBinding::JsonArrayText) => Param::Json(format!(
+                "[{}]",
+                v.iter()
+                    .map(|x| x.to_string())
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )),
             (Param::TextArray(v), ParamBinding::JsonArrayText) => Param::Json(format!(
                 "[{}]",
                 v.iter()
@@ -520,7 +623,16 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
 pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
     let (src, tgt) = (dir.source(), dir.target());
     let opts = c.allow.iter().fold(Options::default(), |o, a| o.with(*a));
-    let mut out = Outcome { name: c.name, passed: false, detail: String::new(), translated: None, constructs: vec![], allowances: vec![], refusal: None, rows: 0 };
+    let mut out = Outcome {
+        name: c.name,
+        passed: false,
+        detail: String::new(),
+        translated: None,
+        constructs: vec![],
+        allowances: vec![],
+        refusal: None,
+        rows: 0,
+    };
     let tr = unisql::translate(c.sql, src, tgt, &opts);
     match (&c.expect, tr) {
         (Expect::Refused(construct), Err(unisql::Error::Untranslatable(u))) => {
@@ -541,10 +653,19 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
                     out.passed = true;
                     out.detail = format!("parser gap (the engine accepts it): {msg}");
                 }
-                Err(pe) => out.detail = format!("the engine also rejects it, so this is not a parser gap: {pe}"),
+                Err(pe) => {
+                    out.detail =
+                        format!("the engine also rejects it, so this is not a parser gap: {pe}")
+                }
             }
         }
-        (Expect::NotInIr(construct), Err(unisql::Error::Read(unisql::ReadError::NotInIr { construct: got, detail }))) => {
+        (
+            Expect::NotInIr(construct),
+            Err(unisql::Error::Read(unisql::ReadError::NotInIr {
+                construct: got,
+                detail,
+            })),
+        ) => {
             out.passed = got == *construct;
             out.detail = format!("not in IR `{got}`: {detail}");
         }
@@ -562,22 +683,43 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
                     out.passed = true;
                     out.detail = format!("diverges: {src} returns {:?}; {tgt} errors ({le})", o.0);
                 }
-                (Ok(o), Ok(l)) if !rows_equal(&o.0, &l.0, c.ordered) || !rows_equal(&o.1, &l.1, c.ordered) => {
+                (Ok(o), Ok(l))
+                    if !rows_equal(&o.0, &l.0, c.ordered) || !rows_equal(&o.1, &l.1, c.ordered) =>
+                {
                     out.passed = true;
                     out.detail = format!("diverges: {src} {:?} vs {tgt} {:?}", o.0, l.0);
                 }
-                (o, l) => out.detail = format!("expected a divergence but engines agree/failed alike: {:?} / {:?}", o.map(|x| x.0), l.map(|x| x.0)),
+                (o, l) => {
+                    out.detail = format!(
+                        "expected a divergence but engines agree/failed alike: {:?} / {:?}",
+                        o.map(|x| x.0),
+                        l.map(|x| x.0)
+                    )
+                }
             }
         }
-        (Expect::Refused(_) | Expect::NeedsAllowance(_) | Expect::NotInIr(_) | Expect::ParserGap, Ok(t)) => {
+        (
+            Expect::Refused(_) | Expect::NeedsAllowance(_) | Expect::NotInIr(_) | Expect::ParserGap,
+            Ok(t),
+        ) => {
             out.detail = format!("expected a refusal but got text: {}", t.sql);
             out.translated = Some(t.sql);
         }
         (_, Err(err)) => out.detail = format!("translate failed: {err}"),
         (Expect::Same, Ok(t)) => {
             out.translated = Some(t.sql.clone());
-            out.constructs = t.report.entries.iter().map(|x| (x.construct.clone(), x.tier)).collect();
-            out.allowances = t.report.entries.iter().filter_map(|x| x.allowance.map(|a| (x.construct.clone(), a))).collect();
+            out.constructs = t
+                .report
+                .entries
+                .iter()
+                .map(|x| (x.construct.clone(), x.tier))
+                .collect();
+            out.allowances = t
+                .report
+                .entries
+                .iter()
+                .filter_map(|x| x.allowance.map(|a| (x.construct.clone(), a)))
+                .collect();
             // Identity check: source -> source must give the same results as the original.
             let self_t = unisql::translate(c.sql, src, src, &Options::default());
             let self_text = match self_t {
@@ -595,24 +737,39 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
                 (Ok(o), Ok(i), Ok(l)) => {
                     out.rows = o.0.len();
                     if !rows_equal(&o.0, &i.0, c.ordered) || !rows_equal(&o.1, &i.1, c.ordered) {
-                        out.detail = format!("{src}->{src} differs from original; text: {self_text}");
+                        out.detail =
+                            format!("{src}->{src} differs from original; text: {self_text}");
                     } else if !rows_equal(&o.0, &l.0, c.ordered) {
-                        out.detail = format!("RESULT DIFFERS
+                        out.detail = format!(
+                            "RESULT DIFFERS
   {src}: {:?}
   {tgt}: {:?}
-  sql: {}", o.0, l.0, t.sql);
+  sql: {}",
+                            o.0, l.0, t.sql
+                        );
                     } else if !rows_equal(&o.1, &l.1, c.ordered) {
-                        out.detail = format!("STATE DIFFERS
+                        out.detail = format!(
+                            "STATE DIFFERS
   {src}: {:?}
   {tgt}: {:?}
-  sql: {}", o.1, l.1, t.sql);
+  sql: {}",
+                            o.1, l.1, t.sql
+                        );
                     } else {
                         out.passed = true;
                         out.detail = "same".into();
                     }
                 }
-                (o, i, l) => out.detail = format!("engine error: {src}={:?} {src}->{src}={:?} {tgt}={:?}
-  sql: {}", o.err(), i.err(), l.err(), t.sql),
+                (o, i, l) => {
+                    out.detail = format!(
+                        "engine error: {src}={:?} {src}->{src}={:?} {tgt}={:?}
+  sql: {}",
+                        o.err(),
+                        i.err(),
+                        l.err(),
+                        t.sql
+                    )
+                }
             }
         }
     }
@@ -622,7 +779,10 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
 /// The fixture constructs a matrix: distinct construct ids across passing cases.
 pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
     let mut m = BTreeSet::new();
-    for o in outcomes.iter().filter(|o| o.passed && o.translated.is_some()) {
+    for o in outcomes
+        .iter()
+        .filter(|o| o.passed && o.translated.is_some())
+    {
         for (c, t) in &o.constructs {
             m.insert((c.clone(), t.name()));
         }
@@ -657,7 +817,9 @@ pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str
                 Tier::Emulated => "emulated",
                 _ => "conditional",
             };
-            let e = proven.entry(c.clone()).or_insert((how.to_string(), BTreeSet::new()));
+            let e = proven
+                .entry(c.clone())
+                .or_insert((how.to_string(), BTreeSet::new()));
             if rank(how) > rank(&e.0) {
                 e.0 = how.to_string();
             }
@@ -671,12 +833,17 @@ pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str
     let mut refused: BTreeMap<String, String> = BTreeMap::new();
     for o in outcomes.iter().filter(|o| o.passed) {
         if let Some((c, why)) = &o.refusal {
-            refused.entry(c.clone()).or_insert_with(|| why.replace(['\t', '\n'], " "));
+            refused
+                .entry(c.clone())
+                .or_insert_with(|| why.replace(['\t', '\n'], " "));
         }
     }
-    let mut out = String::from("subject_kind\tsubject\tbackend\tversion\thow\tevidence\tnote\tfrom\n");
+    let mut out =
+        String::from("subject_kind\tsubject\tbackend\tversion\thow\tevidence\tnote\tfrom\n");
     let mut row = |subject: &str, how: &str, ev: &str, note: &str| {
-        out.push_str(&format!("construct\t{subject}\t{backend}\t{version}\t{how}\t{ev}\t{note}\t{from}\n"));
+        out.push_str(&format!(
+            "construct\t{subject}\t{backend}\t{version}\t{how}\t{ev}\t{note}\t{from}\n"
+        ));
     };
     let mut subjects: BTreeSet<String> = proven.keys().cloned().collect();
     subjects.extend(refused.keys().cloned());
@@ -686,7 +853,10 @@ pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str
                 let note = if al.is_empty() {
                     String::new()
                 } else {
-                    format!("allowance={}", al.iter().copied().collect::<Vec<_>>().join(","))
+                    format!(
+                        "allowance={}",
+                        al.iter().copied().collect::<Vec<_>>().join(",")
+                    )
                 };
                 row(&s, how, "proven", &note);
                 if let Some(why) = r {

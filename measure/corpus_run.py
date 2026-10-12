@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
 """Feed the DML statements of the three corpora to the real translator and summarise.
 
 usage: python3 -I corpus_run.py <corpus-binary> [label]

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Throwaway measurement tool (design phase). Reads JSON lines produced by `extract.py` on stdin,
 //! parses each SQL text as PostgreSQL with `sqlparser`, and tags every construct with a proposed
 //! tier for a SQLite target. It emits no SQL. Tiers are a *rule-table proposal*, not a result of

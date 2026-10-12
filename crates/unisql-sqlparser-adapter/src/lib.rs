@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! sqlparser adapter: text -> IR for the dialects that sqlparser can parse. The per-dialect
 //! differences are the [`Rules`]; no parser type escapes this crate. **Anything the IR cannot represent is `ReadError::NotInIr`, never a pass-through.**
 //!
@@ -83,7 +84,11 @@ fn add_note(construct: &str, note: &str, allowance: Allowance) {
     CX.with(|c| {
         let mut b = c.borrow_mut();
         let cx = b.as_mut().expect("reader context");
-        let n = ReadNote { construct: construct.into(), note: note.into(), allowance };
+        let n = ReadNote {
+            construct: construct.into(),
+            note: note.into(),
+            allowance,
+        };
         if !cx.notes.contains(&n) {
             cx.notes.push(n);
         }
@@ -119,22 +124,39 @@ fn bump_param(explicit: Option<u32>, name: Option<&str>) -> u32 {
 type R<T> = Result<T, ReadError>;
 
 fn no<T>(construct: &str, detail: &str) -> R<T> {
-    Err(ReadError::NotInIr { construct: construct.to_string(), detail: detail.to_string() })
+    Err(ReadError::NotInIr {
+        construct: construct.to_string(),
+        detail: detail.to_string(),
+    })
 }
 
 /// Read exactly one statement written in the dialect described by `rules`.
 pub fn read(sql: &str, rules: &'static Rules) -> R<Read> {
-    CX.with(|c| *c.borrow_mut() = Some(Cx { rules, max_param: 0, names: vec![], notes: vec![] }));
+    CX.with(|c| {
+        *c.borrow_mut() = Some(Cx {
+            rules,
+            max_param: 0,
+            names: vec![],
+            notes: vec![],
+        })
+    });
     let out = (|| {
         let d = (rules.dialect)();
-        let mut stmts = Parser::parse_sql(d.as_ref(), sql).map_err(|e| ReadError::Syntax(e.to_string()))?;
+        let mut stmts =
+            Parser::parse_sql(d.as_ref(), sql).map_err(|e| ReadError::Syntax(e.to_string()))?;
         if stmts.len() != 1 {
-            return no("multiple_statements", &format!("expected one statement, found {}", stmts.len()));
+            return no(
+                "multiple_statements",
+                &format!("expected one statement, found {}", stmts.len()),
+            );
         }
         statement(stmts.remove(0))
     })();
     let cx = CX.with(|c| c.borrow_mut().take()).expect("reader context");
-    out.map(|stmt| Read { stmt, notes: cx.notes })
+    out.map(|stmt| Read {
+        stmt,
+        notes: cx.notes,
+    })
 }
 
 fn statement(s: sp::Statement) -> R<Statement> {
@@ -143,19 +165,32 @@ fn statement(s: sp::Statement) -> R<Statement> {
         sp::Statement::Insert(i) => insert(i),
         sp::Statement::Update(u) => update(u),
         sp::Statement::Delete(d) => delete(d),
-        other => no("statement", &format!("{} is not a DML statement the first slice reads", head(&other))),
+        other => no(
+            "statement",
+            &format!(
+                "{} is not a DML statement the first slice reads",
+                head(&other)
+            ),
+        ),
     }
 }
 
 fn head(x: &impl std::fmt::Debug) -> String {
     let s = format!("{x:?}");
-    s.split(|c: char| !c.is_alphanumeric() && c != '_').next().unwrap_or("").to_string()
+    s.split(|c: char| !c.is_alphanumeric() && c != '_')
+        .next()
+        .unwrap_or("")
+        .to_string()
 }
 
 /// Identifier folding: unquoted identifiers fold to lower case; quoted ones are exact, except where
 /// the dialect treats quoted names case-insensitively too (SQLite).
 fn ident(i: &sp::Ident) -> String {
-    if i.quote_style.is_some() && !rules().fold_quoted { i.value.clone() } else { i.value.to_lowercase() }
+    if i.quote_style.is_some() && !rules().fold_quoted {
+        i.value.clone()
+    } else {
+        i.value.to_lowercase()
+    }
 }
 
 fn object_name(n: &sp::ObjectName) -> R<Name> {
@@ -172,7 +207,10 @@ fn object_name(n: &sp::ObjectName) -> R<Name> {
 fn single_name(n: &sp::ObjectName) -> R<String> {
     let nm = object_name(n)?;
     if nm.0.len() != 1 {
-        return no("qualified_column_target", "expected an unqualified column name");
+        return no(
+            "qualified_column_target",
+            "expected an unqualified column name",
+        );
     }
     Ok(nm.0.into_iter().next().unwrap())
 }
@@ -193,16 +231,30 @@ fn query(q: sp::Query) -> R<Query> {
     if fetch.is_some() {
         return no("fetch_first", "FETCH FIRST is not in the IR (use LIMIT)");
     }
-    if for_clause.is_some() || settings.is_some() || format_clause.is_some() || !pipe_operators.is_empty() {
+    if for_clause.is_some()
+        || settings.is_some()
+        || format_clause.is_some()
+        || !pipe_operators.is_empty()
+    {
         return no("query_clause", "FOR/SETTINGS/FORMAT/pipe operators");
     }
     let mut ctes = Vec::new();
     let mut recursive = false;
     if let Some(w) = with {
-        let sp::With { with_token: _, recursive: rec, cte_tables } = w;
+        let sp::With {
+            with_token: _,
+            recursive: rec,
+            cte_tables,
+        } = w;
         recursive = rec;
         for c in cte_tables {
-            let sp::Cte { alias, query: cq, from, materialized, closing_paren_token: _ } = c;
+            let sp::Cte {
+                alias,
+                query: cq,
+                from,
+                materialized,
+                closing_paren_token: _,
+            } = c;
             if from.is_some() || materialized.is_some() {
                 return no("cte_option", "MATERIALIZED / FROM in a CTE");
             }
@@ -213,7 +265,11 @@ fn query(q: sp::Query) -> R<Query> {
                 }
                 columns.push(ident(&col.name));
             }
-            ctes.push(Cte { name: ident(&alias.name), columns, query: query(*cq)? });
+            ctes.push(Cte {
+                name: ident(&alias.name),
+                columns,
+                query: query(*cq)?,
+            });
         }
     }
     let mut body = set_expr(*body)?;
@@ -221,9 +277,16 @@ fn query(q: sp::Query) -> R<Query> {
     match locks.len() {
         0 => {}
         1 => {
-            let sp::LockClause { lock_type, of, nonblock } = locks.into_iter().next().unwrap();
+            let sp::LockClause {
+                lock_type,
+                of,
+                nonblock,
+            } = locks.into_iter().next().unwrap();
             if of.is_some() || nonblock.is_some() {
-                return no("row_lock_option", "FOR UPDATE OF / NOWAIT / SKIP LOCKED is not in the IR yet");
+                return no(
+                    "row_lock_option",
+                    "FOR UPDATE OF / NOWAIT / SKIP LOCKED is not in the IR yet",
+                );
             }
             lock = Some(match lock_type {
                 sp::LockType::Update => RowLock::Update,
@@ -256,7 +319,11 @@ fn query(q: sp::Query) -> R<Query> {
     let (mut limit, mut offset) = (None, None);
     match limit_clause {
         None => {}
-        Some(sp::LimitClause::LimitOffset { limit: l, offset: o, limit_by }) => {
+        Some(sp::LimitClause::LimitOffset {
+            limit: l,
+            offset: o,
+            limit_by,
+        }) => {
             if !limit_by.is_empty() {
                 return no("limit_by", "LIMIT .. BY");
             }
@@ -277,16 +344,30 @@ fn query(q: sp::Query) -> R<Query> {
                 offset = Some(expr(value)?);
             }
         }
-        Some(sp::LimitClause::OffsetCommaLimit { offset: o, limit: l }) => {
+        Some(sp::LimitClause::OffsetCommaLimit {
+            offset: o,
+            limit: l,
+        }) => {
             offset = Some(expr(o)?);
             limit = Some(expr(l)?);
         }
     }
-    Ok(Query { with: ctes, recursive, body, order_by: order, limit, offset })
+    Ok(Query {
+        with: ctes,
+        recursive,
+        body,
+        order_by: order,
+        limit,
+        offset,
+    })
 }
 
 fn order_item(o: sp::OrderByExpr) -> R<OrderItem> {
-    let sp::OrderByExpr { expr: e, options, with_fill } = o;
+    let sp::OrderByExpr {
+        expr: e,
+        options,
+        with_fill,
+    } = o;
     if with_fill.is_some() {
         return no("order_by_with_fill", "WITH FILL");
     }
@@ -295,13 +376,22 @@ fn order_item(o: sp::OrderByExpr) -> R<OrderItem> {
     // largest value on PostgreSQL (first when descending) and the smallest on SQLite (first ascending).
     let default_first = if rules().nulls_smallest { !desc } else { desc };
     let nulls_first = options.nulls_first.unwrap_or(default_first);
-    Ok(OrderItem { expr: expr(e)?, desc, nulls_first: Some(nulls_first) })
+    Ok(OrderItem {
+        expr: expr(e)?,
+        desc,
+        nulls_first: Some(nulls_first),
+    })
 }
 
 fn set_expr(s: sp::SetExpr) -> R<SetExpr> {
     match s {
         sp::SetExpr::Select(sel) => Ok(SetExpr::Select(Box::new(select(*sel)?))),
-        sp::SetExpr::SetOperation { left, op, set_quantifier, right } => {
+        sp::SetExpr::SetOperation {
+            left,
+            op,
+            set_quantifier,
+            right,
+        } => {
             let op = match op {
                 sp::SetOperator::Union => SetOp::Union,
                 sp::SetOperator::Intersect => SetOp::Intersect,
@@ -322,8 +412,15 @@ fn set_expr(s: sp::SetExpr) -> R<SetExpr> {
         }
         sp::SetExpr::Query(q) => {
             let q = query(*q)?;
-            if !q.with.is_empty() || !q.order_by.is_empty() || q.limit.is_some() || q.offset.is_some() {
-                return no("parenthesised_query", "parenthesised query with WITH/ORDER/LIMIT as a set operand");
+            if !q.with.is_empty()
+                || !q.order_by.is_empty()
+                || q.limit.is_some()
+                || q.offset.is_some()
+            {
+                return no(
+                    "parenthesised_query",
+                    "parenthesised query with WITH/ORDER/LIMIT as a set operand",
+                );
             }
             Ok(q.body)
         }
@@ -374,7 +471,10 @@ fn select(s: sp::Select) -> R<Select> {
         || qualify.is_some()
         || value_table_mode.is_some()
     {
-        return no("select_clause", "a SELECT clause the IR does not represent (TOP/INTO/WINDOW/QUALIFY/hints/...)");
+        return no(
+            "select_clause",
+            "a SELECT clause the IR does not represent (TOP/INTO/WINDOW/QUALIFY/hints/...)",
+        );
     }
     let distinct = match distinct {
         None | Some(sp::Distinct::All) => Distinct::No,
@@ -433,10 +533,14 @@ fn wildcard_plain(o: &sp::WildcardAdditionalOptions) -> R<()> {
 
 fn select_item(it: sp::SelectItem) -> R<SelectItem> {
     match it {
-        sp::SelectItem::UnnamedExpr(e) => Ok(SelectItem::Expr { expr: expr(e)?, alias: None }),
-        sp::SelectItem::ExprWithAlias { expr: e, alias } => {
-            Ok(SelectItem::Expr { expr: expr(e)?, alias: Some(ident(&alias)) })
-        }
+        sp::SelectItem::UnnamedExpr(e) => Ok(SelectItem::Expr {
+            expr: expr(e)?,
+            alias: None,
+        }),
+        sp::SelectItem::ExprWithAlias { expr: e, alias } => Ok(SelectItem::Expr {
+            expr: expr(e)?,
+            alias: Some(ident(&alias)),
+        }),
         sp::SelectItem::Wildcard(o) => {
             wildcard_plain(&o)?;
             Ok(SelectItem::Wildcard)
@@ -457,7 +561,12 @@ fn select_item(it: sp::SelectItem) -> R<SelectItem> {
 fn alias_name(a: Option<sp::TableAlias>) -> R<Option<String>> {
     match a {
         None => Ok(None),
-        Some(sp::TableAlias { explicit: _, name, columns, at }) => {
+        Some(sp::TableAlias {
+            explicit: _,
+            name,
+            columns,
+            at,
+        }) => {
             if !columns.is_empty() || at.is_some() {
                 return no("table_alias_columns", "column list on a table alias");
             }
@@ -489,20 +598,33 @@ fn table_factor(t: sp::TableFactor) -> R<TableRef> {
                 || sample.is_some()
                 || !index_hints.is_empty()
             {
-                return no("table_option", "table function args/hints/version/sample/partitions");
+                return no(
+                    "table_option",
+                    "table function args/hints/version/sample/partitions",
+                );
             }
-            Ok(TableRef::Table { name: object_name(&name)?, alias: alias_name(alias)? })
+            Ok(TableRef::Table {
+                name: object_name(&name)?,
+                alias: alias_name(alias)?,
+            })
         }
-        sp::TableFactor::Derived { lateral, subquery, alias, sample } => {
+        sp::TableFactor::Derived {
+            lateral,
+            subquery,
+            alias,
+            sample,
+        } => {
             if lateral || sample.is_some() {
                 return no("derived_option", "LATERAL / TABLESAMPLE");
             }
-            let alias = alias_name(alias)?
-                .ok_or_else(|| ReadError::NotInIr {
-                    construct: "unaliased_subquery".into(),
-                    detail: "PostgreSQL requires an alias on a FROM subquery".into(),
-                })?;
-            Ok(TableRef::Subquery { query: Box::new(query(*subquery)?), alias })
+            let alias = alias_name(alias)?.ok_or_else(|| ReadError::NotInIr {
+                construct: "unaliased_subquery".into(),
+                detail: "PostgreSQL requires an alias on a FROM subquery".into(),
+            })?;
+            Ok(TableRef::Subquery {
+                query: Box::new(query(*subquery)?),
+                alias,
+            })
         }
         other => no("table_factor", &head(&other)),
     }
@@ -512,7 +634,11 @@ fn table_with_joins(t: sp::TableWithJoins) -> R<TableRef> {
     let sp::TableWithJoins { relation, joins } = t;
     let mut cur = table_factor(relation)?;
     for j in joins {
-        let sp::Join { relation, global, join_operator } = j;
+        let sp::Join {
+            relation,
+            global,
+            join_operator,
+        } = j;
         if global {
             return no("global_join", "GLOBAL JOIN");
         }
@@ -527,7 +653,9 @@ fn table_with_joins(t: sp::TableWithJoins) -> R<TableRef> {
         let on = match constraint {
             sp::JoinConstraint::On(e) => Some(expr(e)?),
             sp::JoinConstraint::None => None,
-            sp::JoinConstraint::Using(_) => return no("join_using", "JOIN .. USING is not in the IR yet"),
+            sp::JoinConstraint::Using(_) => {
+                return no("join_using", "JOIN .. USING is not in the IR yet");
+            }
             sp::JoinConstraint::Natural => return no("natural_join", "NATURAL JOIN"),
         };
         cur = TableRef::Join {
@@ -562,7 +690,10 @@ fn assignments(a: Vec<sp::Assignment>) -> R<Vec<Assignment>> {
             sp::AssignmentTarget::ColumnName(n) => single_name(&n)?,
             sp::AssignmentTarget::Tuple(_) => return no("tuple_assignment", "SET (a, b) = ..."),
         };
-        out.push(Assignment { column, value: expr(value)? });
+        out.push(Assignment {
+            column,
+            value: expr(value)?,
+        });
     }
     Ok(out)
 }
@@ -615,7 +746,10 @@ fn insert(i: sp::Insert) -> R<Statement> {
         || !multi_table_when_clauses.is_empty()
         || multi_table_else_clause.is_some()
     {
-        return no("insert_option", "an INSERT form other than INSERT INTO t [(cols)] VALUES|query");
+        return no(
+            "insert_option",
+            "an INSERT form other than INSERT INTO t [(cols)] VALUES|query",
+        );
     }
     let table = match table {
         sp::TableObject::TableName(n) => object_name(&n)?,
@@ -633,7 +767,11 @@ fn insert(i: sp::Insert) -> R<Statement> {
                         && q.limit_clause.is_none()
                         && q.locks.is_empty() =>
                 {
-                    let sp::Values { explicit_row, value_keyword: _, rows } = v;
+                    let sp::Values {
+                        explicit_row,
+                        value_keyword: _,
+                        rows,
+                    } = v;
                     if explicit_row {
                         return no("explicit_row", "ROW(..) in VALUES");
                     }
@@ -644,7 +782,10 @@ fn insert(i: sp::Insert) -> R<Statement> {
                     InsertSource::Values(out)
                 }
                 body => {
-                    let q2 = sp::Query { body: Box::new(body), ..q };
+                    let q2 = sp::Query {
+                        body: Box::new(body),
+                        ..q
+                    };
                     InsertSource::Query(Box::new(query(q2)?))
                 }
             }
@@ -653,7 +794,10 @@ fn insert(i: sp::Insert) -> R<Statement> {
     let on_conflict = match on {
         None => None,
         Some(sp::OnInsert::OnConflict(oc)) => {
-            let sp::OnConflict { conflict_target, action } = oc;
+            let sp::OnConflict {
+                conflict_target,
+                action,
+            } = oc;
             let target = match conflict_target {
                 None => Vec::new(),
                 Some(sp::ConflictTarget::Columns(cols)) => cols.iter().map(ident).collect(),
@@ -663,12 +807,13 @@ fn insert(i: sp::Insert) -> R<Statement> {
             };
             let action = match action {
                 sp::OnConflictAction::DoNothing => ConflictAction::DoNothing,
-                sp::OnConflictAction::DoUpdate(sp::DoUpdate { assignments: a, selection }) => {
-                    ConflictAction::DoUpdate {
-                        set: assignments(a)?,
-                        where_: selection.map(expr).transpose()?,
-                    }
-                }
+                sp::OnConflictAction::DoUpdate(sp::DoUpdate {
+                    assignments: a,
+                    selection,
+                }) => ConflictAction::DoUpdate {
+                    set: assignments(a)?,
+                    where_: selection.map(expr).transpose()?,
+                },
             };
             Some(OnConflict { target, action })
         }
@@ -676,13 +821,25 @@ fn insert(i: sp::Insert) -> R<Statement> {
             // No conflict target: MySQL fires on ANY unique key. `VALUES(c)` is `excluded.c`.
             let set = assignments(a)?
                 .into_iter()
-                .map(|asg| Assignment { column: asg.column, value: excluded_refs(asg.value) })
+                .map(|asg| Assignment {
+                    column: asg.column,
+                    value: excluded_refs(asg.value),
+                })
                 .collect();
-            Some(OnConflict { target: vec![], action: ConflictAction::DoUpdate { set, where_: None } })
+            Some(OnConflict {
+                target: vec![],
+                action: ConflictAction::DoUpdate { set, where_: None },
+            })
         }
         Some(other) => return no("on_insert", &head(&other)),
     };
-    Ok(Statement::Insert(Insert { table, columns, source, on_conflict, returning: returning(ret)? }))
+    Ok(Statement::Insert(Insert {
+        table,
+        columns,
+        source,
+        on_conflict,
+        returning: returning(ret)?,
+    }))
 }
 
 fn update(u: sp::Update) -> R<Statement> {
@@ -699,15 +856,24 @@ fn update(u: sp::Update) -> R<Statement> {
         order_by,
         limit,
     } = u;
-    if !optimizer_hints.is_empty() || output.is_some() || or.is_some() || !order_by.is_empty() || limit.is_some() {
-        return no("update_option", "UPDATE with hints/OUTPUT/OR/ORDER BY/LIMIT");
+    if !optimizer_hints.is_empty()
+        || output.is_some()
+        || or.is_some()
+        || !order_by.is_empty()
+        || limit.is_some()
+    {
+        return no(
+            "update_option",
+            "UPDATE with hints/OUTPUT/OR/ORDER BY/LIMIT",
+        );
     }
     let (table, alias) = simple_table(table)?;
     let from = match from {
         None => Vec::new(),
-        Some(sp::UpdateTableFromKind::AfterSet(ts)) => {
-            ts.into_iter().map(table_with_joins).collect::<R<Vec<_>>>()?
-        }
+        Some(sp::UpdateTableFromKind::AfterSet(ts)) => ts
+            .into_iter()
+            .map(table_with_joins)
+            .collect::<R<Vec<_>>>()?,
         Some(other) => return no("update_from_position", &head(&other)),
     };
     Ok(Statement::Update(Update {
@@ -733,9 +899,16 @@ fn delete(d: sp::Delete) -> R<Statement> {
         order_by,
         limit,
     } = d;
-    if !optimizer_hints.is_empty() || !tables.is_empty() || output.is_some() || !order_by.is_empty() || limit.is_some()
+    if !optimizer_hints.is_empty()
+        || !tables.is_empty()
+        || output.is_some()
+        || !order_by.is_empty()
+        || limit.is_some()
     {
-        return no("delete_option", "DELETE with hints/multi-table/OUTPUT/ORDER BY/LIMIT");
+        return no(
+            "delete_option",
+            "DELETE with hints/multi-table/OUTPUT/ORDER BY/LIMIT",
+        );
     }
     let ts = match from {
         sp::FromTable::WithFromKeyword(ts) | sp::FromTable::WithoutKeyword(ts) => ts,
@@ -769,25 +942,50 @@ fn expr(e: sp::Expr) -> R<Expr> {
         E::CompoundIdentifier(parts) => Expr::Column(Name(parts.iter().map(ident).collect())),
         E::Value(v) => value(v.value)?,
         E::Nested(inner) => Expr::Nested(boxed(*inner)?),
-        E::IsNull(x) => Expr::IsNull { expr: boxed(*x)?, negated: false },
-        E::IsNotNull(x) => Expr::IsNull { expr: boxed(*x)?, negated: true },
-        E::InList { expr: x, list, negated } => Expr::InList {
+        E::IsNull(x) => Expr::IsNull {
+            expr: boxed(*x)?,
+            negated: false,
+        },
+        E::IsNotNull(x) => Expr::IsNull {
+            expr: boxed(*x)?,
+            negated: true,
+        },
+        E::InList {
+            expr: x,
+            list,
+            negated,
+        } => Expr::InList {
             expr: boxed(*x)?,
             list: list.into_iter().map(expr).collect::<R<_>>()?,
             negated,
         },
-        E::InSubquery { expr: x, subquery, negated } => Expr::InSubquery {
+        E::InSubquery {
+            expr: x,
+            subquery,
+            negated,
+        } => Expr::InSubquery {
             expr: boxed(*x)?,
             query: Box::new(query(*subquery)?),
             negated,
         },
-        E::Between { expr: x, negated, low, high } => Expr::Between {
+        E::Between {
+            expr: x,
+            negated,
+            low,
+            high,
+        } => Expr::Between {
             expr: boxed(*x)?,
             low: boxed(*low)?,
             high: boxed(*high)?,
             negated,
         },
-        E::Like { negated, any, expr: x, pattern, escape_char } => {
+        E::Like {
+            negated,
+            any,
+            expr: x,
+            pattern,
+            escape_char,
+        } => {
             if any {
                 return no("like_option", "LIKE ANY");
             }
@@ -808,7 +1006,13 @@ fn expr(e: sp::Expr) -> R<Expr> {
             }
             like_expr(*x, *pattern, escape_char, negated, ci)?
         }
-        E::ILike { negated, any, expr: x, pattern, escape_char } => {
+        E::ILike {
+            negated,
+            any,
+            expr: x,
+            pattern,
+            escape_char,
+        } => {
             if any {
                 return no("like_option", "ILIKE ANY");
             }
@@ -821,7 +1025,10 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 sp::UnaryOperator::Plus => UnaryOp::Plus,
                 other => return no("unary_operator", &head(&other)),
             };
-            Expr::Unary { op, expr: boxed(*x)? }
+            Expr::Unary {
+                op,
+                expr: boxed(*x)?,
+            }
         }
         E::BinaryOp { left, op, right } => {
             use sp::BinaryOperator as B;
@@ -855,7 +1062,10 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 other => {
                     return no(
                         "binary_operator",
-                        &format!("{} (JSON/array/regex/bitwise operators are not in the IR)", head(&other)),
+                        &format!(
+                            "{} (JSON/array/regex/bitwise operators are not in the IR)",
+                            head(&other)
+                        ),
                     );
                 }
             };
@@ -865,12 +1075,29 @@ fn expr(e: sp::Expr) -> R<Expr> {
                     "the source `/` is exact (DECIMAL) division; the target divides as double precision",
                     Allowance::DecimalDivisionAsFloat,
                 );
-                let l = Expr::Cast { expr: boxed(*left)?, ty: SqlType::Double };
-                return Ok(Expr::Binary { op, left: Box::new(l), right: boxed(*right)? });
+                let l = Expr::Cast {
+                    expr: boxed(*left)?,
+                    ty: SqlType::Double,
+                };
+                return Ok(Expr::Binary {
+                    op,
+                    left: Box::new(l),
+                    right: boxed(*right)?,
+                });
             }
-            Expr::Binary { op, left: boxed(*left)?, right: boxed(*right)? }
+            Expr::Binary {
+                op,
+                left: boxed(*left)?,
+                right: boxed(*right)?,
+            }
         }
-        E::Case { case_token: _, end_token: _, operand, conditions, else_result } => Expr::Case {
+        E::Case {
+            case_token: _,
+            end_token: _,
+            operand,
+            conditions,
+            else_result,
+        } => Expr::Case {
             operand: operand.map(|o| boxed(*o)).transpose()?,
             branches: conditions
                 .into_iter()
@@ -878,13 +1105,26 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 .collect::<R<_>>()?,
             else_: else_result.map(|o| boxed(*o)).transpose()?,
         },
-        E::Cast { kind, expr: x, data_type, format } => {
+        E::Cast {
+            kind,
+            expr: x,
+            data_type,
+            format,
+        } => {
             if format.is_some() || !matches!(kind, sp::CastKind::Cast | sp::CastKind::DoubleColon) {
                 return no("cast_form", "TRY_CAST / SAFE_CAST / CAST .. FORMAT");
             }
-            Expr::Cast { expr: boxed(*x)?, ty: data_type_to_ir(&data_type)? }
+            Expr::Cast {
+                expr: boxed(*x)?,
+                ty: data_type_to_ir(&data_type)?,
+            }
         }
-        E::Trim { trim_where, trim_what, expr: x, trim_characters } => {
+        E::Trim {
+            trim_where,
+            trim_what,
+            expr: x,
+            trim_characters,
+        } => {
             // `trim(chars FROM x)` / `trim(BOTH chars FROM x)`; the comma form is `trim_characters`.
             let side = match trim_where {
                 None | Some(sp::TrimWhereField::Both) => TrimSide::Both,
@@ -897,11 +1137,24 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 (None, Some(mut cs)) if cs.len() == 1 => Some(boxed(cs.remove(0))?),
                 _ => return no("trim_form", "TRIM with several character arguments"),
             };
-            Expr::Trim { expr: boxed(*x)?, side, chars }
+            Expr::Trim {
+                expr: boxed(*x)?,
+                side,
+                chars,
+            }
         }
-        E::Substring { expr: x, substring_from, substring_for, special: _, shorthand: _ } => {
+        E::Substring {
+            expr: x,
+            substring_from,
+            substring_for,
+            special: _,
+            shorthand: _,
+        } => {
             if rules().name == "mysql" {
-                return no("substring", "MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite");
+                return no(
+                    "substring",
+                    "MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite",
+                );
             }
             // `substring(x FROM a FOR b)` and `substring(x, a, b)` are `substr(x, a, b)`.
             let mut args = vec![FunctionArg::Expr(expr(*x)?)];
@@ -913,7 +1166,9 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 (Some(f), None) => args.push(FunctionArg::Expr(expr(*f)?)),
                 (None, Some(l)) => {
                     // FOR without FROM starts at position 1.
-                    args.push(FunctionArg::Expr(Expr::Literal(Literal::Number("1".into()))));
+                    args.push(FunctionArg::Expr(Expr::Literal(Literal::Number(
+                        "1".into(),
+                    ))));
                     args.push(FunctionArg::Expr(expr(*l)?));
                 }
                 (None, None) => return no("substring_form", "SUBSTRING without FROM or FOR"),
@@ -928,19 +1183,31 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 order_by: vec![],
             })
         }
-        E::AnyOp { left, compare_op, right, is_some: _ } => {
+        E::AnyOp {
+            left,
+            compare_op,
+            right,
+            is_some: _,
+        } => {
             if !matches!(compare_op, sp::BinaryOperator::Eq) {
                 return no("any_operator", "only `= ANY(..)` is in the IR");
             }
             quantified(*left, *right, false)?
         }
-        E::AllOp { left, compare_op, right } => {
+        E::AllOp {
+            left,
+            compare_op,
+            right,
+        } => {
             if !matches!(compare_op, sp::BinaryOperator::NotEq) {
                 return no("all_operator", "only `<> ALL(..)` is in the IR");
             }
             quantified(*left, *right, true)?
         }
-        E::Exists { subquery, negated } => Expr::Exists { query: Box::new(query(*subquery)?), negated },
+        E::Exists { subquery, negated } => Expr::Exists {
+            query: Box::new(query(*subquery)?),
+            negated,
+        },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
         E::Function(f) => function(f)?,
         other => return no("expression", &head(&other)),
@@ -952,15 +1219,23 @@ fn quantified(left: sp::Expr, right: sp::Expr, negated: bool) -> R<Expr> {
     let lhs = boxed(left)?;
     // `$1::int[]` is only a type hint on the parameter.
     let mut right = right;
-    if let sp::Expr::Cast { kind, expr: inner, data_type, format: None } = right.clone() {
-        if matches!(kind, sp::CastKind::Cast | sp::CastKind::DoubleColon) && matches!(data_type, sp::DataType::Array(_)) {
-            right = *inner;
-        }
+    if let sp::Expr::Cast {
+        kind: sp::CastKind::Cast | sp::CastKind::DoubleColon,
+        expr: inner,
+        data_type: sp::DataType::Array(_),
+        format: None,
+    } = right.clone()
+    {
+        right = *inner;
     }
     match right {
         sp::Expr::Value(v) => match v.value {
             sp::Value::Placeholder(_) => match value(v.value)? {
-                Expr::Param(n) => Ok(Expr::AnyParam { expr: lhs, param: n, negated }),
+                Expr::Param(n) => Ok(Expr::AnyParam {
+                    expr: lhs,
+                    param: n,
+                    negated,
+                }),
                 _ => no("array_param", "expected a numbered parameter"),
             },
             other => no("array_operand", &head(&other)),
@@ -970,7 +1245,11 @@ fn quantified(left: sp::Expr, right: sp::Expr, negated: bool) -> R<Expr> {
             list: elem.into_iter().map(expr).collect::<R<Vec<_>>>()?,
             negated,
         }),
-        sp::Expr::Subquery(q) => Ok(Expr::InSubquery { expr: lhs, query: Box::new(query(*q)?), negated }),
+        sp::Expr::Subquery(q) => Ok(Expr::InSubquery {
+            expr: lhs,
+            query: Box::new(query(*q)?),
+            negated,
+        }),
         other => no("array_operand", &head(&other)),
     }
 }
@@ -978,27 +1257,32 @@ fn quantified(left: sp::Expr, right: sp::Expr, negated: bool) -> R<Expr> {
 /// MySQL's `VALUES(col)` inside `ON DUPLICATE KEY UPDATE` refers to the row proposed for insertion.
 fn excluded_refs(e: Expr) -> Expr {
     match e {
-        Expr::Function(f) if f.name == "values" && f.args.len() == 1 => match f.args.into_iter().next() {
-            Some(FunctionArg::Expr(Expr::Column(n))) => {
-                Expr::Column(Name(vec!["excluded".to_string(), n.last().to_string()]))
+        Expr::Function(f) if f.name == "values" && f.args.len() == 1 => {
+            match f.args.into_iter().next() {
+                Some(FunctionArg::Expr(Expr::Column(n))) => {
+                    Expr::Column(Name(vec!["excluded".to_string(), n.last().to_string()]))
+                }
+                other => Expr::Function(Function {
+                    name: "values".into(),
+                    args: other.into_iter().collect(),
+                    distinct: false,
+                    star: false,
+                    filter: None,
+                    over: None,
+                    order_by: vec![],
+                }),
             }
-            other => Expr::Function(Function {
-                name: "values".into(),
-                args: other.into_iter().collect(),
-                distinct: false,
-                star: false,
-                filter: None,
-                over: None,
-                order_by: vec![],
-            }),
-        },
+        }
         Expr::Binary { op, left, right } => Expr::Binary {
             op,
             left: Box::new(excluded_refs(*left)),
             right: Box::new(excluded_refs(*right)),
         },
         Expr::Nested(x) => Expr::Nested(Box::new(excluded_refs(*x))),
-        Expr::Unary { op, expr } => Expr::Unary { op, expr: Box::new(excluded_refs(*expr)) },
+        Expr::Unary { op, expr } => Expr::Unary {
+            op,
+            expr: Box::new(excluded_refs(*expr)),
+        },
         other => other,
     }
 }
@@ -1012,10 +1296,18 @@ fn like_expr(
 ) -> R<Expr> {
     let escape = match escape_char {
         Some(e) => Some(boxed(*e)?),
-        None if rules().like_default_escape => Some(Box::new(Expr::Literal(Literal::String("\\".into())))),
+        None if rules().like_default_escape => {
+            Some(Box::new(Expr::Literal(Literal::String("\\".into()))))
+        }
         None => None,
     };
-    Ok(Expr::Like { expr: boxed(x)?, pattern: boxed(pattern)?, negated, case_insensitive, escape })
+    Ok(Expr::Like {
+        expr: boxed(x)?,
+        pattern: boxed(pattern)?,
+        negated,
+        case_insensitive,
+        escape,
+    })
 }
 
 fn value(v: sp::Value) -> R<Expr> {
@@ -1036,7 +1328,10 @@ fn value(v: sp::Value) -> R<Expr> {
         sp::Value::Placeholder(p) => {
             let bad = || ReadError::NotInIr {
                 construct: "placeholder".into(),
-                detail: format!("`{p}` is not a placeholder form of dialect `{}`", rules().name),
+                detail: format!(
+                    "`{p}` is not a placeholder form of dialect `{}`",
+                    rules().name
+                ),
             };
             if rules().question_placeholders {
                 if p == "?" {
@@ -1078,12 +1373,18 @@ fn function(f: sp::Function) -> R<Expr> {
         || !within_group.is_empty()
         || null_treatment.is_some()
     {
-        return no("function_option", "ODBC syntax/parameters/WITHIN GROUP/FILTER/IGNORE NULLS");
+        return no(
+            "function_option",
+            "ODBC syntax/parameters/WITHIN GROUP/FILTER/IGNORE NULLS",
+        );
     }
     let over = match over {
         None => None,
         Some(sp::WindowType::NamedWindow(_)) => {
-            return no("named_window", "OVER w (a WINDOW clause) is not in the IR yet");
+            return no(
+                "named_window",
+                "OVER w (a WINDOW clause) is not in the IR yet",
+            );
         }
         Some(sp::WindowType::WindowSpec(spec)) => Some(window_spec(spec)?),
     };
@@ -1091,7 +1392,7 @@ fn function(f: sp::Function) -> R<Expr> {
     let name = object_name(&name)?;
     let base = name.last().to_string();
     if name.0.len() != 1 {
-        return no("qualified_function", &format!("{}", name.0.join(".")));
+        return no("qualified_function", &name.0.join("."));
     }
     let args = match args {
         // `CURRENT_TIMESTAMP` is a function without parentheses.
@@ -1116,10 +1417,16 @@ fn function(f: sp::Function) -> R<Expr> {
             }
             return no("bare_function", &format!("`{base}` without parentheses"));
         }
-        sp::FunctionArguments::Subquery(_) => return no("function_subquery", "function over a subquery"),
+        sp::FunctionArguments::Subquery(_) => {
+            return no("function_subquery", "function over a subquery");
+        }
         sp::FunctionArguments::List(l) => l,
     };
-    let sp::FunctionArgumentList { duplicate_treatment, args, clauses } = args;
+    let sp::FunctionArgumentList {
+        duplicate_treatment,
+        args,
+        clauses,
+    } = args;
     let mut agg_order = Vec::new();
     let mut separator: Option<String> = None;
     for cl in clauses {
@@ -1133,7 +1440,12 @@ fn function(f: sp::Function) -> R<Expr> {
                 sp::Value::SingleQuotedString(s) => separator = Some(s),
                 other => return no("separator", &head(&other)),
             },
-            other => return no("function_clause", &format!("{} inside a function call", head(&other))),
+            other => {
+                return no(
+                    "function_clause",
+                    &format!("{} inside a function call", head(&other)),
+                );
+            }
         }
     }
     let distinct = match duplicate_treatment {
@@ -1144,24 +1456,31 @@ fn function(f: sp::Function) -> R<Expr> {
     let mut star = false;
     for a in args {
         match a {
-            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(e)) => out.push(FunctionArg::Expr(expr(e)?)),
-            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Wildcard) => star = true,
-            sp::FunctionArg::Named { name, arg: sp::FunctionArgExpr::Expr(e), operator }
-                if matches!(operator, sp::FunctionArgOperator::RightArrow) =>
-            {
-                out.push(FunctionArg::Named { name: ident(&name), value: expr(e)? })
+            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(e)) => {
+                out.push(FunctionArg::Expr(expr(e)?))
             }
+            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Wildcard) => star = true,
+            sp::FunctionArg::Named {
+                name,
+                arg: sp::FunctionArgExpr::Expr(e),
+                operator: sp::FunctionArgOperator::RightArrow,
+            } => out.push(FunctionArg::Named {
+                name: ident(&name),
+                value: expr(e)?,
+            }),
             // sqlparser produces `ExprNamed` when the name is parsed as an expression.
             sp::FunctionArg::ExprNamed {
                 name: sp::Expr::Identifier(name),
                 arg: sp::FunctionArgExpr::Expr(e),
                 operator: sp::FunctionArgOperator::RightArrow,
-            } => out.push(FunctionArg::Named { name: ident(&name), value: expr(e)? }),
+            } => out.push(FunctionArg::Named {
+                name: ident(&name),
+                value: expr(e)?,
+            }),
             other => return no("function_argument", &head(&other)),
         }
     }
     let mut name = base;
-    let mut out = out;
     if name == "current_timestamp" {
         name = "now".to_string();
     }
@@ -1215,23 +1534,42 @@ fn function(f: sp::Function) -> R<Expr> {
             "group_concat" => {
                 name = "string_agg".to_string();
                 if out.len() == 1 {
-                    out.push(FunctionArg::Expr(Expr::Literal(Literal::String(",".into()))));
+                    out.push(FunctionArg::Expr(Expr::Literal(Literal::String(
+                        ",".into(),
+                    ))));
                 }
             }
             _ => {}
         }
     }
-    Ok(Expr::Function(Function { name, args: out, distinct, star, filter, over, order_by: agg_order }))
+    Ok(Expr::Function(Function {
+        name,
+        args: out,
+        distinct,
+        star,
+        filter,
+        over,
+        order_by: agg_order,
+    }))
 }
 
 fn window_spec(w: sp::WindowSpec) -> R<Window> {
-    let sp::WindowSpec { window_name, partition_by, order_by, window_frame } = w;
+    let sp::WindowSpec {
+        window_name,
+        partition_by,
+        order_by,
+        window_frame,
+    } = w;
     if window_name.is_some() {
         return no("named_window", "OVER (w ..) refinement of a named window");
     }
     let frame = match window_frame {
         None => None,
-        Some(sp::WindowFrame { units, start_bound, end_bound }) => {
+        Some(sp::WindowFrame {
+            units,
+            start_bound,
+            end_bound,
+        }) => {
             let bound = |b: sp::WindowFrameBound| -> R<FrameBound> {
                 Ok(match b {
                     sp::WindowFrameBound::CurrentRow => FrameBound::CurrentRow,
@@ -1270,13 +1608,18 @@ fn data_type_to_ir(t: &sp::DataType) -> R<SqlType> {
         D::Real | D::Float4 => SqlType::Real,
         D::Double(_) | D::DoublePrecision | D::Float8 => SqlType::Double,
         D::Numeric(info) | D::Decimal(info) => match info {
-            sp::ExactNumberInfo::None => SqlType::Numeric { precision: None, scale: None },
-            sp::ExactNumberInfo::Precision(p) => {
-                SqlType::Numeric { precision: Some(*p as u32), scale: None }
-            }
-            sp::ExactNumberInfo::PrecisionAndScale(p, s) => {
-                SqlType::Numeric { precision: Some(*p as u32), scale: Some(*s as u32) }
-            }
+            sp::ExactNumberInfo::None => SqlType::Numeric {
+                precision: None,
+                scale: None,
+            },
+            sp::ExactNumberInfo::Precision(p) => SqlType::Numeric {
+                precision: Some(*p as u32),
+                scale: None,
+            },
+            sp::ExactNumberInfo::PrecisionAndScale(p, s) => SqlType::Numeric {
+                precision: Some(*p as u32),
+                scale: Some(*s as u32),
+            },
         },
         D::Text => SqlType::Text,
         D::Signed | D::SignedInteger | D::Unsigned | D::UnsignedInteger => SqlType::BigInt,

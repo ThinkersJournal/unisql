@@ -17,6 +17,7 @@ exclude = ["measure/classify"]
 version = "0.0.1"
 edition = "2024"
 license = "MIT OR Apache-2.0"
+repository = "https://github.com/ThinkersJournal/unisql"
 publish = false
 rust-version = "1.94"
 

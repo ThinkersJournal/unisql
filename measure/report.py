@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
 """Write untranslatable-by-tier.txt: every non-exact statement, grouped by tier then reason,
 with file:line at the pinned SHA. Input: *.out.jsonl produced by classify."""
 import collections

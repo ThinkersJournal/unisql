@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! MySQL / MariaDB -> PostgreSQL and -> SQLite differential suites (the MySQL reader).
 //!
 //! Statements are written in MySQL and run on a real MySQL 8.4 / MariaDB 11.4 started with
@@ -8,7 +9,7 @@
 use std::fmt::Write as _;
 
 use unisql::Allowance as A;
-use unisql_differential::{run_case_dir, Case, Dir, Engines, Expect, Param};
+use unisql_differential::{Case, Dir, Engines, Expect, Param, run_case_dir};
 
 const PG: &str = r#"
 CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age integer,
@@ -79,7 +80,15 @@ const ALL: &[A] = &[
 ];
 
 fn c(name: &'static str, sql: &'static str) -> Case {
-    Case { name, sql, params: vec![], allow: ALL.to_vec(), ordered: false, after: None, expect: Expect::Same }
+    Case {
+        name,
+        sql,
+        params: vec![],
+        allow: ALL.to_vec(),
+        ordered: false,
+        after: None,
+        expect: Expect::Same,
+    }
 }
 fn ord(mut x: Case) -> Case {
     x.ordered = true;
@@ -105,55 +114,180 @@ fn only(mut x: Case, allow: &[A]) -> Case {
 fn cases(dir: Dir) -> Vec<Case> {
     let mut v = vec![
         // ---- placeholders (positional ?), backtick identifiers
-        p(c("ph_question", "SELECT id, name FROM users WHERE id = ?"), vec![Param::Int(3)]),
-        p(c("ph_two", "SELECT id FROM users WHERE age > ? AND city = ?"), vec![Param::Int(26), Param::Text("Oslo")]),
-        c("backticks", "SELECT `id`, `name` FROM `users` WHERE `age` BETWEEN 25 AND 41"),
+        p(
+            c("ph_question", "SELECT id, name FROM users WHERE id = ?"),
+            vec![Param::Int(3)],
+        ),
+        p(
+            c("ph_two", "SELECT id FROM users WHERE age > ? AND city = ?"),
+            vec![Param::Int(26), Param::Text("Oslo")],
+        ),
+        c(
+            "backticks",
+            "SELECT `id`, `name` FROM `users` WHERE `age` BETWEEN 25 AND 41",
+        ),
         // ---- exact core
-        c("select_where", "SELECT id FROM users WHERE city = 'Oslo' AND active = 1"),
-        c("is_null", "SELECT id FROM users WHERE age IS NULL OR city IS NULL"),
-        c("in_list", "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)"),
-        c("aggregates", "SELECT count(*), count(status), sum(amount), min(amount), max(amount) FROM orders"),
-        c("group_having", "SELECT user_id, count(*), sum(amount) FROM orders GROUP BY user_id HAVING sum(amount) > 100"),
-        c("join", "SELECT u.name, o.amount FROM users u JOIN orders o ON o.user_id = u.id WHERE o.status = 'paid'"),
-        c("left_join", "SELECT u.id, o.id FROM users u LEFT JOIN orders o ON o.user_id = u.id"),
-        c("subquery_in", "SELECT name FROM users WHERE id IN (SELECT user_id FROM orders WHERE amount > 100)"),
-        c("exists", "SELECT name FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id AND o.status = 'open')"),
-        c("cte", "WITH big AS (SELECT user_id, sum(amount) AS t FROM orders GROUP BY user_id) SELECT u.name, big.t FROM users u JOIN big ON big.user_id = u.id"),
-        ord(c("with_recursive", "WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM t WHERE n < 5) SELECT n FROM t ORDER BY n")),
-        ord(c("window_rank", "SELECT id, rank() OVER (PARTITION BY city ORDER BY age) FROM users ORDER BY id")),
-        c("set_ops", "SELECT id FROM users EXCEPT SELECT user_id FROM orders"),
+        c(
+            "select_where",
+            "SELECT id FROM users WHERE city = 'Oslo' AND active = 1",
+        ),
+        c(
+            "is_null",
+            "SELECT id FROM users WHERE age IS NULL OR city IS NULL",
+        ),
+        c(
+            "in_list",
+            "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
+        ),
+        c(
+            "aggregates",
+            "SELECT count(*), count(status), sum(amount), min(amount), max(amount) FROM orders",
+        ),
+        c(
+            "group_having",
+            "SELECT user_id, count(*), sum(amount) FROM orders GROUP BY user_id HAVING sum(amount) > 100",
+        ),
+        c(
+            "join",
+            "SELECT u.name, o.amount FROM users u JOIN orders o ON o.user_id = u.id WHERE o.status = 'paid'",
+        ),
+        c(
+            "left_join",
+            "SELECT u.id, o.id FROM users u LEFT JOIN orders o ON o.user_id = u.id",
+        ),
+        c(
+            "subquery_in",
+            "SELECT name FROM users WHERE id IN (SELECT user_id FROM orders WHERE amount > 100)",
+        ),
+        c(
+            "exists",
+            "SELECT name FROM users u WHERE EXISTS (SELECT 1 FROM orders o WHERE o.user_id = u.id AND o.status = 'open')",
+        ),
+        c(
+            "cte",
+            "WITH big AS (SELECT user_id, sum(amount) AS t FROM orders GROUP BY user_id) SELECT u.name, big.t FROM users u JOIN big ON big.user_id = u.id",
+        ),
+        ord(c(
+            "with_recursive",
+            "WITH RECURSIVE t(n) AS (SELECT 1 UNION ALL SELECT n + 1 FROM t WHERE n < 5) SELECT n FROM t ORDER BY n",
+        )),
+        ord(c(
+            "window_rank",
+            "SELECT id, rank() OVER (PARTITION BY city ORDER BY age) FROM users ORDER BY id",
+        )),
+        c(
+            "set_ops",
+            "SELECT id FROM users EXCEPT SELECT user_id FROM orders",
+        ),
         // ---- NULL ordering: MySQL NULLs are the SMALLEST value
         ord(c("nulls_asc", "SELECT id, age FROM users ORDER BY age, id")),
-        ord(c("nulls_desc", "SELECT id, age FROM users ORDER BY age DESC, id")),
+        ord(c(
+            "nulls_desc",
+            "SELECT id, age FROM users ORDER BY age DESC, id",
+        )),
         // ---- LIMIT forms
-        ord(c("limit_comma", "SELECT id FROM users ORDER BY id LIMIT 2, 3")),
-        ord(c("limit_offset", "SELECT id FROM users ORDER BY id LIMIT 3 OFFSET 2")),
+        ord(c(
+            "limit_comma",
+            "SELECT id FROM users ORDER BY id LIMIT 2, 3",
+        )),
+        ord(c(
+            "limit_offset",
+            "SELECT id FROM users ORDER BY id LIMIT 3 OFFSET 2",
+        )),
         // ---- MySQL operator and function semantics
         c("or_keyword", "SELECT id FROM users WHERE id = 1 OR id = 2"),
         c("div_decimal", "SELECT 7 / 2, 1 / 4 FROM users WHERE id = 1"),
-        c("div_integer", "SELECT 7 DIV 2, -7 DIV 2, 7 % 3, -7 % 3 FROM users WHERE id = 1"),
-        c("ifnull_concat_if", "SELECT concat(name, '-', ifnull(city, '?')), IF(age >= 40, 'senior', 'adult') FROM users"),
-        c("length_is_bytes", "SELECT length(name), char_length(name) FROM users WHERE id IN (1, 7)"),
-        c("group_concat_sep", "SELECT group_concat(name ORDER BY age, id SEPARATOR '|') FROM users"),
-        c("group_concat_default", "SELECT group_concat(name) FROM users WHERE id = 1"),
-        c("cast_forms", "SELECT CAST(id AS SIGNED), CAST(id AS CHAR) FROM users WHERE id = 1"),
+        c(
+            "div_integer",
+            "SELECT 7 DIV 2, -7 DIV 2, 7 % 3, -7 % 3 FROM users WHERE id = 1",
+        ),
+        c(
+            "ifnull_concat_if",
+            "SELECT concat(name, '-', ifnull(city, '?')), IF(age >= 40, 'senior', 'adult') FROM users",
+        ),
+        c(
+            "length_is_bytes",
+            "SELECT length(name), char_length(name) FROM users WHERE id IN (1, 7)",
+        ),
+        c(
+            "group_concat_sep",
+            "SELECT group_concat(name ORDER BY age, id SEPARATOR '|') FROM users",
+        ),
+        c(
+            "group_concat_default",
+            "SELECT group_concat(name) FROM users WHERE id = 1",
+        ),
+        c(
+            "cast_forms",
+            "SELECT CAST(id AS SIGNED), CAST(id AS CHAR) FROM users WHERE id = 1",
+        ),
         // ---- LIKE (default escape is a backslash, as in PostgreSQL)
         c("like_prefix", "SELECT name FROM users WHERE name LIKE 'a%'"),
-        c("like_escape", "SELECT name FROM users WHERE name LIKE 'frank\\%'"),
+        c(
+            "like_escape",
+            "SELECT name FROM users WHERE name LIKE 'frank\\%'",
+        ),
         // ---- DML
-        after(p(c("insert_values", "INSERT INTO users (id, name, active) VALUES (?, ?, 1)"), vec![Param::Int(9), Param::Text("gus")]),
-            "SELECT id, name, active FROM users WHERE id = 9"),
-        after(c("delete_where", "DELETE FROM orders WHERE amount < 100"), "SELECT id FROM orders ORDER BY id"),
-        after(c("update_where", "UPDATE users SET age = age + 1 WHERE city = 'Oslo'"), "SELECT id, age FROM users ORDER BY id"),
+        after(
+            p(
+                c(
+                    "insert_values",
+                    "INSERT INTO users (id, name, active) VALUES (?, ?, 1)",
+                ),
+                vec![Param::Int(9), Param::Text("gus")],
+            ),
+            "SELECT id, name, active FROM users WHERE id = 9",
+        ),
+        after(
+            c("delete_where", "DELETE FROM orders WHERE amount < 100"),
+            "SELECT id FROM orders ORDER BY id",
+        ),
+        after(
+            c(
+                "update_where",
+                "UPDATE users SET age = age + 1 WHERE city = 'Oslo'",
+            ),
+            "SELECT id, age FROM users ORDER BY id",
+        ),
         // ---- the gate, source side
-        exp(only(c("gate_div_decimal", "SELECT 7 / 2"), &[A::TextCollation]), Expect::NeedsAllowance(A::DecimalDivisionAsFloat)),
+        exp(
+            only(c("gate_div_decimal", "SELECT 7 / 2"), &[A::TextCollation]),
+            Expect::NeedsAllowance(A::DecimalDivisionAsFloat),
+        ),
         // ---- refusals and not-in-IR
-        exp(c("refuse_odku", "INSERT INTO kv (k, v) VALUES ('a', 'b') ON DUPLICATE KEY UPDATE v = VALUES(v)"), Expect::Refused("upsert")),
-        exp(c("ir_insert_ignore", "INSERT IGNORE INTO kv (k, v) VALUES ('a', 'b')"), Expect::NotInIr("insert_option")),
-        exp(c("ir_pipes_operator", "SELECT id FROM users WHERE id = 1 || id = 2"), Expect::NotInIr("pipes_operator")),
-        exp(c("ir_null_safe_eq", "SELECT id FROM users WHERE age <=> NULL"), Expect::NotInIr("binary_operator")),
-        exp(c("ir_substring", "SELECT substring(name, 0, 3) FROM users"), Expect::NotInIr("substring")),
-        exp(c("refuse_date_format", "SELECT date_format(now(), '%Y')"), Expect::Refused("fn:date_format")),
+        exp(
+            c(
+                "refuse_odku",
+                "INSERT INTO kv (k, v) VALUES ('a', 'b') ON DUPLICATE KEY UPDATE v = VALUES(v)",
+            ),
+            Expect::Refused("upsert"),
+        ),
+        exp(
+            c(
+                "ir_insert_ignore",
+                "INSERT IGNORE INTO kv (k, v) VALUES ('a', 'b')",
+            ),
+            Expect::NotInIr("insert_option"),
+        ),
+        exp(
+            c(
+                "ir_pipes_operator",
+                "SELECT id FROM users WHERE id = 1 || id = 2",
+            ),
+            Expect::NotInIr("pipes_operator"),
+        ),
+        exp(
+            c("ir_null_safe_eq", "SELECT id FROM users WHERE age <=> NULL"),
+            Expect::NotInIr("binary_operator"),
+        ),
+        exp(
+            c("ir_substring", "SELECT substring(name, 0, 3) FROM users"),
+            Expect::NotInIr("substring"),
+        ),
+        exp(
+            c("refuse_date_format", "SELECT date_format(now(), '%Y')"),
+            Expect::Refused("fn:date_format"),
+        ),
     ];
     if matches!(dir, Dir::MysqlToPg | Dir::MariadbToPg) {
         // MySQL `1/0` is NULL; PostgreSQL raises an error. (SQLite agrees with MySQL here.)
@@ -171,21 +305,54 @@ fn run(dir: Dir, maria: bool) {
     let outcomes: Vec<_> = cs.iter().map(|c| run_case_dir(&mut e, c, dir)).collect();
 
     let mut log = String::new();
-    writeln!(log, "{} {myv} -> {} (pg {pgv}, sqlite {litev}); cases={}", dir.source(), dir.target(), outcomes.len()).unwrap();
+    writeln!(
+        log,
+        "{} {myv} -> {} (pg {pgv}, sqlite {litev}); cases={}",
+        dir.source(),
+        dir.target(),
+        outcomes.len()
+    )
+    .unwrap();
     for o in &outcomes {
-        writeln!(log, "{} {:<26} {}", if o.passed { "PASS" } else { "FAIL" }, o.name, o.detail.lines().next().unwrap_or("")).unwrap();
+        writeln!(
+            log,
+            "{} {:<26} {}",
+            if o.passed { "PASS" } else { "FAIL" },
+            o.name,
+            o.detail.lines().next().unwrap_or("")
+        )
+        .unwrap();
         if let Some(t) = &o.translated {
             writeln!(log, "       -> {t}").unwrap();
         }
     }
     let matrix = unisql_differential::matrix_rows(&outcomes);
-    writeln!(log, "\nMATRIX (construct, tier) from {} passing translated cases:", outcomes.iter().filter(|o| o.passed && o.translated.is_some()).count()).unwrap();
+    writeln!(
+        log,
+        "\nMATRIX (construct, tier) from {} passing translated cases:",
+        outcomes
+            .iter()
+            .filter(|o| o.passed && o.translated.is_some())
+            .count()
+    )
+    .unwrap();
     for (k, t) in &matrix {
         writeln!(log, "  {k:<28} {t}").unwrap();
     }
     let docs = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../../docs");
-    let _ = std::fs::write(docs.join(format!("DIFFERENTIAL-{}-{}.txt", dir.source(), dir.target())), &log);
-    let backend_module = if dir.target() == "sqlite" { "sqlite" } else { "postgres" };
+    let _ = std::fs::write(
+        docs.join(format!(
+            "DIFFERENTIAL-{}-{}.txt",
+            dir.source(),
+            dir.target()
+        )),
+        &log,
+    );
+    let backend_module = if dir.target() == "sqlite" {
+        "sqlite"
+    } else {
+        "postgres"
+    };
     let backend_version = if dir.target() == "sqlite" {
         litev.clone()
     } else {
@@ -205,7 +372,11 @@ fn run(dir: Dir, maria: bool) {
         for o in &failed {
             println!("---- FAILED {}\n{}", o.name, o.detail);
         }
-        panic!("{} of {} differential cases failed", failed.len(), outcomes.len());
+        panic!(
+            "{} of {} differential cases failed",
+            failed.len(),
+            outcomes.len()
+        );
     }
 }
 

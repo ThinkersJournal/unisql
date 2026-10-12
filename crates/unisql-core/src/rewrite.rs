@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! IR-to-IR rewrites that targets opt into. Each is a pure function with a stated precondition and
 //! returns `Err(reason)` when it cannot be applied *correctly* (the target then refuses).
 
@@ -43,7 +44,10 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, String> {
                     (None, Expr::Function(f)) => f.name.clone(),
                     _ => "?column?".to_string(),
                 };
-                inner_proj.push(SelectItem::Expr { expr: expr.clone(), alias: Some(hidden.clone()) });
+                inner_proj.push(SelectItem::Expr {
+                    expr: expr.clone(),
+                    alias: Some(hidden.clone()),
+                });
                 outer_proj.push(SelectItem::Expr {
                     expr: Expr::Column(Name::simple(hidden)),
                     alias: Some(shown),
@@ -55,7 +59,10 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, String> {
     let mut outer_order = Vec::new();
     for (j, o) in q.order_by.iter().enumerate() {
         let hidden = format!("__o{j}");
-        inner_proj.push(SelectItem::Expr { expr: o.expr.clone(), alias: Some(hidden.clone()) });
+        inner_proj.push(SelectItem::Expr {
+            expr: o.expr.clone(),
+            alias: Some(hidden.clone()),
+        });
         outer_order.push(OrderItem {
             expr: Expr::Column(Name::simple(hidden)),
             desc: o.desc,
@@ -100,7 +107,10 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, String> {
     let outer = Select {
         distinct: Distinct::No,
         projection: outer_proj,
-        from: vec![TableRef::Subquery { query: Box::new(inner), alias: "__d".into() }],
+        from: vec![TableRef::Subquery {
+            query: Box::new(inner),
+            alias: "__d".into(),
+        }],
         where_: Some(Expr::Binary {
             op: BinaryOp::Eq,
             left: Box::new(Expr::Column(Name::simple("__rn"))),

@@ -3,6 +3,7 @@ name = "unisql-differential"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+repository.workspace = true
 publish.workspace = true
 rust-version.workspace = true
 description = "Differential tests: run a statement on real PostgreSQL and its translation on real SQLite, compare."

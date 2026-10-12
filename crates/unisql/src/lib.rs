@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! UniSQL: translate SQL text from a source dialect to a target dialect.
 //!
 //! ```
@@ -38,7 +39,11 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::UnknownDialect(d) => write!(f, "unknown dialect `{d}` (known: {})", dialects().join(", ")),
+            Error::UnknownDialect(d) => write!(
+                f,
+                "unknown dialect `{d}` (known: {})",
+                dialects().join(", ")
+            ),
             Error::NoReader(d) => write!(f, "dialect `{d}` cannot be used as a source yet"),
             Error::Read(e) => write!(f, "{e}"),
             Error::Untranslatable(u) => write!(f, "{u}"),
@@ -66,14 +71,19 @@ fn target(name: &str) -> Result<Box<dyn Target>, Error> {
     match name {
         "postgres" => Ok(Box::new(Postgres)),
         "sqlite" => Ok(Box::new(Sqlite)),
-        "mysql" => Ok(Box::new(Mysql::mysql())),
-        "mariadb" => Ok(Box::new(Mysql::mariadb())),
+        "mysql" => Ok(Box::new(Mysql::for_mysql())),
+        "mariadb" => Ok(Box::new(Mysql::for_mariadb())),
         other => Err(Error::UnknownDialect(other.to_string())),
     }
 }
 
 /// Translate one statement from `source` to `target`.
-pub fn translate(sql: &str, source: &str, target_dialect: &str, opts: &Options) -> Result<Translation, Error> {
+pub fn translate(
+    sql: &str,
+    source: &str,
+    target_dialect: &str,
+    opts: &Options,
+) -> Result<Translation, Error> {
     let tgt = target(target_dialect)?;
     let read = read(sql, source)?;
     // Assumptions the source text itself carries go through the same gate as target-side ones.
@@ -83,12 +93,17 @@ pub fn translate(sql: &str, source: &str, target_dialect: &str, opts: &Options) 
                 construct: n.construct.clone(),
                 source: source.to_string(),
                 target: target_dialect.to_string(),
-                reason: format!("conditional: needs allowance `{}`: {}", n.allowance.name(), n.note),
+                reason: format!(
+                    "conditional: needs allowance `{}`: {}",
+                    n.allowance.name(),
+                    n.note
+                ),
                 alternatives: vec![],
             }));
         }
     }
-    let mut t = unisql_core::write(&read.stmt, source, tgt.as_ref(), opts).map_err(Error::Untranslatable)?;
+    let mut t = unisql_core::write(&read.stmt, source, tgt.as_ref(), opts)
+        .map_err(Error::Untranslatable)?;
     for n in read.notes {
         t.report.push(Entry {
             construct: n.construct,
@@ -101,6 +116,11 @@ pub fn translate(sql: &str, source: &str, target_dialect: &str, opts: &Options) 
 }
 
 /// Like [`translate`], returning only the text. Still errors on refusal.
-pub fn translate_str(sql: &str, source: &str, target_dialect: &str, opts: &Options) -> Result<String, Error> {
+pub fn translate_str(
+    sql: &str,
+    source: &str,
+    target_dialect: &str,
+    opts: &Options,
+) -> Result<String, Error> {
     translate(sql, source, target_dialect, opts).map(|t| t.sql)
 }

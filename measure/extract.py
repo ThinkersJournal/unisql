@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MIT OR Apache-2.0
 """Extract SQL string literals from Rust sources and .sql files at a pinned git SHA.
 Reads blobs via `git show <sha>:<path>` (never a working tree). Output: JSON lines."""
 import json, re, subprocess, sys

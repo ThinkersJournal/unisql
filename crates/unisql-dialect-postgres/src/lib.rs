@@ -1,14 +1,24 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! PostgreSQL dialect module: a reader (text -> IR) and a writer ([`Postgres`] target).
 
 use unisql_core::ast::*;
 use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
-use unisql_core::target::{generic_call_ordered, Ctx, PORTABLE_FUNCTIONS};
+use unisql_core::target::{Ctx, PORTABLE_FUNCTIONS, generic_call_ordered};
 use unisql_core::{Read, ReadError, Target};
 
 type R<T> = Result<T, Untranslatable>;
 
 /// Functions PostgreSQL has with the meaning a foreign source's reader gives them.
-const FROM_OTHER: &[&str] = &["string_agg", "now", "ltrim", "rtrim", "trim", "char_length", "octet_length", "coalesce"];
+const FROM_OTHER: &[&str] = &[
+    "string_agg",
+    "now",
+    "ltrim",
+    "rtrim",
+    "trim",
+    "char_length",
+    "octet_length",
+    "coalesce",
+];
 
 /// Read exactly one PostgreSQL statement.
 pub fn read(sql: &str) -> Result<Read, ReadError> {
@@ -27,7 +37,8 @@ impl Target for Postgres {
 
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
-        if ctx.source != "postgres" && !PORTABLE_FUNCTIONS.contains(&n) && !FROM_OTHER.contains(&n) {
+        if ctx.source != "postgres" && !PORTABLE_FUNCTIONS.contains(&n) && !FROM_OTHER.contains(&n)
+        {
             return Err(ctx.refuse(
                 &format!("fn:{n}"),
                 "no verified mapping for this function on PostgreSQL yet",
@@ -36,13 +47,30 @@ impl Target for Postgres {
         }
         ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
         let order = ctx.agg_order.take();
-        Ok(generic_call_ordered(n, args, f.distinct, f.star, order.as_deref()))
+        Ok(generic_call_ordered(
+            n,
+            args,
+            f.distinct,
+            f.star,
+            order.as_deref(),
+        ))
     }
 
-    fn array_membership(&self, lhs: &str, ph: &str, negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+    fn array_membership(
+        &self,
+        lhs: &str,
+        ph: &str,
+        negated: bool,
+        n: u32,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         ctx.note("array_param", Tier::Exact, "native array parameter", None)?;
         ctx.bind_array_param(n, ParamBinding::NativeArray);
-        Ok(if negated { format!("{lhs} <> ALL({ph})") } else { format!("{lhs} = ANY({ph})") })
+        Ok(if negated {
+            format!("{lhs} <> ALL({ph})")
+        } else {
+            format!("{lhs} = ANY({ph})")
+        })
     }
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {

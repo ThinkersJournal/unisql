@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! The writer side of a dialect: a [`Target`] supplies *differences*; the shared printer in
 //! [`crate::print`] does the rest. Defaults describe PostgreSQL, the first source dialect, so a
 //! Postgres target is nearly empty and every other target overrides only what it must.
@@ -26,7 +27,18 @@ pub struct Ctx<'a> {
 
 impl<'a> Ctx<'a> {
     pub fn new(opts: &'a Options, source: &'a str, target: &'a str) -> Self {
-        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new(), in_upsert: false, agg_order: None, array_params: Default::default(), scalar_params: Default::default() }
+        Ctx {
+            report: Report::default(),
+            opts,
+            source,
+            target,
+            max_param: 0,
+            param_order: Vec::new(),
+            in_upsert: false,
+            agg_order: None,
+            array_params: Default::default(),
+            scalar_params: Default::default(),
+        }
     }
 
     /// Record how the target gives `construct`. `Refused` and an *ungranted* `Conditional` return an
@@ -52,11 +64,21 @@ impl<'a> Ctx<'a> {
                         &[],
                     ));
                 }
-                self.report.push(Entry { construct, tier, note, allowance: Some(a) });
+                self.report.push(Entry {
+                    construct,
+                    tier,
+                    note,
+                    allowance: Some(a),
+                });
                 Ok(())
             }
             _ => {
-                self.report.push(Entry { construct, tier, note, allowance });
+                self.report.push(Entry {
+                    construct,
+                    tier,
+                    note,
+                    allowance,
+                });
                 Ok(())
             }
         }
@@ -143,7 +165,10 @@ pub trait Target {
             Escape::None => " ESCAPE ''".to_string(),
             Escape::Custom(c) => format!(" ESCAPE {c}"),
         };
-        Ok(format!("{lhs} {}{kw} {rhs}{tail}", if negated { "NOT " } else { "" }))
+        Ok(format!(
+            "{lhs} {}{kw} {rhs}{tail}",
+            if negated { "NOT " } else { "" }
+        ))
     }
 
     /// A function call with arguments already printed. Return the full call text.
@@ -159,7 +184,13 @@ pub trait Target {
         }
         ctx.note(format!("fn:{}", f.name), Tier::Exact, "", None)?;
         let order = ctx.agg_order.take();
-        Ok(generic_call_ordered(&f.name, args, f.distinct, f.star, order.as_deref()))
+        Ok(generic_call_ordered(
+            &f.name,
+            args,
+            f.distinct,
+            f.star,
+            order.as_deref(),
+        ))
     }
 
     fn cast(&self, expr: &str, ty: &SqlType, ctx: &mut Ctx) -> R<String> {
@@ -257,13 +288,25 @@ pub trait Target {
 
     /// JSON `->` / `->>` with operands printed. Default: PostgreSQL.
     fn json_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
-        ctx.note(if text { "json_get_text" } else { "json_get" }, Tier::Exact, "", None)?;
+        ctx.note(
+            if text { "json_get_text" } else { "json_get" },
+            Tier::Exact,
+            "",
+            None,
+        )?;
         Ok(format!("{lhs} {} {rhs}", if text { "->>" } else { "->" }))
     }
 
     /// Replace the default `l OP r` text for a binary operator (for example `||` -> `CONCAT`,
     /// `/` -> `DIV`). Operands are already printed. Return `None` for the default.
-    fn binary_override(&self, _op: BinaryOp, _l: &str, _r: &str, _numeric: bool, _ctx: &mut Ctx) -> R<Option<String>> {
+    fn binary_override(
+        &self,
+        _op: BinaryOp,
+        _l: &str,
+        _r: &str,
+        _numeric: bool,
+        _ctx: &mut Ctx,
+    ) -> R<Option<String>> {
         Ok(None)
     }
 
@@ -300,7 +343,16 @@ pub trait Target {
                 &["state the conflict key columns in the statement"],
             ));
         }
-        ctx.note(if where_.is_some() { "upsert_where" } else { "upsert" }, Tier::Exact, "", None)?;
+        ctx.note(
+            if where_.is_some() {
+                "upsert_where"
+            } else {
+                "upsert"
+            },
+            Tier::Exact,
+            "",
+            None,
+        )?;
         let mut s = String::from(" ON CONFLICT");
         if !conflict_cols.is_empty() {
             s.push_str(&format!(" ({})", conflict_cols.join(", ")));
@@ -319,10 +371,20 @@ pub trait Target {
     /// Membership in an array parameter: `lhs = ANY(ph)` (or `<> ALL` when `negated`). The target
     /// must record how the caller binds parameter `n` via [`Ctx::bind_array_param`]. **The default
     /// refuses**: a target with no array codec has no honest translation.
-    fn array_membership(&self, _lhs: &str, _ph: &str, _negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+    fn array_membership(
+        &self,
+        _lhs: &str,
+        _ph: &str,
+        _negated: bool,
+        n: u32,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         Err(ctx.refuse(
             "array_param",
-            &format!("target `{}` has no codec for an array parameter (${n})", ctx.target),
+            &format!(
+                "target `{}` has no codec for an array parameter (${n})",
+                ctx.target
+            ),
             &["expand the array into an IN (..) list in the application"],
         ))
     }
@@ -348,16 +410,42 @@ pub trait Target {
         if nulls_first == default_first {
             Ok(String::new())
         } else {
-            Ok(if nulls_first { " NULLS FIRST" } else { " NULLS LAST" }.to_string())
+            Ok(if nulls_first {
+                " NULLS FIRST"
+            } else {
+                " NULLS LAST"
+            }
+            .to_string())
         }
     }
 }
 
 /// Functions with the same name and meaning on every dialect UniSQL targets so far.
 pub const PORTABLE_FUNCTIONS: &[&str] = &[
-    "count", "sum", "min", "max", "avg", "coalesce", "nullif", "abs", "lower", "upper", "length",
-    "replace", "substr", "row_number", "rank", "dense_rank", "percent_rank", "cume_dist", "ntile",
-    "lag", "lead", "first_value", "last_value", "nth_value",
+    "count",
+    "sum",
+    "min",
+    "max",
+    "avg",
+    "coalesce",
+    "nullif",
+    "abs",
+    "lower",
+    "upper",
+    "length",
+    "replace",
+    "substr",
+    "row_number",
+    "rank",
+    "dense_rank",
+    "percent_rank",
+    "cume_dist",
+    "ntile",
+    "lag",
+    "lead",
+    "first_value",
+    "last_value",
+    "nth_value",
 ];
 
 pub fn generic_call(name: &str, args: &[String], distinct: bool, star: bool) -> String {
@@ -393,9 +481,17 @@ pub fn pg_type_name(ty: &SqlType) -> String {
         SqlType::BigInt => "BIGINT".into(),
         SqlType::Real => "REAL".into(),
         SqlType::Double => "DOUBLE PRECISION".into(),
-        SqlType::Numeric { precision: None, .. } => "NUMERIC".into(),
-        SqlType::Numeric { precision: Some(p), scale: None } => format!("NUMERIC({p})"),
-        SqlType::Numeric { precision: Some(p), scale: Some(s) } => format!("NUMERIC({p}, {s})"),
+        SqlType::Numeric {
+            precision: None, ..
+        } => "NUMERIC".into(),
+        SqlType::Numeric {
+            precision: Some(p),
+            scale: None,
+        } => format!("NUMERIC({p})"),
+        SqlType::Numeric {
+            precision: Some(p),
+            scale: Some(s),
+        } => format!("NUMERIC({p}, {s})"),
         SqlType::Text => "TEXT".into(),
         SqlType::Varchar(None) => "VARCHAR".into(),
         SqlType::Varchar(Some(n)) => format!("VARCHAR({n})"),

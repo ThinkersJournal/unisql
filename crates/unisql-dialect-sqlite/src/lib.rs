@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! SQLite dialect module: a reader (text -> IR) and a writer (the [`Sqlite`] target).
 //!
 //! Every deviation from PostgreSQL semantics is a named [`Allowance`] or a refusal; the
@@ -5,9 +6,9 @@
 //! version assumed by the tiers: SQLite 3.35 (`RETURNING`), noted per construct.
 
 use unisql_core::ast::*;
-use unisql_core::rewrite;
 use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
-use unisql_core::target::{generic_call, generic_call_ordered, Ctx, Escape, StmtKind};
+use unisql_core::rewrite;
+use unisql_core::target::{Ctx, Escape, StmtKind, generic_call, generic_call_ordered};
 use unisql_core::{Read, ReadError, Target};
 
 /// Read exactly one SQLite statement.
@@ -84,22 +85,22 @@ impl Target for Sqlite {
     }
 
     fn rewrite_query(&self, q: &Query, ctx: &mut Ctx) -> R<Option<Query>> {
-        if let SetExpr::Select(s) = &q.body {
-            if matches!(s.distinct, Distinct::On(_)) {
-                return match rewrite::distinct_on_via_window(q) {
-                    Ok(q2) => {
-                        ctx.note(
+        if let SetExpr::Select(s) = &q.body
+            && matches!(s.distinct, Distinct::On(_))
+        {
+            return match rewrite::distinct_on_via_window(q) {
+                Ok(q2) => {
+                    ctx.note(
                             "distinct_on",
                             Tier::Emulated,
                             "row_number() OVER (PARTITION BY keys ORDER BY ..) = 1 in a derived table; \
                              without ORDER BY the surviving row per key is arbitrary on both engines",
                             None,
                         )?;
-                        Ok(Some(q2))
-                    }
-                    Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
-                };
-            }
+                    Ok(Some(q2))
+                }
+                Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
+            };
         }
         Ok(None)
     }
@@ -205,20 +206,36 @@ impl Target for Sqlite {
             // Same dialect in and out: the reader accepted the name, so this is the identity.
             ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
             let order = ctx.agg_order.take();
-            return Ok(generic_call_ordered(n, args, f.distinct, f.star, order.as_deref()));
+            return Ok(generic_call_ordered(
+                n,
+                args,
+                f.distinct,
+                f.star,
+                order.as_deref(),
+            ));
         }
         if f.over.is_some()
             && matches!(
                 n,
-                "row_number" | "rank" | "dense_rank" | "percent_rank" | "cume_dist" | "ntile" | "lag"
-                    | "lead" | "first_value" | "last_value" | "nth_value"
+                "row_number"
+                    | "rank"
+                    | "dense_rank"
+                    | "percent_rank"
+                    | "cume_dist"
+                    | "ntile"
+                    | "lag"
+                    | "lead"
+                    | "first_value"
+                    | "last_value"
+                    | "nth_value"
             )
         {
             ctx.note(format!("fn:{n}"), Tier::Exact, "window function", None)?;
             return Ok(generic_call(n, args, false, false));
         }
         match n {
-            "md5" | "sha256" | "sha1" | "sha512" | "encode" | "decode" | "convert_to" | "convert_from" => {
+            "md5" | "sha256" | "sha1" | "sha512" | "encode" | "decode" | "convert_to"
+            | "convert_from" => {
                 return Err(ctx.refuse(
                     &format!("fn:{n}"),
                     "SQLite has no built-in hashing/encoding functions; the result would depend on a \
@@ -226,8 +243,8 @@ impl Target for Sqlite {
                     &["hash in the application", "register the function and use a raw(sqlite, ..) fragment"],
                 ));
             }
-            "current_schema" | "current_database" | "current_user" | "session_user" | "to_regclass"
-            | "pg_backend_pid" | "set_config" | "current_setting" => {
+            "current_schema" | "current_database" | "current_user" | "session_user"
+            | "to_regclass" | "pg_backend_pid" | "set_config" | "current_setting" => {
                 return Err(ctx.refuse(
                     &format!("fn:{n}"),
                     "PostgreSQL catalog/session introspection has no SQLite equivalent",
@@ -260,8 +277,8 @@ impl Target for Sqlite {
                 )?;
                 Ok(generic_call(n, args, f.distinct, f.star))
             }
-            "count" | "sum" | "avg" | "coalesce" | "nullif" | "abs" | "length" | "replace" | "trim"
-            | "ltrim" | "rtrim" | "substr" | "ifnull" => {
+            "count" | "sum" | "avg" | "coalesce" | "nullif" | "abs" | "length" | "replace"
+            | "trim" | "ltrim" | "rtrim" | "substr" | "ifnull" => {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
                 Ok(generic_call(n, args, f.distinct, f.star))
             }
@@ -280,7 +297,11 @@ impl Target for Sqlite {
             }
             "octet_length" => {
                 if args.len() != 1 {
-                    return Err(ctx.refuse("fn:octet_length", "octet_length takes one argument", &[]));
+                    return Err(ctx.refuse(
+                        "fn:octet_length",
+                        "octet_length takes one argument",
+                        &[],
+                    ));
                 }
                 ctx.note(
                     "fn:octet_length",
@@ -309,7 +330,13 @@ impl Target for Sqlite {
                     None,
                 )?;
                 let order = ctx.agg_order.take();
-                Ok(generic_call_ordered("group_concat", args, f.distinct, false, order.as_deref()))
+                Ok(generic_call_ordered(
+                    "group_concat",
+                    args,
+                    f.distinct,
+                    false,
+                    order.as_deref(),
+                ))
             }
             "now" => {
                 ctx.note(
@@ -323,7 +350,10 @@ impl Target for Sqlite {
             other => Err(ctx.refuse(
                 &format!("fn:{other}"),
                 "no verified mapping for this function on SQLite yet",
-                &["add a mapping with a differential test", "use a raw(sqlite, ..) fragment"],
+                &[
+                    "add a mapping with a differential test",
+                    "use a raw(sqlite, ..) fragment",
+                ],
             )),
         }
     }
@@ -388,7 +418,11 @@ impl Target for Sqlite {
             ));
         }
         ctx.note(
-            if where_.is_some() { "upsert_where" } else { "upsert" },
+            if where_.is_some() {
+                "upsert_where"
+            } else {
+                "upsert"
+            },
             Tier::Exact,
             "requires SQLite >= 3.24",
             None,
@@ -432,7 +466,14 @@ impl Target for Sqlite {
         }
     }
 
-    fn array_membership(&self, lhs: &str, ph: &str, negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+    fn array_membership(
+        &self,
+        lhs: &str,
+        ph: &str,
+        negated: bool,
+        n: u32,
+        ctx: &mut Ctx,
+    ) -> R<String> {
         ctx.note(
             "array_param",
             Tier::Conditional,
@@ -508,7 +549,12 @@ impl Target for Sqlite {
                 "explicit NULLS FIRST/LAST (SQLite >= 3.30) to keep PostgreSQL's NULL order",
                 None,
             )?;
-            Ok(if nulls_first { " NULLS FIRST" } else { " NULLS LAST" }.to_string())
+            Ok(if nulls_first {
+                " NULLS FIRST"
+            } else {
+                " NULLS LAST"
+            }
+            .to_string())
         }
     }
 }

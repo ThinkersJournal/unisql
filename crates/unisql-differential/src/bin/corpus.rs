@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
 //! Corpus runner: reads JSON lines `{id, group, sql}` on stdin, runs the real translator
 //! PostgreSQL -> SQLite on each, and prints one JSON line per statement. No engine is contacted.
 //!
@@ -27,7 +28,9 @@ const ALL: &[Allowance] = &[
 
 fn main() {
     let all = ALL.iter().fold(Options::default(), |o, a| o.with(*a));
-    let target = std::env::args().nth(1).unwrap_or_else(|| "sqlite".to_string());
+    let target = std::env::args()
+        .nth(1)
+        .unwrap_or_else(|| "sqlite".to_string());
     for line in std::io::stdin().lock().lines() {
         let line = line.unwrap();
         let mut rec: serde_json::Value = serde_json::from_str(&line).unwrap();
@@ -51,8 +54,12 @@ fn main() {
                     }
                 }
                 Err(Error::Untranslatable(u)) => ("refused", u.construct, vec![]),
-                Err(Error::Read(unisql::ReadError::NotInIr { construct, .. })) => ("not_in_ir", construct, vec![]),
-                Err(Error::Read(unisql::ReadError::Syntax(m))) => ("syntax", m.chars().take(80).collect(), vec![]),
+                Err(Error::Read(unisql::ReadError::NotInIr { construct, .. })) => {
+                    ("not_in_ir", construct, vec![])
+                }
+                Err(Error::Read(unisql::ReadError::Syntax(m))) => {
+                    ("syntax", m.chars().take(80).collect(), vec![])
+                }
                 Err(e) => ("error", e.to_string(), vec![]),
             };
         let obj = rec.as_object_mut().unwrap();
