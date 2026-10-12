@@ -1,7 +1,7 @@
 //! PostgreSQL dialect module: a reader (text -> IR) and a writer ([`Postgres`] target).
 
 use unisql_core::ast::*;
-use unisql_core::report::{Allowance, Tier, Untranslatable};
+use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
 use unisql_core::target::{generic_call_ordered, Ctx, PORTABLE_FUNCTIONS};
 use unisql_core::{Read, ReadError, Target};
 
@@ -37,6 +37,12 @@ impl Target for Postgres {
         ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
         let order = ctx.agg_order.take();
         Ok(generic_call_ordered(n, args, f.distinct, f.star, order.as_deref()))
+    }
+
+    fn array_membership(&self, lhs: &str, ph: &str, negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+        ctx.note("array_param", Tier::Exact, "native array parameter", None)?;
+        ctx.bind_array_param(n, ParamBinding::NativeArray);
+        Ok(if negated { format!("{lhs} <> ALL({ph})") } else { format!("{lhs} = ANY({ph})") })
     }
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {

@@ -11,6 +11,7 @@ pub mod target;
 
 pub use print::write;
 pub use report::{
-    Allowance, Entry, Options, Read, ReadError, ReadNote, Report, Tier, Translation, Untranslatable,
+    Allowance, Entry, Options, ParamBinding, Read, ReadError, ReadNote, Report, Tier, Translation,
+    Untranslatable,
 };
 pub use target::{Ctx, Target};

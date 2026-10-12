@@ -3,7 +3,7 @@
 //! Postgres target is nearly empty and every other target overrides only what it must.
 
 use crate::ast::*;
-use crate::report::{Allowance, Entry, Options, Report, Tier, Untranslatable};
+use crate::report::{Allowance, Entry, Options, ParamBinding, Report, Tier, Untranslatable};
 
 /// Per-translation state handed to every hook.
 pub struct Ctx<'a> {
@@ -18,11 +18,15 @@ pub struct Ctx<'a> {
     /// Printed `ORDER BY` of the aggregate call being printed, for the function hook to consume.
     /// A hook that does not `take()` it cannot honour the order, and the printer then refuses.
     pub agg_order: Option<String>,
+    /// Parameters used as arrays, with the binding the target requires.
+    pub array_params: std::collections::BTreeMap<u32, ParamBinding>,
+    /// Parameters used as plain values (a parameter must not be both).
+    pub scalar_params: std::collections::BTreeSet<u32>,
 }
 
 impl<'a> Ctx<'a> {
     pub fn new(opts: &'a Options, source: &'a str, target: &'a str) -> Self {
-        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new(), in_upsert: false, agg_order: None }
+        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new(), in_upsert: false, agg_order: None, array_params: Default::default(), scalar_params: Default::default() }
     }
 
     /// Record how the target gives `construct`. `Refused` and an *ungranted* `Conditional` return an
@@ -56,6 +60,11 @@ impl<'a> Ctx<'a> {
                 Ok(())
             }
         }
+    }
+
+    /// Record that source parameter `n` is an array that the caller must bind as `binding`.
+    pub fn bind_array_param(&mut self, n: u32, binding: ParamBinding) {
+        self.array_params.insert(n, binding);
     }
 
     pub fn refuse(&self, construct: &str, reason: &str, alternatives: &[&str]) -> Untranslatable {
@@ -292,6 +301,17 @@ pub trait Target {
             }
         }
         Ok(s)
+    }
+
+    /// Membership in an array parameter: `lhs = ANY(ph)` (or `<> ALL` when `negated`). The target
+    /// must record how the caller binds parameter `n` via [`Ctx::bind_array_param`]. **The default
+    /// refuses**: a target with no array codec has no honest translation.
+    fn array_membership(&self, _lhs: &str, _ph: &str, _negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            "array_param",
+            &format!("target `{}` has no codec for an array parameter (${n})", ctx.target),
+            &["expand the array into an IN (..) list in the application"],
+        ))
     }
 
     /// Hook for `[NOT] BETWEEN`. `numeric` is true when an operand is syntactically numeric (so no

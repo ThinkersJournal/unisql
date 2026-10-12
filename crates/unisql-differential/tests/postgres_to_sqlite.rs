@@ -53,6 +53,7 @@ INSERT INTO kv VALUES ('a','1',1),('b',NULL,2),('c','x',NULL),('Cap','z',3);
 "#;
 
 const COLL: &[A] = &[A::TextCollation];
+const ARR: &[A] = &[A::ArrayNullSemantics];
 
 fn c(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
     Case { name, sql, params: vec![], allow: allow.to_vec(), ordered: false, after: None, expect: Expect::Same }
@@ -170,6 +171,20 @@ fn cases() -> Vec<Case> {
         exp(c("ir_skip_locked", "SELECT id FROM users FOR UPDATE SKIP LOCKED", &[]), Expect::NotInIr("row_lock_option")),
         exp(c("ir_json_path_op", "SELECT data #> '{o,k}' FROM docs", &[]), Expect::NotInIr("binary_operator")),
         exp(c("ir_named_window", "SELECT id, sum(amount) OVER w FROM orders WINDOW w AS (ORDER BY id)", &[]), Expect::NotInIr("select_clause")),
+        // ---- array parameters: `= ANY($1)` binds as JSON text on SQLite (ParamBinding::JsonArrayText)
+        p(c("any_int_array", "SELECT id FROM users WHERE id = ANY($1)", ARR), vec![Param::IntArray(vec![1, 3, 5, 9])]),
+        p(c("all_ne_int_array", "SELECT id FROM users WHERE id <> ALL($1)", ARR), vec![Param::IntArray(vec![1, 3])]),
+        p(c("any_text_array", "SELECT id FROM users WHERE city = ANY($1)", ARR), vec![Param::TextArray(vec!["Oslo", "Bergen"])]),
+        p(c("any_cast_hint", "SELECT id FROM users WHERE id = ANY($1::int[])", ARR), vec![Param::IntArray(vec![2, 4])]),
+        p(c("any_empty_array", "SELECT id FROM users WHERE id = ANY($1)", ARR), vec![Param::IntArray(vec![])]),
+        p(c("all_ne_empty_array", "SELECT id FROM users WHERE id <> ALL($1)", ARR), vec![Param::IntArray(vec![])]),
+        p(c("any_with_scalar", "SELECT id FROM users WHERE id = ANY($1) AND age > $2", &[A::ArrayNullSemantics, A::TextCollation]),
+            vec![Param::IntArray(vec![1, 3, 5]), Param::Int(26)]),
+        c("any_array_literal", "SELECT id FROM users WHERE id = ANY(ARRAY[1, 2])", &[]),
+        p(exp(c("gate_array", "SELECT id FROM users WHERE id = ANY($1)", &[]), Expect::NeedsAllowance(A::ArrayNullSemantics)),
+            vec![Param::IntArray(vec![1])]),
+        p(exp(c("diverge_null_array", "SELECT id FROM users WHERE NOT (id = ANY($1))", ARR), Expect::Diverges), vec![Param::Null]),
+        exp(c("ir_any_lt", "SELECT id FROM users WHERE id < ANY($1)", ARR), Expect::NotInIr("any_operator")),
         // ---- milestone B: DISTINCT ON emulation
         ord(c("distinct_on_basic", "SELECT DISTINCT ON (city) city, id, name FROM users WHERE city IS NOT NULL ORDER BY city, age DESC, id", COLL)),
         ord(c("distinct_on_orders", "SELECT DISTINCT ON (user_id) user_id, amount, id FROM orders ORDER BY user_id, amount DESC, id", COLL)),

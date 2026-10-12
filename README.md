@@ -16,6 +16,8 @@ use unisql::{translate, Options};
 let t = translate("SELECT id FROM users WHERE id = $1", "postgres", "sqlite", &Options::default())?;
 assert_eq!(t.sql, r#"SELECT "id" FROM "users" WHERE "id" = ?1"#);
 // t.report says, per construct, whether the target gave it exactly, by emulation, or conditionally.
+// t.param_order / t.param_bindings say how the caller must bind each parameter on the target
+// (for example an array parameter becomes JSON text on SQLite and MySQL).
 ```
 
 What it does and does not promise, in one paragraph: a statement is translated only when the target

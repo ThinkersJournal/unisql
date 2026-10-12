@@ -22,6 +22,7 @@ const ALL: &[Allowance] = &[
     Allowance::IntegerDivisionAssumed,
     Allowance::UpsertAnyUniqueKey,
     Allowance::AggregateStringTruncation,
+    Allowance::ArrayNullSemantics,
 ];
 
 fn main() {

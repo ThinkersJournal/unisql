@@ -6,7 +6,7 @@
 
 use unisql_core::ast::*;
 use unisql_core::rewrite;
-use unisql_core::report::{Allowance, Tier, Untranslatable};
+use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
 use unisql_core::target::{generic_call, generic_call_ordered, Ctx, Escape, StmtKind};
 use unisql_core::{Read, ReadError, Target};
 
@@ -423,6 +423,18 @@ impl Target for Sqlite {
                 Ok(format!(" LIMIT -1 OFFSET {o}"))
             }
         }
+    }
+
+    fn array_membership(&self, lhs: &str, ph: &str, negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            "array_param",
+            Tier::Conditional,
+            "bind the array as JSON text; membership via json_each(). A NULL array reads as empty",
+            Some(Allowance::ArrayNullSemantics),
+        )?;
+        ctx.bind_array_param(n, ParamBinding::JsonArrayText);
+        let not = if negated { "NOT " } else { "" };
+        Ok(format!("{lhs} {not}IN (SELECT value FROM json_each({ph}))"))
     }
 
     fn between(&self, numeric: bool, ctx: &mut Ctx) -> R<()> {

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=109
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=120
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -142,6 +142,26 @@ PASS refuse_cast_uuid             refused `cast`: CAST to Uuid has no SQLite equ
 PASS ir_skip_locked               not in IR `row_lock_option`: FOR UPDATE OF / NOWAIT / SKIP LOCKED is not in the IR yet
 PASS ir_json_path_op              not in IR `binary_operator`: HashArrow (JSON/array/regex/bitwise operators are not in the IR)
 PASS ir_named_window              not in IR `select_clause`: a SELECT clause the IR does not represent (TOP/INTO/WINDOW/QUALIFY/hints/...)
+PASS any_int_array                same
+       -> SELECT "id" FROM "users" WHERE "id" IN (SELECT value FROM json_each(?1))
+PASS all_ne_int_array             same
+       -> SELECT "id" FROM "users" WHERE "id" NOT IN (SELECT value FROM json_each(?1))
+PASS any_text_array               same
+       -> SELECT "id" FROM "users" WHERE "city" IN (SELECT value FROM json_each(?1))
+PASS any_cast_hint                same
+       -> SELECT "id" FROM "users" WHERE "id" IN (SELECT value FROM json_each(?1))
+PASS any_empty_array              same
+       -> SELECT "id" FROM "users" WHERE "id" IN (SELECT value FROM json_each(?1))
+PASS all_ne_empty_array           same
+       -> SELECT "id" FROM "users" WHERE "id" NOT IN (SELECT value FROM json_each(?1))
+PASS any_with_scalar              same
+       -> SELECT "id" FROM "users" WHERE "id" IN (SELECT value FROM json_each(?1)) AND ("age" > ?2)
+PASS any_array_literal            same
+       -> SELECT "id" FROM "users" WHERE "id" IN (1, 2)
+PASS gate_array                   refused without allowance: conditional: needs allowance `array_null_semantics`: bind the array as JSON text; membership via json_each(). A NULL array reads as empty
+PASS diverge_null_array           diverges: postgres [] vs sqlite [[Int(1)], [Int(2)], [Int(3)], [Int(4)], [Int(5)], [Int(6)]]
+       -> SELECT "id" FROM "users" WHERE NOT "id" IN (SELECT value FROM json_each(?1))
+PASS ir_any_lt                    not in IR `any_operator`: only `= ANY(..)` is in the IR
 PASS distinct_on_basic            same
        -> SELECT "__u0" AS "city", "__u1" AS "id", "__u2" AS "name" FROM (SELECT "city" AS "__u0", "id" AS "__u1", "name" AS "__u2", "city" AS "__o0", "age" AS "__o1", "id" AS "__o2", ROW_NUMBER() OVER (PARTITION BY "city" ORDER BY "city" NULLS LAST, "age" DESC NULLS FIRST, "id" NULLS LAST) AS "__rn" FROM "users" WHERE "city" IS NOT NULL) AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" DESC NULLS FIRST, "__o2" NULLS LAST
 PASS distinct_on_orders           same
@@ -196,7 +216,8 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 87 passing translated cases:
+MATRIX (construct, tier) from 96 passing translated cases:
+  array_param                  conditional
   boolean_literal              conditional
   cast                         conditional
   distinct_on                  emulated

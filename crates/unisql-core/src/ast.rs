@@ -195,6 +195,9 @@ pub enum Expr {
     Subquery(Box<Query>),
     Exists { query: Box<Query>, negated: bool },
     Nested(Box<Expr>),
+    /// `expr = ANY($n)` (or `expr <> ALL($n)` when `negated`): membership in an *array parameter*.
+    /// The parameter's binding shape is target-specific; see `Translation::param_bindings`.
+    AnyParam { expr: Box<Expr>, param: u32, negated: bool },
     /// `TRIM([LEADING|TRAILING|BOTH] [chars FROM] expr)`; `chars` absent means whitespace.
     Trim { expr: Box<Expr>, side: TrimSide, chars: Option<Box<Expr>> },
 }

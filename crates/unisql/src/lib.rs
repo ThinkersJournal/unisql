@@ -16,7 +16,8 @@ use std::fmt;
 
 pub use unisql_core::ast;
 pub use unisql_core::{
-    Allowance, Entry, Options, ReadError, Report, Target, Tier, Translation, Untranslatable,
+    Allowance, Entry, Options, ParamBinding, ReadError, Report, Target, Tier, Translation,
+    Untranslatable,
 };
 use unisql_dialect_mysql::Mysql;
 use unisql_dialect_postgres::Postgres;

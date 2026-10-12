@@ -183,6 +183,14 @@ refinements, none of which add a dependency on any other layer:
 2. **An options argument carries the named allowances** (the Conditional tier). No allowance, no text.
 3. **The result carries the parameter order**, because the text alone cannot be bound correctly when
    the target uses positional `?` and the source used `$2, $1` or reused `$1`.
+4. **The result carries a per-parameter binding** (`Translation::param_bindings`, ruled by the PM
+   2026-10-12): some parameters change *shape* between engines. `x = ANY($1)` with an array on
+   PostgreSQL becomes `x IN (SELECT value FROM json_each(?1))` on SQLite and
+   `JSON_CONTAINS(?, JSON_ARRAY(x))` on MySQL/MariaDB, where the caller must bind the array as JSON
+   text. `ParamBinding::{Scalar, NativeArray, JsonArrayText}` says which, per source parameter. A
+   target with no codec **refuses** (`array_param`); a parameter used both as an array and as a
+   single value is refused. The array forms carry the `array_null_semantics` allowance: a NULL
+   array, NULL elements or a NULL operand are definite on the target and unknown on the source.
 
 Dialects are named at runtime (`"postgres"`, `"sqlite"`), looked up in a registry of the dialect
 modules compiled in (section 2.1). Integrations (sqlx, Diesel, PersistAnt) are separate optional

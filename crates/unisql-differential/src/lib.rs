@@ -10,7 +10,7 @@ use std::collections::BTreeSet;
 use postgres::types::{ToSql, Type};
 use postgres::{Client, NoTls};
 use rusqlite::types::ValueRef;
-use unisql::{Allowance, Options, Tier};
+use unisql::{Allowance, Options, ParamBinding, Tier};
 
 /// One value in a canonical result cell.
 #[derive(Clone, Debug, PartialEq)]
@@ -48,6 +48,11 @@ pub enum Param {
     Int(i64),
     Real(f64),
     Text(&'static str),
+    /// An array value; the harness binds it as the target's [`ParamBinding`] requires.
+    IntArray(Vec<i64>),
+    TextArray(Vec<&'static str>),
+    /// JSON text (what an array becomes on SQLite and MySQL).
+    Json(String),
 }
 
 pub struct Engines {
@@ -141,6 +146,8 @@ impl Engines {
                 Param::Null => mysql::Value::NULL,
                 Param::Int(i) => mysql::Value::Int(*i),
                 Param::Real(r) => mysql::Value::Double(*r),
+                Param::Json(j) => mysql::Value::Bytes(j.as_bytes().to_vec()),
+                Param::IntArray(_) | Param::TextArray(_) => mysql::Value::NULL,
                 Param::Text(t) => mysql::Value::Bytes(t.as_bytes().to_vec()),
             })
             .collect();
@@ -217,6 +224,8 @@ impl Engines {
                     Param::Null => rusqlite::types::Value::Null,
                     Param::Int(i) => rusqlite::types::Value::Integer(*i),
                     Param::Real(r) => rusqlite::types::Value::Real(*r),
+                    Param::Json(j) => rusqlite::types::Value::Text(j.clone()),
+                    Param::IntArray(_) | Param::TextArray(_) => rusqlite::types::Value::Null,
                     Param::Text(t) => rusqlite::types::Value::Text((*t).to_string()),
                 })
                 .collect();
@@ -268,6 +277,14 @@ fn pg_params(types: &[Type], params: &[Param]) -> Result<Vec<Box<dyn ToSql + Syn
             (Type::FLOAT8, Param::Real(r)) => Box::new(*r),
             (Type::FLOAT8, Param::Int(i)) => Box::new(*i as f64),
             (Type::FLOAT8, Param::Null) => Box::new(None::<f64>),
+            (Type::INT4_ARRAY, Param::IntArray(v)) => Box::new(v.iter().map(|x| *x as i32).collect::<Vec<i32>>()),
+            (Type::INT8_ARRAY, Param::IntArray(v)) => Box::new(v.clone()),
+            (Type::TEXT_ARRAY | Type::VARCHAR_ARRAY, Param::TextArray(v)) => {
+                Box::new(v.iter().map(|s| s.to_string()).collect::<Vec<String>>())
+            }
+            (Type::INT4_ARRAY, Param::Null) => Box::new(None::<Vec<i32>>),
+            (Type::INT8_ARRAY, Param::Null) => Box::new(None::<Vec<i64>>),
+            (Type::TEXT_ARRAY | Type::VARCHAR_ARRAY, Param::Null) => Box::new(None::<Vec<String>>),
             (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Text(s)) => Box::new((*s).to_string()),
             (Type::TEXT | Type::VARCHAR | Type::UNKNOWN, Param::Null) => Box::new(None::<String>),
             (t, p) => return Err(format!("harness cannot bind {p:?} to PostgreSQL type {t}")),
@@ -394,6 +411,8 @@ pub struct Outcome {
     pub translated: Option<String>,
     /// Construct -> worst tier recorded by the report, when it translated.
     pub constructs: Vec<(String, Tier)>,
+    /// `(construct, allowance)` for every Conditional entry the report recorded.
+    pub allowances: Vec<(String, Allowance)>,
     /// `(construct, reason)` when the case passed by being refused.
     pub refusal: Option<(String, String)>,
     pub rows: usize,
@@ -438,11 +457,27 @@ impl Engines {
 
 /// Bind values for the target: numbered-placeholder targets use the caller's order; positional `?`
 /// targets (MySQL) bind in `param_order`, repeating a value used twice.
-fn target_params(target: &str, params: &[Param], order: &[u32]) -> Vec<Param> {
+fn target_params(target: &str, params: &[Param], order: &[u32], bindings: &[ParamBinding]) -> Vec<Param> {
+    let conv = |n: usize| -> Param {
+        let p = &params[n];
+        match (p, bindings.get(n).copied().unwrap_or(ParamBinding::Scalar)) {
+            (Param::IntArray(v), ParamBinding::JsonArrayText) => {
+                Param::Json(format!("[{}]", v.iter().map(|x| x.to_string()).collect::<Vec<_>>().join(",")))
+            }
+            (Param::TextArray(v), ParamBinding::JsonArrayText) => Param::Json(format!(
+                "[{}]",
+                v.iter()
+                    .map(|s| format!("\"{}\"", s.replace('\\', "\\\\").replace('"', "\\\"")))
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )),
+            _ => p.clone(),
+        }
+    };
     if matches!(target, "mysql" | "mariadb") {
-        order.iter().map(|n| params[(*n - 1) as usize].clone()).collect()
+        order.iter().map(|n| conv((*n - 1) as usize)).collect()
     } else {
-        params.to_vec()
+        (0..params.len()).map(conv).collect()
     }
 }
 
@@ -453,7 +488,7 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
 pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
     let (src, tgt) = (dir.source(), dir.target());
     let opts = c.allow.iter().fold(Options::default(), |o, a| o.with(*a));
-    let mut out = Outcome { name: c.name, passed: false, detail: String::new(), translated: None, constructs: vec![], refusal: None, rows: 0 };
+    let mut out = Outcome { name: c.name, passed: false, detail: String::new(), translated: None, constructs: vec![], allowances: vec![], refusal: None, rows: 0 };
     let tr = unisql::translate(c.sql, src, tgt, &opts);
     match (&c.expect, tr) {
         (Expect::Refused(construct), Err(unisql::Error::Untranslatable(u))) => {
@@ -483,7 +518,7 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         }
         (Expect::Diverges, Ok(t)) => {
             out.translated = Some(t.sql.clone());
-            let tparams = target_params(tgt, &c.params, &t.param_order);
+            let tparams = target_params(tgt, &c.params, &t.param_order, &t.param_bindings);
             let orig = e.run_on(src, c.sql, &c.params, c.after);
             let other = e.run_on(tgt, &t.sql, &tparams, c.after);
             match (orig, other) {
@@ -510,6 +545,7 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         (Expect::Same, Ok(t)) => {
             out.translated = Some(t.sql.clone());
             out.constructs = t.report.entries.iter().map(|x| (x.construct.clone(), x.tier)).collect();
+            out.allowances = t.report.entries.iter().filter_map(|x| x.allowance.map(|a| (x.construct.clone(), a))).collect();
             // Identity check: source -> source must give the same results as the original.
             let self_t = unisql::translate(c.sql, src, src, &Options::default());
             let self_text = match self_t {
@@ -519,7 +555,7 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
                     return out;
                 }
             };
-            let tparams = target_params(tgt, &c.params, &t.param_order);
+            let tparams = target_params(tgt, &c.params, &t.param_order, &t.param_bindings);
             let orig = e.run_on(src, c.sql, &c.params, c.after);
             let ident = e.run_on(src, &self_text, &c.params, c.after);
             let other = e.run_on(tgt, &t.sql, &tparams, c.after);
@@ -562,60 +598,71 @@ pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
     m
 }
 
-/// Matrix rows in PersistAnt's agreed schema (DESIGN.md section 5.4):
+/// Matrix rows in PersistAnt's agreed schema (agreed with the PersistAnt lane 2026-10-12):
 /// `subject_kind, subject, backend, version, how, evidence, note, from`.
 ///
-/// - `how`: `native` (Exact), `emulated` (Emulated, and Conditional: a Conditional construct is a
-///   call-site allowance, never a native cell, so it is recorded conservatively as `emulated`),
-///   `absent` (refused).
+/// - `how`: `native` (Exact), `emulated` (Emulated), `conditional` (Conditional: the construct
+///   translates only if the call site names the allowance, listed as `allowance=a,b` at the start of
+///   `note`, so a gate can read it), `absent` (refused). Weakest proven form wins per subject.
 /// - `evidence`: `proven` only for a construct that translated and whose result matched on the real
 ///   engines; a refusal is `declared` (the translator refuses; the engine's lack is not itself tested).
+/// - A refused *form* of a construct that also has a proven form is its own subject
+///   `<construct>.refused`, never a note on the proven cell.
 pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str) -> String {
-    let mut rows: std::collections::BTreeMap<String, (String, String, String)> = Default::default();
-    let mut worse = |k: String, how: &str, ev: &str, note: String| {
-        let rank = |h: &str| match h {
-            "native" => 0,
-            "emulated" => 1,
-            _ => 2,
-        };
-        match rows.get(&k) {
-            Some((h, _, _)) if rank(h) >= rank(how) => {}
-            _ => {
-                rows.insert(k, (how.to_string(), ev.to_string(), note));
-            }
-        }
+    use std::collections::{BTreeMap, BTreeSet};
+    let rank = |h: &str| match h {
+        "native" => 0,
+        "emulated" => 1,
+        "conditional" => 2,
+        _ => 3,
     };
+    let mut proven: BTreeMap<String, (String, BTreeSet<&'static str>)> = BTreeMap::new();
     for o in outcomes.iter().filter(|o| o.passed) {
         for (c, t) in &o.constructs {
             let how = match t {
                 Tier::Exact => "native",
-                _ => "emulated",
+                Tier::Emulated => "emulated",
+                _ => "conditional",
             };
-            let note = if matches!(t, Tier::Conditional) { "conditional: needs a named allowance" } else { "" };
-            worse(c.clone(), how, "proven", note.to_string());
+            let e = proven.entry(c.clone()).or_insert((how.to_string(), BTreeSet::new()));
+            if rank(how) > rank(&e.0) {
+                e.0 = how.to_string();
+            }
         }
-        // refusals are handled after the translated rows, below
-    }
-    // Refusals last: a construct with a proven translation keeps it and records the refused form.
-    for o in outcomes.iter().filter(|o| o.passed) {
-        if let Some((c, why)) = &o.refusal {
-            let why = why.replace(['\t', '\n'], " ");
-            match rows.get_mut(c) {
-                Some((_, _, note)) => {
-                    if !note.is_empty() {
-                        note.push_str("; ");
-                    }
-                    note.push_str(&format!("refused in one form: {why}"));
-                }
-                None => {
-                    rows.insert(c.clone(), ("absent".into(), "declared".into(), why));
-                }
+        for (c, a) in &o.allowances {
+            if let Some(e) = proven.get_mut(c) {
+                e.1.insert(a.name());
             }
         }
     }
+    let mut refused: BTreeMap<String, String> = BTreeMap::new();
+    for o in outcomes.iter().filter(|o| o.passed) {
+        if let Some((c, why)) = &o.refusal {
+            refused.entry(c.clone()).or_insert_with(|| why.replace(['\t', '\n'], " "));
+        }
+    }
     let mut out = String::from("subject_kind\tsubject\tbackend\tversion\thow\tevidence\tnote\tfrom\n");
-    for (k, (how, ev, note)) in rows {
-        out.push_str(&format!("construct\t{k}\t{backend}\t{version}\t{how}\t{ev}\t{note}\t{from}\n"));
+    let mut row = |subject: &str, how: &str, ev: &str, note: &str| {
+        out.push_str(&format!("construct\t{subject}\t{backend}\t{version}\t{how}\t{ev}\t{note}\t{from}\n"));
+    };
+    let mut subjects: BTreeSet<String> = proven.keys().cloned().collect();
+    subjects.extend(refused.keys().cloned());
+    for s in subjects {
+        match (proven.get(&s), refused.get(&s)) {
+            (Some((how, al)), r) => {
+                let note = if al.is_empty() {
+                    String::new()
+                } else {
+                    format!("allowance={}", al.iter().copied().collect::<Vec<_>>().join(","))
+                };
+                row(&s, how, "proven", &note);
+                if let Some(why) = r {
+                    row(&format!("{s}.refused"), "absent", "declared", why);
+                }
+            }
+            (None, Some(why)) => row(&s, "absent", "declared", why),
+            (None, None) => {}
+        }
     }
     out
 }

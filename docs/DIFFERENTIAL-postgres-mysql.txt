@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=75
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=83
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -120,6 +120,21 @@ PASS interval_secs                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
 PASS interval_wide                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
+PASS any_int_array                same
+       -> SELECT `id` FROM `users` WHERE JSON_CONTAINS(?, JSON_ARRAY(`id`))
+PASS all_ne_int_array             same
+       -> SELECT `id` FROM `users` WHERE NOT JSON_CONTAINS(?, JSON_ARRAY(`id`))
+PASS any_text_array               same
+       -> SELECT `id` FROM `users` WHERE JSON_CONTAINS(?, JSON_ARRAY(`city`))
+PASS any_empty_array              same
+       -> SELECT `id` FROM `users` WHERE JSON_CONTAINS(?, JSON_ARRAY(`id`))
+PASS all_ne_empty_array           same
+       -> SELECT `id` FROM `users` WHERE NOT JSON_CONTAINS(?, JSON_ARRAY(`id`))
+PASS any_with_scalar_reorder      same
+       -> SELECT `id` FROM `users` WHERE ((`age` > ?) AND JSON_CONTAINS(?, JSON_ARRAY(`id`))) AND (`age` < (? + 100))
+PASS any_array_literal            same
+       -> SELECT `id` FROM `users` WHERE `id` IN (1, 2)
+PASS gate_array                   refused without allowance: conditional: needs allowance `array_null_semantics`: bind the array as JSON text; membership via JSON_CONTAINS(arr, JSON_ARRAY(x)). NULLs are definite
 PASS gate_text_collation          refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
 PASS gate_division                refused without allowance: conditional: needs allowance `integer_division_assumed`: / yields a DECIMAL in MySQL; DIV is integer division, valid only if both operands are integers
 PASS gate_upsert_key              refused without allowance: conditional: needs allowance `upsert_any_unique_key`: ON DUPLICATE KEY UPDATE fires on ANY unique key, not the stated conflict target
@@ -137,7 +152,8 @@ PASS refuse_update_from           refused `update_from`:
 PASS refuse_cast_uuid             refused `cast`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
 
-MATRIX (construct, tier) from 62 passing translated cases:
+MATRIX (construct, tier) from 69 passing translated cases:
+  array_param                  conditional
   boolean_literal              conditional
   cast                         conditional
   concat                       exact

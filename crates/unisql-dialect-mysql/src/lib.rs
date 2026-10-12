@@ -8,7 +8,7 @@
 //! equality, ordering and `LIKE` agree with a PostgreSQL `C` locale (allowance `text_collation`).
 
 use unisql_core::ast::*;
-use unisql_core::report::{Allowance, Tier, Untranslatable};
+use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
 use unisql_core::rewrite;
 use unisql_core::target::{Ctx, Escape, StmtKind};
 use unisql_core::Target;
@@ -491,6 +491,18 @@ impl Target for Mysql {
             }
             _ => Ok(()),
         }
+    }
+
+    fn array_membership(&self, lhs: &str, ph: &str, negated: bool, n: u32, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            "array_param",
+            Tier::Conditional,
+            "bind the array as JSON text; membership via JSON_CONTAINS(arr, JSON_ARRAY(x)). NULLs are definite",
+            Some(Allowance::ArrayNullSemantics),
+        )?;
+        ctx.bind_array_param(n, ParamBinding::JsonArrayText);
+        let not = if negated { "NOT " } else { "" };
+        Ok(format!("{not}JSON_CONTAINS({ph}, JSON_ARRAY({lhs}))"))
     }
 
     fn between(&self, numeric: bool, ctx: &mut Ctx) -> R<()> {

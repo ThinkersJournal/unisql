@@ -55,6 +55,9 @@ pub enum Allowance {
     /// JSON `->` yields a JSON value on the source; on the target it is its text representation, so
     /// comparison is textual (whitespace and key order are not normalised).
     JsonRepresentationAsText,
+    /// An array parameter used for membership: a `NULL` array, `NULL` elements or a `NULL` operand
+    /// give an unknown result on the source but a definite true/false on the target.
+    ArrayNullSemantics,
     /// `a / b` becomes integer division (`DIV`), valid only if both operands are integers.
     IntegerDivisionAssumed,
     /// An upsert fires on any unique key of the target, not only the stated conflict target.
@@ -78,6 +81,7 @@ impl Allowance {
             Allowance::TimestampArithmeticAsText => "timestamp_arithmetic_as_text",
             Allowance::JsonScalarAffinity => "json_scalar_affinity",
             Allowance::JsonRepresentationAsText => "json_representation_as_text",
+            Allowance::ArrayNullSemantics => "array_null_semantics",
             Allowance::IntegerDivisionAssumed => "integer_division_assumed",
             Allowance::UpsertAnyUniqueKey => "upsert_any_unique_key",
             Allowance::AggregateStringTruncation => "aggregate_string_truncation",
@@ -179,6 +183,29 @@ impl fmt::Display for ReadError {
 
 impl std::error::Error for ReadError {}
 
+/// How the caller must bind one source parameter on the target. The *text* of a statement is not
+/// enough when a parameter changes shape between engines (an array that SQLite and MySQL can only
+/// take as JSON text).
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+pub enum ParamBinding {
+    /// A single value, bound as it would be on the source.
+    Scalar,
+    /// A native array value (PostgreSQL `int4[]`, `text[]`, ...).
+    NativeArray,
+    /// A JSON array, bound as text: `[1,3]` or `["a","b"]`.
+    JsonArrayText,
+}
+
+impl ParamBinding {
+    pub fn name(self) -> &'static str {
+        match self {
+            ParamBinding::Scalar => "scalar",
+            ParamBinding::NativeArray => "native_array",
+            ParamBinding::JsonArrayText => "json_array_text",
+        }
+    }
+}
+
 /// A successful translation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Translation {
@@ -189,6 +216,8 @@ pub struct Translation {
     /// numbered placeholders (`$n`, `?n`) can ignore it; a target with positional `?` binds the
     /// values in exactly this order (a source parameter used twice appears twice).
     pub param_order: Vec<u32>,
+    /// One entry per source parameter (index `n - 1` is `$n`): how to bind it on the target.
+    pub param_bindings: Vec<ParamBinding>,
     pub report: Report,
 }
 

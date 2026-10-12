@@ -1,6 +1,6 @@
 subject_kind	subject	backend	version	how	evidence	note	from
-construct	cast	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
-construct	division	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	cast	postgres	16.15	conditional	proven	allowance=lenient_cast	sqlite
+construct	division	postgres	16.15	conditional	proven	allowance=division_by_zero_is_null	sqlite
 construct	filter_clause	postgres	16.15	native	proven		sqlite
 construct	fn:coalesce	postgres	16.15	native	proven		sqlite
 construct	fn:count	postgres	16.15	native	proven		sqlite
@@ -10,7 +10,7 @@ construct	fn:lower	postgres	16.15	native	proven		sqlite
 construct	fn:ltrim	postgres	16.15	native	proven		sqlite
 construct	fn:max	postgres	16.15	native	proven		sqlite
 construct	fn:min	postgres	16.15	native	proven		sqlite
-construct	fn:now	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	fn:now	postgres	16.15	conditional	proven	allowance=now_as_text	sqlite
 construct	fn:random	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:rank	postgres	16.15	native	proven		sqlite
 construct	fn:replace	postgres	16.15	native	proven		sqlite
@@ -22,12 +22,12 @@ construct	fn:upper	postgres	16.15	native	proven		sqlite
 construct	ilike	postgres	16.15	native	proven		sqlite
 construct	join:inner_join	postgres	16.15	native	proven		sqlite
 construct	join:left_join	postgres	16.15	native	proven		sqlite
-construct	like	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	like	postgres	16.15	conditional	proven	allowance=like_case_sensitivity_is_connection_setting	sqlite
 construct	limit	postgres	16.15	native	proven		sqlite
 construct	null_ordering	postgres	16.15	native	proven		sqlite
 construct	offset	postgres	16.15	native	proven		sqlite
-construct	order_by	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
-construct	ordered_comparison	postgres	16.15	emulated	proven	conditional: needs a named allowance	sqlite
+construct	order_by	postgres	16.15	conditional	proven	allowance=text_collation	sqlite
+construct	ordered_comparison	postgres	16.15	conditional	proven	allowance=text_collation	sqlite
 construct	recursive_cte	postgres	16.15	native	proven		sqlite
 construct	returning	postgres	16.15	native	proven		sqlite
 construct	trim	postgres	16.15	native	proven		sqlite

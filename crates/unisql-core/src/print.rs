@@ -1,7 +1,7 @@
 //! The shared printer: IR -> SQL text for any [`Target`].
 
 use crate::ast::*;
-use crate::report::{Options, Translation, Untranslatable};
+use crate::report::{Options, ParamBinding, Translation, Untranslatable};
 use crate::target::{Ctx, Escape, StmtKind, Target};
 
 type R<T> = Result<T, Untranslatable>;
@@ -16,7 +16,23 @@ pub fn write(
 ) -> Result<Translation, Untranslatable> {
     let mut ctx = Ctx::new(opts, source, target.name());
     let sql = Printer { t: target }.statement(stmt, &mut ctx)?;
-    Ok(Translation { sql, param_count: ctx.max_param, param_order: ctx.param_order, report: ctx.report })
+    if let Some(n) = ctx.array_params.keys().find(|n| ctx.scalar_params.contains(n)) {
+        return Err(ctx.refuse(
+            "array_param",
+            &format!("parameter ${n} is used both as an array and as a single value"),
+            &[],
+        ));
+    }
+    let param_bindings = (1..=ctx.max_param)
+        .map(|n| ctx.array_params.get(&n).copied().unwrap_or(ParamBinding::Scalar))
+        .collect();
+    Ok(Translation {
+        sql,
+        param_count: ctx.max_param,
+        param_order: ctx.param_order,
+        param_bindings,
+        report: ctx.report,
+    })
 }
 
 struct Printer<'t> {
@@ -353,7 +369,15 @@ impl Printer<'_> {
             Expr::Param(n) => {
                 c.max_param = c.max_param.max(*n);
                 c.param_order.push(*n);
+                c.scalar_params.insert(*n);
                 self.t.placeholder(*n)
+            }
+            Expr::AnyParam { expr, param, negated } => {
+                let lhs = self.operand(expr, c)?;
+                c.max_param = c.max_param.max(*param);
+                c.param_order.push(*param);
+                let ph = self.t.placeholder(*param);
+                self.t.array_membership(&lhs, &ph, *negated, *param, c)?
             }
             Expr::Nested(inner) => self.expr(inner, c)?,
             Expr::Unary { op, expr } => {

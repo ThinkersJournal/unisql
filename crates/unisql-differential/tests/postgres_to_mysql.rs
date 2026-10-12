@@ -65,6 +65,7 @@ const ALL: &[A] = &[
     A::IntegerDivisionAssumed,
     A::UpsertAnyUniqueKey,
     A::AggregateStringTruncation,
+    A::ArrayNullSemantics,
 ];
 
 fn c(name: &'static str, sql: &'static str) -> Case {
@@ -165,6 +166,17 @@ fn cases(maria: bool) -> Vec<Case> {
         c("cast_int_text", "SELECT CAST(id AS TEXT), CAST('12' AS INTEGER) FROM users WHERE id = 1"),
         p(c("interval_secs", "SELECT id FROM events WHERE at > now() - make_interval(secs => $1)"), vec![Param::Real(60.0)]),
         p(c("interval_wide", "SELECT id FROM events WHERE at > now() - make_interval(secs => $1)"), vec![Param::Real(1000.0)]),
+        // ---- array parameters bind as JSON text (ParamBinding::JsonArrayText) via JSON_CONTAINS
+        p(c("any_int_array", "SELECT id FROM users WHERE id = ANY($1)"), vec![Param::IntArray(vec![1, 3, 5, 9])]),
+        p(c("all_ne_int_array", "SELECT id FROM users WHERE id <> ALL($1)"), vec![Param::IntArray(vec![1, 3])]),
+        p(c("any_text_array", "SELECT id FROM users WHERE city = ANY($1)"), vec![Param::TextArray(vec!["Oslo", "Bergen"])]),
+        p(c("any_empty_array", "SELECT id FROM users WHERE id = ANY($1)"), vec![Param::IntArray(vec![])]),
+        p(c("all_ne_empty_array", "SELECT id FROM users WHERE id <> ALL($1)"), vec![Param::IntArray(vec![])]),
+        p(c("any_with_scalar_reorder", "SELECT id FROM users WHERE age > $2 AND id = ANY($1) AND age < $2 + 100"),
+            vec![Param::IntArray(vec![1, 3, 5]), Param::Int(26)]),
+        c("any_array_literal", "SELECT id FROM users WHERE id = ANY(ARRAY[1, 2])"),
+        p(exp(only(c("gate_array", "SELECT id FROM users WHERE id = ANY($1)"), &[]), Expect::NeedsAllowance(A::ArrayNullSemantics)),
+            vec![Param::IntArray(vec![1])]),
         // ---- the allowance gate: without it, no text
         exp(only(c("gate_text_collation", "SELECT id FROM users WHERE city = 'Oslo'"), &[]), Expect::NeedsAllowance(A::TextCollation)),
         exp(only(c("gate_division", "SELECT 7 / 2"), &[A::DivisionByZeroIsNull]), Expect::NeedsAllowance(A::IntegerDivisionAssumed)),

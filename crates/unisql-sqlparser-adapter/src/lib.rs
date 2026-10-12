@@ -879,11 +879,51 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 order_by: vec![],
             })
         }
+        E::AnyOp { left, compare_op, right, is_some: _ } => {
+            if !matches!(compare_op, sp::BinaryOperator::Eq) {
+                return no("any_operator", "only `= ANY(..)` is in the IR");
+            }
+            quantified(*left, *right, false)?
+        }
+        E::AllOp { left, compare_op, right } => {
+            if !matches!(compare_op, sp::BinaryOperator::NotEq) {
+                return no("all_operator", "only `<> ALL(..)` is in the IR");
+            }
+            quantified(*left, *right, true)?
+        }
         E::Exists { subquery, negated } => Expr::Exists { query: Box::new(query(*subquery)?), negated },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
         E::Function(f) => function(f)?,
         other => return no("expression", &head(&other)),
     })
+}
+
+/// `x = ANY(rhs)` / `x <> ALL(rhs)`: an array parameter, an array literal, or a subquery.
+fn quantified(left: sp::Expr, right: sp::Expr, negated: bool) -> R<Expr> {
+    let lhs = boxed(left)?;
+    // `$1::int[]` is only a type hint on the parameter.
+    let mut right = right;
+    if let sp::Expr::Cast { kind, expr: inner, data_type, format: None } = right.clone() {
+        if matches!(kind, sp::CastKind::Cast | sp::CastKind::DoubleColon) && matches!(data_type, sp::DataType::Array(_)) {
+            right = *inner;
+        }
+    }
+    match right {
+        sp::Expr::Value(v) => match v.value {
+            sp::Value::Placeholder(_) => match value(v.value)? {
+                Expr::Param(n) => Ok(Expr::AnyParam { expr: lhs, param: n, negated }),
+                _ => no("array_param", "expected a numbered parameter"),
+            },
+            other => no("array_operand", &head(&other)),
+        },
+        sp::Expr::Array(sp::Array { elem, named: _ }) => Ok(Expr::InList {
+            expr: lhs,
+            list: elem.into_iter().map(expr).collect::<R<Vec<_>>>()?,
+            negated,
+        }),
+        sp::Expr::Subquery(q) => Ok(Expr::InSubquery { expr: lhs, query: Box::new(query(*q)?), negated }),
+        other => no("array_operand", &head(&other)),
+    }
 }
 
 fn like_expr(
