@@ -4,20 +4,20 @@ construct	division	postgres	16.15	conditional	proven	allowance=division_by_zero_
 construct	filter_clause	postgres	16.15	native	proven		sqlite
 construct	fn:coalesce	postgres	16.15	native	proven		sqlite
 construct	fn:count	postgres	16.15	native	proven		sqlite
-construct	fn:instr	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:instr.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:length	postgres	16.15	native	proven		sqlite
 construct	fn:lower	postgres	16.15	native	proven		sqlite
 construct	fn:ltrim	postgres	16.15	native	proven		sqlite
 construct	fn:max	postgres	16.15	native	proven		sqlite
 construct	fn:min	postgres	16.15	native	proven		sqlite
 construct	fn:now	postgres	16.15	conditional	proven	allowance=now_as_text	sqlite
-construct	fn:random	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:random.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:rank	postgres	16.15	native	proven		sqlite
 construct	fn:replace	postgres	16.15	native	proven		sqlite
-construct	fn:strftime	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:strftime.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:string_agg	postgres	16.15	native	proven		sqlite
 construct	fn:sum	postgres	16.15	native	proven		sqlite
-construct	fn:typeof	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:typeof.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:upper	postgres	16.15	native	proven		sqlite
 construct	ilike	postgres	16.15	native	proven		sqlite
 construct	join:inner_join	postgres	16.15	native	proven		sqlite

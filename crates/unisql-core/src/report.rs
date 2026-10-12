@@ -149,6 +149,15 @@ pub struct Untranslatable {
     pub alternatives: Vec<String>,
 }
 
+impl Untranslatable {
+    /// The matrix subject a gate should look up for this refusal: always `<construct>.refused`.
+    /// (Proven forms keep `<construct>`; a statement that uses a refused form needs the `.refused`
+    /// subject, so the split between the two is visible to a gate that keys on subject.)
+    pub fn subject(&self) -> String {
+        format!("{}.refused", self.construct)
+    }
+}
+
 impl fmt::Display for Untranslatable {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(

@@ -15,7 +15,8 @@ never push/publish/create a repo (the PM creates repos; D7 = board 182 must be a
   (`--locale=C`), SQLite 3.53.2 bundled, MySQL 8.4.11 / MariaDB 11.4.13 with `utf8mb4_bin`; commands + digests in
   README. Containers REMOVED at stop: recreate per README (suites fail, never skip, if unreachable).
 - Matrix files (PersistAnt row schema, agreed with their lane): `crates/unisql-dialect-*/matrix-<backend>-from-
-  <source>.tsv`; `how=conditional` carries `allowance=` first in note; refused forms are `<construct>.refused`.
+  <source>.tsv`; `how=conditional` carries `allowance=` first in note; EVERY refusal is subject `<construct>.refused`
+  (= `Untranslatable::subject()`), so a gate keys on the same string the matrix holds.
 - Param codec: `Translation::param_bindings` (Scalar | NativeArray | JsonArrayText) next to `param_order`;
   `= ANY($n)` works pg/sqlite/mysql/mariadb; a target with no codec refuses `array_param`.
 - Allowances: 15 named (see `report.rs`); no blanket mode.

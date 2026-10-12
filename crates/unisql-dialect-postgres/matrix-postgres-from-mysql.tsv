@@ -5,7 +5,7 @@ construct	division_integer	postgres	16.15	conditional	proven	allowance=integer_d
 construct	fn:char_length	postgres	16.15	native	proven		mysql
 construct	fn:coalesce	postgres	16.15	native	proven		mysql
 construct	fn:count	postgres	16.15	native	proven		mysql
-construct	fn:date_format	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	mysql
+construct	fn:date_format.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	mysql
 construct	fn:max	postgres	16.15	native	proven		mysql
 construct	fn:min	postgres	16.15	native	proven		mysql
 construct	fn:octet_length	postgres	16.15	native	proven		mysql
@@ -22,5 +22,5 @@ construct	order_by	postgres	16.15	conditional	proven	allowance=text_collation	my
 construct	ordered_comparison	postgres	16.15	conditional	proven	allowance=text_collation	mysql
 construct	recursive_cte	postgres	16.15	native	proven		mysql
 construct	text_comparison	postgres	16.15	conditional	proven	allowance=text_collation	mysql
-construct	upsert	postgres	16.15	absent	declared	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mysql
+construct	upsert.refused	postgres	16.15	absent	declared	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mysql
 construct	window_function	postgres	16.15	native	proven		mysql

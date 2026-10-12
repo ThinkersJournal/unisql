@@ -5,7 +5,7 @@ construct	division_integer	postgres	16.15	conditional	proven	allowance=integer_d
 construct	fn:char_length	postgres	16.15	native	proven		mariadb
 construct	fn:coalesce	postgres	16.15	native	proven		mariadb
 construct	fn:count	postgres	16.15	native	proven		mariadb
-construct	fn:date_format	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	mariadb
+construct	fn:date_format.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	mariadb
 construct	fn:max	postgres	16.15	native	proven		mariadb
 construct	fn:min	postgres	16.15	native	proven		mariadb
 construct	fn:octet_length	postgres	16.15	native	proven		mariadb
@@ -22,5 +22,5 @@ construct	order_by	postgres	16.15	conditional	proven	allowance=text_collation	ma
 construct	ordered_comparison	postgres	16.15	conditional	proven	allowance=text_collation	mariadb
 construct	recursive_cte	postgres	16.15	native	proven		mariadb
 construct	text_comparison	postgres	16.15	conditional	proven	allowance=text_collation	mariadb
-construct	upsert	postgres	16.15	absent	declared	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mariadb
+construct	upsert.refused	postgres	16.15	absent	declared	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mariadb
 construct	window_function	postgres	16.15	native	proven		mariadb

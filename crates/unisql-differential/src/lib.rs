@@ -638,8 +638,9 @@ pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
 ///   `note`, so a gate can read it), `absent` (refused). Weakest proven form wins per subject.
 /// - `evidence`: `proven` only for a construct that translated and whose result matched on the real
 ///   engines; a refusal is `declared` (the translator refuses; the engine's lack is not itself tested).
-/// - A refused *form* of a construct that also has a proven form is its own subject
-///   `<construct>.refused`, never a note on the proven cell.
+/// - A refusal is always its own subject `<construct>.refused` (matching
+///   `Untranslatable::subject()`), never a note on a proven cell, so a gate that keys on subject
+///   sees the split.
 pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str) -> String {
     use std::collections::{BTreeMap, BTreeSet};
     let rank = |h: &str| match h {
@@ -692,7 +693,7 @@ pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str
                     row(&format!("{s}.refused"), "absent", "declared", why);
                 }
             }
-            (None, Some(why)) => row(&s, "absent", "declared", why),
+            (None, Some(why)) => row(&format!("{s}.refused"), "absent", "declared", why),
             (None, None) => {}
         }
     }

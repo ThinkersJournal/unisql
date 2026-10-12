@@ -11,29 +11,29 @@ construct	fn:avg	sqlite	3.53.2	native	proven		postgres
 construct	fn:btrim	sqlite	3.53.2	emulated	proven		postgres
 construct	fn:char_length	sqlite	3.53.2	emulated	proven		postgres
 construct	fn:coalesce	sqlite	3.53.2	native	proven		postgres
-construct	fn:convert_to	sqlite	3.53.2	absent	declared	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
+construct	fn:convert_to.refused	sqlite	3.53.2	absent	declared	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
 construct	fn:count	sqlite	3.53.2	native	proven		postgres
-construct	fn:current_schema	sqlite	3.53.2	absent	declared	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
+construct	fn:current_schema.refused	sqlite	3.53.2	absent	declared	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:lag	sqlite	3.53.2	native	proven		postgres
 construct	fn:lead	sqlite	3.53.2	native	proven		postgres
 construct	fn:length	sqlite	3.53.2	native	proven		postgres
 construct	fn:lower	sqlite	3.53.2	conditional	proven	allowance=ascii_only_case_folding	postgres
 construct	fn:ltrim	sqlite	3.53.2	native	proven		postgres
-construct	fn:make_interval	sqlite	3.53.2	absent	declared	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
+construct	fn:make_interval.refused	sqlite	3.53.2	absent	declared	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
 construct	fn:max	sqlite	3.53.2	conditional	proven	allowance=text_collation	postgres
-construct	fn:md5	sqlite	3.53.2	absent	declared	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
+construct	fn:md5.refused	sqlite	3.53.2	absent	declared	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
 construct	fn:min	sqlite	3.53.2	conditional	proven	allowance=text_collation	postgres
 construct	fn:now	sqlite	3.53.2	conditional	proven	allowance=now_as_text	postgres
 construct	fn:nullif	sqlite	3.53.2	native	proven		postgres
 construct	fn:octet_length	sqlite	3.53.2	emulated	proven		postgres
 construct	fn:rank	sqlite	3.53.2	native	proven		postgres
-construct	fn:regexp_replace	sqlite	3.53.2	absent	declared	no built-in regular-expression or split function in SQLite	postgres
+construct	fn:regexp_replace.refused	sqlite	3.53.2	absent	declared	no built-in regular-expression or split function in SQLite	postgres
 construct	fn:replace	sqlite	3.53.2	native	proven		postgres
 construct	fn:row_number	sqlite	3.53.2	native	proven		postgres
 construct	fn:string_agg	sqlite	3.53.2	emulated	proven		postgres
 construct	fn:sum	sqlite	3.53.2	native	proven		postgres
 construct	fn:sum.refused	sqlite	3.53.2	absent	declared	this target cannot honour an ORDER BY inside this aggregate	postgres
-construct	fn:to_regclass	sqlite	3.53.2	absent	declared	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
+construct	fn:to_regclass.refused	sqlite	3.53.2	absent	declared	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:upper	sqlite	3.53.2	conditional	proven	allowance=ascii_only_case_folding	postgres
 construct	ilike	sqlite	3.53.2	conditional	proven	allowance=ascii_only_case_folding,like_case_sensitivity_is_connection_setting	postgres
 construct	interval_arithmetic	sqlite	3.53.2	conditional	proven	allowance=timestamp_arithmetic_as_text	postgres
@@ -43,14 +43,14 @@ construct	json_get	sqlite	3.53.2	conditional	proven	allowance=json_representatio
 construct	json_get_text	sqlite	3.53.2	conditional	proven	allowance=json_scalar_affinity	postgres
 construct	like	sqlite	3.53.2	conditional	proven	allowance=like_case_sensitivity_is_connection_setting	postgres
 construct	limit	sqlite	3.53.2	native	proven		postgres
-construct	named_arg	sqlite	3.53.2	absent	declared	SQLite functions have no named-argument notation	postgres
+construct	named_arg.refused	sqlite	3.53.2	absent	declared	SQLite functions have no named-argument notation	postgres
 construct	null_ordering	sqlite	3.53.2	emulated	proven		postgres
 construct	offset	sqlite	3.53.2	emulated	proven		postgres
 construct	order_by	sqlite	3.53.2	conditional	proven	allowance=text_collation	postgres
 construct	ordered_comparison	sqlite	3.53.2	conditional	proven	allowance=text_collation	postgres
 construct	recursive_cte	sqlite	3.53.2	native	proven		postgres
 construct	returning	sqlite	3.53.2	native	proven		postgres
-construct	row_lock	sqlite	3.53.2	absent	declared	SQLite has no row-level locks (it locks the whole database)	postgres
+construct	row_lock.refused	sqlite	3.53.2	absent	declared	SQLite has no row-level locks (it locks the whole database)	postgres
 construct	trim	sqlite	3.53.2	native	proven		postgres
 construct	update_from	sqlite	3.53.2	native	proven		postgres
 construct	upsert	sqlite	3.53.2	native	proven		postgres
