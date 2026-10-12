@@ -7,7 +7,7 @@
 use unisql_core::ast::*;
 use unisql_core::rewrite;
 use unisql_core::report::{Allowance, Tier, Untranslatable};
-use unisql_core::target::{generic_call, Ctx, Escape};
+use unisql_core::target::{generic_call, generic_call_ordered, Ctx, Escape, StmtKind};
 use unisql_core::{Read, ReadError, Target};
 
 /// Read exactly one SQLite statement.
@@ -204,7 +204,8 @@ impl Target for Sqlite {
             }
             // Same dialect in and out: the reader accepted the name, so this is the identity.
             ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
-            return Ok(generic_call(n, args, f.distinct, f.star));
+            let order = ctx.agg_order.take();
+            return Ok(generic_call_ordered(n, args, f.distinct, f.star, order.as_deref()));
         }
         if f.over.is_some()
             && matches!(
@@ -304,10 +305,11 @@ impl Target for Sqlite {
                 ctx.note(
                     "fn:string_agg",
                     Tier::Emulated,
-                    "-> group_concat(value, separator); element order unspecified on both",
+                    "-> group_concat(value, separator); an ORDER BY inside needs SQLite >= 3.44",
                     None,
                 )?;
-                Ok(generic_call("group_concat", args, f.distinct, false))
+                let order = ctx.agg_order.take();
+                Ok(generic_call_ordered("group_concat", args, f.distinct, false, order.as_deref()))
             }
             "now" => {
                 ctx.note(
@@ -365,7 +367,7 @@ impl Target for Sqlite {
         ))
     }
 
-    fn returning(&self, ctx: &mut Ctx) -> R<()> {
+    fn returning(&self, _kind: StmtKind, ctx: &mut Ctx) -> R<()> {
         ctx.note("returning", Tier::Exact, "requires SQLite >= 3.35", None)
     }
 

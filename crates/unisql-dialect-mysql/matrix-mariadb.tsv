@@ -21,7 +21,7 @@ construct	fn:replace	mariadb	11.4.13	native	proven		postgres
 construct	fn:row_number	mariadb	11.4.13	native	proven		postgres
 construct	fn:string_agg	mariadb	11.4.13	emulated	proven	conditional: needs a named allowance	postgres
 construct	fn:substr	mariadb	11.4.13	absent	declared	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
-construct	fn:sum	mariadb	11.4.13	native	proven		postgres
+construct	fn:sum	mariadb	11.4.13	native	proven	refused in one form: this target cannot honour an ORDER BY inside this aggregate	postgres
 construct	ilike	mariadb	11.4.13	emulated	proven	conditional: needs a named allowance	postgres
 construct	interval_arithmetic	mariadb	11.4.13	emulated	proven	conditional: needs a named allowance	postgres
 construct	join:inner_join	mariadb	11.4.13	native	proven		postgres
@@ -33,7 +33,7 @@ construct	null_ordering	mariadb	11.4.13	emulated	proven		postgres
 construct	offset	mariadb	11.4.13	emulated	proven		postgres
 construct	order_by	mariadb	11.4.13	emulated	proven	conditional: needs a named allowance	postgres
 construct	recursive_cte	mariadb	11.4.13	native	proven		postgres
-construct	returning	mariadb	11.4.13	native	proven		postgres
+construct	returning	mariadb	11.4.13	native	proven	refused in one form: MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE	postgres
 construct	text_comparison	mariadb	11.4.13	emulated	proven	conditional: needs a named allowance	postgres
 construct	trim	mariadb	11.4.13	native	proven	refused in one form: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
 construct	update_from	mariadb	11.4.13	absent	declared		postgres

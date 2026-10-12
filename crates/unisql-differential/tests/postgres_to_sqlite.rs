@@ -144,6 +144,9 @@ fn cases() -> Vec<Case> {
         // ---- functions with a stated tier
         c("string_agg_single", "SELECT string_agg(name, ',') FROM users WHERE id = 1", &[]),
         c("char_length", "SELECT char_length(name) FROM users", &[]),
+        c("agg_order_desc_nulls_last", "SELECT string_agg(name, '|' ORDER BY age DESC NULLS LAST, id) FROM users", COLL),
+        c("agg_order_default_nulls", "SELECT string_agg(name, '|' ORDER BY age, id) FROM users", COLL),
+        exp(c("refuse_agg_order_sum", "SELECT sum(amount ORDER BY id) FROM orders", COLL), Expect::Refused("fn:sum")),
         c("btrim_forms", "SELECT btrim('  hi  '), btrim('xxhixx', 'x')", &[]),
         c("octet_length_utf8", "SELECT octet_length('abc'), octet_length('héllo')", &[]),
         c("now_as_text", "SELECT id FROM users WHERE now() IS NOT NULL AND id = 1", &[A::NowAsText]),

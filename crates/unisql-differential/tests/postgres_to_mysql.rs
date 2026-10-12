@@ -156,6 +156,10 @@ fn cases(maria: bool) -> Vec<Case> {
         c("trim_leading_char", "SELECT trim(leading 'x' from 'xxhixx')"),
         c("btrim_default", "SELECT btrim('  hi  ')"),
         c("string_agg_single", "SELECT string_agg(name, ',') FROM users WHERE id = 1"),
+        c("agg_order_desc_nulls_last", "SELECT string_agg(name, '|' ORDER BY age DESC NULLS LAST, id) FROM users"),
+        c("agg_order_default_nulls", "SELECT string_agg(name, '|' ORDER BY age, id) FROM users"),
+        c("agg_order_nulls_first", "SELECT string_agg(name, '|' ORDER BY age NULLS FIRST, id) FROM users"),
+        exp(c("refuse_agg_order_sum", "SELECT sum(amount ORDER BY id) FROM orders"), Expect::Refused("fn:sum")),
         c("now_not_null", "SELECT id FROM users WHERE now() IS NOT NULL AND id = 1"),
         c("int_division", "SELECT 7 / 2, -7 / 2, 7 % 3, -7 % 3 FROM users WHERE id = 1"),
         c("cast_int_text", "SELECT CAST(id AS TEXT), CAST('12' AS INTEGER) FROM users WHERE id = 1"),
@@ -183,6 +187,8 @@ fn cases(maria: bool) -> Vec<Case> {
         // MariaDB >= 10.5: INSERT/DELETE .. RETURNING; UPDATE .. RETURNING is still refused.
         v.push(c("insert_returning", "INSERT INTO kv (key, value, n) VALUES ('d', 'w', 9) RETURNING key, n"));
         v.push(c("delete_returning", "DELETE FROM orders WHERE status = 'open' RETURNING id"));
+        // MariaDB has no UPDATE .. RETURNING: it must be refused, not sent to the engine.
+        v.push(exp(c("refuse_update_returning", "UPDATE users SET age = age + 1 WHERE city = 'Oslo' RETURNING id, age"), Expect::Refused("returning")));
     } else {
         v.push(exp(c("refuse_returning", "INSERT INTO kv (key, value, n) VALUES ('d', 'w', 9) RETURNING key, n"), Expect::Refused("returning")));
     }

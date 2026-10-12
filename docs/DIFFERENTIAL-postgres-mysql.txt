@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=71
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=75
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -103,6 +103,13 @@ PASS btrim_default                same
        -> SELECT TRIM('  hi  ')
 PASS string_agg_single            same
        -> SELECT GROUP_CONCAT(`name` SEPARATOR ',') FROM `users` WHERE `id` = 1
+PASS agg_order_desc_nulls_last    same
+       -> SELECT GROUP_CONCAT(`name` ORDER BY `age` DESC, (`id` IS NULL), `id` SEPARATOR '|') FROM `users`
+PASS agg_order_default_nulls      same
+       -> SELECT GROUP_CONCAT(`name` ORDER BY (`age` IS NULL), `age`, (`id` IS NULL), `id` SEPARATOR '|') FROM `users`
+PASS agg_order_nulls_first        same
+       -> SELECT GROUP_CONCAT(`name` ORDER BY `age`, (`id` IS NULL), `id` SEPARATOR '|') FROM `users`
+PASS refuse_agg_order_sum         refused `fn:sum`: this target cannot honour an ORDER BY inside this aggregate
 PASS now_not_null                 same
        -> SELECT `id` FROM `users` WHERE (NOW() IS NOT NULL) AND (`id` = 1)
 PASS int_division                 same
@@ -130,7 +137,7 @@ PASS refuse_update_from           refused `update_from`:
 PASS refuse_cast_uuid             refused `cast`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
 
-MATRIX (construct, tier) from 59 passing translated cases:
+MATRIX (construct, tier) from 62 passing translated cases:
   boolean_literal              conditional
   cast                         conditional
   concat                       exact

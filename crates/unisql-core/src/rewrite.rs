@@ -70,6 +70,7 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, String> {
             distinct: false,
             star: false,
             filter: None,
+            order_by: vec![],
             over: Some(Window {
                 partition_by: keys.clone(),
                 order_by: q.order_by.clone(),

@@ -2,7 +2,7 @@
 
 use unisql_core::ast::*;
 use unisql_core::report::{Allowance, Tier, Untranslatable};
-use unisql_core::target::{generic_call, Ctx, PORTABLE_FUNCTIONS};
+use unisql_core::target::{generic_call_ordered, Ctx, PORTABLE_FUNCTIONS};
 use unisql_core::{Read, ReadError, Target};
 
 type R<T> = Result<T, Untranslatable>;
@@ -35,7 +35,8 @@ impl Target for Postgres {
             ));
         }
         ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
-        Ok(generic_call(n, args, f.distinct, f.star))
+        let order = ctx.agg_order.take();
+        Ok(generic_call_ordered(n, args, f.distinct, f.star, order.as_deref()))
     }
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {

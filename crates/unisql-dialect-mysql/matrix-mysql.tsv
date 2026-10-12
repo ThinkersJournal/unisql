@@ -21,7 +21,7 @@ construct	fn:replace	mysql	8.4.11	native	proven		postgres
 construct	fn:row_number	mysql	8.4.11	native	proven		postgres
 construct	fn:string_agg	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
 construct	fn:substr	mysql	8.4.11	absent	declared	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
-construct	fn:sum	mysql	8.4.11	native	proven		postgres
+construct	fn:sum	mysql	8.4.11	native	proven	refused in one form: this target cannot honour an ORDER BY inside this aggregate	postgres
 construct	ilike	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
 construct	interval_arithmetic	mysql	8.4.11	emulated	proven	conditional: needs a named allowance	postgres
 construct	join:inner_join	mysql	8.4.11	native	proven		postgres

@@ -10,7 +10,7 @@
 use unisql_core::ast::*;
 use unisql_core::report::{Allowance, Tier, Untranslatable};
 use unisql_core::rewrite;
-use unisql_core::target::{Ctx, Escape};
+use unisql_core::target::{Ctx, Escape, StmtKind};
 use unisql_core::Target;
 
 type R<T> = Result<T, Untranslatable>;
@@ -168,10 +168,12 @@ impl Target for Mysql {
                     "-> GROUP_CONCAT(x SEPARATOR s); the result is silently truncated at group_concat_max_len",
                     Some(Allowance::AggregateStringTruncation),
                 )?;
+                let order = ctx.agg_order.take().map(|o| format!(" ORDER BY {o}")).unwrap_or_default();
                 Ok(format!(
-                    "GROUP_CONCAT({}{} SEPARATOR {})",
+                    "GROUP_CONCAT({}{}{} SEPARATOR {})",
                     if f.distinct { "DISTINCT " } else { "" },
                     args[0],
+                    order,
                     args[1]
                 ))
             }
@@ -342,15 +344,20 @@ impl Target for Mysql {
         Err(ctx.refuse("distinct_on", "unexpected DISTINCT ON", &[]))
     }
 
-    fn returning(&self, ctx: &mut Ctx) -> R<()> {
-        match self.flavor {
-            Flavor::MariaDb => ctx.note(
+    fn returning(&self, kind: StmtKind, ctx: &mut Ctx) -> R<()> {
+        match (self.flavor, kind) {
+            (Flavor::MariaDb, StmtKind::Update) => Err(ctx.refuse(
+                "returning",
+                "MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE",
+                &["run the UPDATE, then SELECT the rows back in the same transaction"],
+            )),
+            (Flavor::MariaDb, _) => ctx.note(
                 "returning",
                 Tier::Exact,
-                "MariaDB >= 10.5 for INSERT and DELETE (UPDATE .. RETURNING is not supported)",
+                "MariaDB >= 10.5 for INSERT and DELETE",
                 None,
             ),
-            Flavor::MySql => Err(ctx.refuse(
+            (Flavor::MySql, _) => Err(ctx.refuse(
                 "returning",
                 "MySQL has no RETURNING clause",
                 &["select the row back with a second statement", "use MariaDB >= 10.5 for INSERT/DELETE"],

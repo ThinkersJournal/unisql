@@ -107,6 +107,7 @@ fn cases() -> Vec<Case> {
         c("ifnull_coalesce", "SELECT id, ifnull(city, 'none') FROM users", &[]),
         c("group_concat_sep", "SELECT group_concat(name, ',') FROM users WHERE id = 1", &[]),
         c("group_concat_default", "SELECT group_concat(name) FROM users WHERE id = 1", &[]),
+        c("group_concat_ordered", "SELECT group_concat(name, '|' ORDER BY age, id) FROM users", COLL),
         c("string_funcs", "SELECT length(name), replace(name, 'a', 'A'), trim('  x '), ltrim('  x'), lower(name), upper(name) FROM users", &[A::AsciiOnlyCaseFolding]),
         c("current_timestamp", "SELECT id FROM users WHERE CURRENT_TIMESTAMP IS NOT NULL AND id = 1", &[A::NowAsText]),
         c("int_division", "SELECT 7 / 2, -7 / 2, 7 % 3, -7 % 3 FROM users WHERE id = 1", &[A::DivisionByZeroIsNull]),

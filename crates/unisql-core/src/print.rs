@@ -2,7 +2,7 @@
 
 use crate::ast::*;
 use crate::report::{Options, Translation, Untranslatable};
-use crate::target::{Ctx, Escape, Target};
+use crate::target::{Ctx, Escape, StmtKind, Target};
 
 type R<T> = Result<T, Untranslatable>;
 
@@ -196,11 +196,11 @@ impl Printer<'_> {
         }
     }
 
-    fn returning(&self, items: &[SelectItem], c: &mut Ctx) -> R<String> {
+    fn returning(&self, items: &[SelectItem], kind: StmtKind, c: &mut Ctx) -> R<String> {
         if items.is_empty() {
             return Ok(String::new());
         }
-        self.t.returning(c)?;
+        self.t.returning(kind, c)?;
         Ok(format!(" RETURNING {}", self.select_items(items, c)?))
     }
 
@@ -239,7 +239,7 @@ impl Printer<'_> {
             };
             out.push_str(&self.t.upsert_clause(&cols, do_nothing, &set, where_.as_deref(), &first, c)?);
         }
-        out.push_str(&self.returning(&i.returning, c)?);
+        out.push_str(&self.returning(&i.returning, StmtKind::Insert, c)?);
         Ok(out)
     }
 
@@ -265,7 +265,7 @@ impl Printer<'_> {
         if let Some(w) = &u.where_ {
             out.push_str(&format!(" WHERE {}", self.expr(w, c)?));
         }
-        out.push_str(&self.returning(&u.returning, c)?);
+        out.push_str(&self.returning(&u.returning, StmtKind::Update, c)?);
         Ok(out)
     }
 
@@ -284,7 +284,7 @@ impl Printer<'_> {
         if let Some(w) = &d.where_ {
             out.push_str(&format!(" WHERE {}", self.expr(w, c)?));
         }
-        out.push_str(&self.returning(&d.returning, c)?);
+        out.push_str(&self.returning(&d.returning, StmtKind::Delete, c)?);
         Ok(out)
     }
 
@@ -494,7 +494,18 @@ impl Printer<'_> {
                         }
                     });
                 }
-                let mut s = self.t.function(f, &args, c)?;
+                if !f.order_by.is_empty() {
+                    c.agg_order = Some(self.order_items(&f.order_by, c)?);
+                }
+                let s = self.t.function(f, &args, c);
+                if c.agg_order.take().is_some() && s.is_ok() {
+                    return Err(c.refuse(
+                        &format!("fn:{}", f.name),
+                        "this target cannot honour an ORDER BY inside this aggregate",
+                        &["order in a subquery", "use string_agg, which is translated"],
+                    ));
+                }
+                let mut s = s?;
                 if let Some(flt) = &f.filter {
                     self.t.feature("filter_clause", c)?;
                     s.push_str(&format!(" FILTER (WHERE {})", self.expr(flt, c)?));

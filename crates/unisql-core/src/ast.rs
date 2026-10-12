@@ -211,6 +211,8 @@ pub struct Function {
     pub filter: Option<Box<Expr>>,
     /// `OVER (..)`: makes the call a window function.
     pub over: Option<Window>,
+    /// `agg(args ORDER BY ..)`: the order in which an aggregate consumes its input.
+    pub order_by: Vec<OrderItem>,
 }
 
 #[derive(Clone, Debug, PartialEq)]

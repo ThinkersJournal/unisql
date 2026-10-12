@@ -869,7 +869,15 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 }
                 (None, None) => return no("substring_form", "SUBSTRING without FROM or FOR"),
             }
-            Expr::Function(Function { name: "substr".into(), args, distinct: false, star: false, filter: None, over: None })
+            Expr::Function(Function {
+                name: "substr".into(),
+                args,
+                distinct: false,
+                star: false,
+                filter: None,
+                over: None,
+                order_by: vec![],
+            })
         }
         E::Exists { subquery, negated } => Expr::Exists { query: Box::new(query(*subquery)?), negated },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
@@ -982,6 +990,7 @@ fn function(f: sp::Function) -> R<Expr> {
                     star: false,
                     filter: None,
                     over: None,
+                    order_by: vec![],
                 }));
             }
             return no("bare_function", &format!("`{base}` without parentheses"));
@@ -990,8 +999,16 @@ fn function(f: sp::Function) -> R<Expr> {
         sp::FunctionArguments::List(l) => l,
     };
     let sp::FunctionArgumentList { duplicate_treatment, args, clauses } = args;
-    if !clauses.is_empty() {
-        return no("function_clause", "ORDER BY/LIMIT/SEPARATOR inside a function call");
+    let mut agg_order = Vec::new();
+    for cl in clauses {
+        match cl {
+            sp::FunctionArgumentClause::OrderBy(items) => {
+                for it in items {
+                    agg_order.push(order_item(it)?);
+                }
+            }
+            other => return no("function_clause", &format!("{} inside a function call", head(&other))),
+        }
     }
     let distinct = match duplicate_treatment {
         None | Some(sp::DuplicateTreatment::All) => false,
@@ -1034,7 +1051,7 @@ fn function(f: sp::Function) -> R<Expr> {
             _ => {}
         }
     }
-    Ok(Expr::Function(Function { name, args: out, distinct, star, filter, over }))
+    Ok(Expr::Function(Function { name, args: out, distinct, star, filter, over, order_by: agg_order }))
 }
 
 fn window_spec(w: sp::WindowSpec) -> R<Window> {

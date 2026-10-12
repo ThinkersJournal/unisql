@@ -28,7 +28,7 @@ construct	fn:regexp_replace	sqlite	3.53.2	absent	declared	no built-in regular-ex
 construct	fn:replace	sqlite	3.53.2	native	proven		postgres
 construct	fn:row_number	sqlite	3.53.2	native	proven		postgres
 construct	fn:string_agg	sqlite	3.53.2	emulated	proven		postgres
-construct	fn:sum	sqlite	3.53.2	native	proven		postgres
+construct	fn:sum	sqlite	3.53.2	native	proven	refused in one form: this target cannot honour an ORDER BY inside this aggregate	postgres
 construct	fn:to_regclass	sqlite	3.53.2	absent	declared	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:upper	sqlite	3.53.2	emulated	proven	conditional: needs a named allowance	postgres
 construct	ilike	sqlite	3.53.2	emulated	proven	conditional: needs a named allowance	postgres

@@ -15,11 +15,14 @@ pub struct Ctx<'a> {
     pub param_order: Vec<u32>,
     /// True while printing the SET list of an upsert (so `excluded.c` can be spelled per target).
     pub in_upsert: bool,
+    /// Printed `ORDER BY` of the aggregate call being printed, for the function hook to consume.
+    /// A hook that does not `take()` it cannot honour the order, and the printer then refuses.
+    pub agg_order: Option<String>,
 }
 
 impl<'a> Ctx<'a> {
     pub fn new(opts: &'a Options, source: &'a str, target: &'a str) -> Self {
-        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new(), in_upsert: false }
+        Ctx { report: Report::default(), opts, source, target, max_param: 0, param_order: Vec::new(), in_upsert: false, agg_order: None }
     }
 
     /// Record how the target gives `construct`. `Refused` and an *ungranted* `Conditional` return an
@@ -67,6 +70,14 @@ impl<'a> Ctx<'a> {
 }
 
 type R<T> = Result<T, Untranslatable>;
+
+/// The kind of statement a clause belongs to (some clauses exist only for some kinds).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum StmtKind {
+    Insert,
+    Update,
+    Delete,
+}
 
 /// The escape character of a `LIKE`, as the IR states it.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -132,7 +143,8 @@ pub trait Target {
             ));
         }
         ctx.note(format!("fn:{}", f.name), Tier::Exact, "", None)?;
-        Ok(generic_call(&f.name, args, f.distinct, f.star))
+        let order = ctx.agg_order.take();
+        Ok(generic_call_ordered(&f.name, args, f.distinct, f.star, order.as_deref()))
     }
 
     fn cast(&self, expr: &str, ty: &SqlType, ctx: &mut Ctx) -> R<String> {
@@ -157,7 +169,7 @@ pub trait Target {
         ctx.note("row_lock", Tier::Exact, "", None)
     }
 
-    fn returning(&self, ctx: &mut Ctx) -> R<()> {
+    fn returning(&self, _kind: StmtKind, ctx: &mut Ctx) -> R<()> {
         ctx.note("returning", Tier::Exact, "", None)
     }
 
@@ -316,14 +328,27 @@ pub const PORTABLE_FUNCTIONS: &[&str] = &[
 ];
 
 pub fn generic_call(name: &str, args: &[String], distinct: bool, star: bool) -> String {
+    generic_call_ordered(name, args, distinct, star, None)
+}
+
+/// `NAME([DISTINCT] args [ORDER BY ..])`.
+pub fn generic_call_ordered(
+    name: &str,
+    args: &[String],
+    distinct: bool,
+    star: bool,
+    order: Option<&str>,
+) -> String {
+    let ord = order.map(|o| format!(" ORDER BY {o}")).unwrap_or_default();
     if star {
         return format!("{}(*)", name.to_uppercase());
     }
     format!(
-        "{}({}{})",
+        "{}({}{}{})",
         name.to_uppercase(),
         if distinct { "DISTINCT " } else { "" },
-        args.join(", ")
+        args.join(", "),
+        ord
     )
 }
 
