@@ -123,6 +123,50 @@ design supports both for free, because the dialect is an argument, not a global.
    shape as PersistAnt's `Proven | Declared | Absent` status (`DESIGN-KINDS §2.1`), deliberately.
    A cell that no test exercised is `untested`, never `native`.
 
+## 2.1 Dialects are modules (direction, 2026-10-12)
+
+The session user's words (verbatim): *"I would like to make SQL dialect support in UniSQL modular so it
+is simple-ish to add new dialects."* Design consequences, still no code:
+
+1. **The core knows no dialect.** The IR, the need/capability vocabulary, the tiers, the report and the
+   refusal rule live in a `unisql-core` crate with no dialect-specific text in it. A test enforces it:
+   the core's tests run against a fake dialect defined in the test.
+2. **A dialect is one unit that supplies up to four independent parts**, each optional so a dialect can
+   be target-only or source-only at first:
+   | Part | What it supplies | Test it must pass |
+   |---|---|---|
+   | **Reader** (source side) | text -> IR, via a parser adapter (sqlparser today, replaceable, section 0.1) plus the dialect's *normalisation* rules into IR nodes | round-trip corpus; every construct it accepts lands in the IR or errors with a span |
+   | **Writer** (target side) | IR -> text: identifier quoting, placeholder style, literal forms, `LIMIT/OFFSET/FETCH` shape, function-name and operator tables, type names | golden files per construct |
+   | **Capability table** | for each construct id: `native | emulated(rewrite id) | absent`, with the minimum engine version | the differential layer fills `evidence`; an entry without a test is `declared`, never `proven` (section 5.4) |
+   | **Rewrites** | named, individually testable IR-to-IR transformations the table refers to (`distinct_on_via_window`, `string_agg_to_group_concat`) | each rewrite has a before/after case and a refusal case |
+3. **Data over code wherever it can be.** Quoting, placeholder form, function-name maps, type maps and
+   the capability table are **declarative data files** a contributor edits without writing Rust (the
+   SQLGlot structure of one generator class per dialect with override tables is the model; its licence
+   step in section 4 applies before anything is borrowed). Rust is needed only for a rewrite that is
+   structural or for a reader that needs a hand-written parser.
+4. **Registration is by crate and feature, not by editing the core.** A dialect crate (`unisql-dialect-*`)
+   exposes one registration entry point; `unisql` re-exports a set behind cargo features
+   (`postgres`, `sqlite`, later `mysql`, ...). Third parties can add a dialect without a PR to this repo.
+   Dialects may **inherit**: MariaDB over MySQL, Redshift over Postgres, as a table of overrides on a
+   parent, with the parent's tests re-run against the child (a child that silently changes a parent's
+   meaning must say so in its table).
+5. **A dialect is declared with a version range.** The capability table is keyed by engine version, so
+   "SQLite >= 3.35 has `RETURNING`" is a row, not a code branch, and the matrix schema in section 5.4
+   already carries `version`.
+6. **Adding a dialect is a checklist, enforced by the test kit, not by review:** (a) a quoting and
+   placeholder file; (b) a type map; (c) a function map; (d) a capability table with every construct id
+   in the core's list present (an absent id is a build error, so a new construct in the core forces every
+   dialect to say something); (e) a golden file per construct; (f) a differential run if an engine is
+   available, otherwise every row stays `declared`. The core ships the kit as a crate so a dialect
+   repo can run it standalone.
+7. **Capability ids vs construct ids (section 5.5):** adding a dialect never adds a PersistAnt `rel.*`
+   id. It adds rows.
+
+**Not claimed:** that data files suffice for every dialect (Oracle's empty-string-as-`NULL`,
+SQL Server's `TOP` and `OUTPUT`, and procedural dialects will need Rust rewrites), or that the first
+two dialects will have found the right trait boundaries. Expect to redo the boundary once, at the
+third dialect (MySQL), and keep the first two small enough that this is cheap.
+
 ## 3. The honest limit of "full portability"
 
 CireSnave's own phrase is "as close as possible to full portability", and it is the right phrase.
