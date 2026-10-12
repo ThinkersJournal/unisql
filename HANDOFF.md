@@ -1,26 +1,38 @@
 # unisql lane HANDOFF (current state only; rewrite, never append)
 
-Written 2026-10-12. Lane `unisql`, cwd `C:\Projects\unisql`. **Local git only: `main`, no remote, nothing
-published, no name reserved; every crate `publish = false`.** Rules: Rust only; crates.io deps only;
-`MIT OR Apache-2.0`; no Opus; every subagent `model: sonnet|haiku`; never push/publish/create a repo (the PM
-creates repos; D7 = board 182 must be answered first); never touch `gh auth`.
+Written 2026-10-12 after milestones A, B, C. Lane `unisql`, cwd `C:\Projects\unisql`.
+**Local git only: `main`, no remote, nothing published, no name reserved; every crate `publish = false`.**
+Rules: Rust only; crates.io deps only; `MIT OR Apache-2.0`; no Opus; every subagent `model: sonnet|haiku`;
+never push/publish/create a repo (the PM creates repos; D7 = board 182 must be answered first); never touch
+`gh auth`; remove the engine containers when you stop.
 
 ## State (last local commit: see `git log`)
-- Workspace: `unisql` (facade `translate`), `unisql-core` (IR, tiers, report, printer, `Target` hooks),
-  `unisql-dialect-postgres` (reader over sqlparser 0.63.0 + target), `unisql-dialect-sqlite` (target),
-  `unisql-differential` (harness + `tests/postgres_to_sqlite.rs`).
-- Differential: 74/74 pass vs real PostgreSQL 16.15 (`--locale=C`) and SQLite 3.53.2; output in
-  `docs/DIFFERENTIAL-postgres-sqlite.txt`. Needs container `unisql-pg` on 127.0.0.1:55432
-  (`docker start unisql-pg`; recreate per README). It fails, never skips, if unreachable.
-- Licences read (docs/LICENCES.md): SQLGlot MIT (derivable, keep notice), jOOQ Apache-2.0 + commercial.
-  Logo = Openclipart "Unicycle" by GDJ, public domain, SVG byte-verified.
+- Crates: `unisql` (facade `translate`), `unisql-core` (IR, tiers, report, printer, `Target` hooks, rewrites),
+  `unisql-sqlparser-adapter` (sqlparser AST -> IR, `Rules` per dialect, replaceable),
+  `unisql-dialect-{postgres,sqlite,mysql}` (readers: postgres, sqlite; targets: postgres, sqlite, mysql, mariadb),
+  `unisql-differential` (harness, 4 suites, `corpus` bin).
+- Differential vs REAL engines (docs/DIFFERENTIAL-*.txt): pg->sqlite 106/106, sqlite->pg 52/52,
+  pg->mysql 8.4.11 71/71, pg->mariadb 11.4.13 72/72. Engines: PostgreSQL 16.15 (`--locale=C`), SQLite 3.53.2
+  bundled, MySQL/MariaDB with `utf8mb4_bin`; run commands + image digests in README.md. Containers REMOVED at stop:
+  recreate per README before `cargo test -p unisql-differential` (it fails, never skips, if unreachable).
+- Matrix files (PersistAnt row schema) per module: `crates/unisql-dialect-*/matrix*.tsv`, written by the suites.
+  Conditional is recorded as `how=emulated` + note (PersistAnt said Conditional is a call-site allowance, not a
+  cell; confirm the mapping with the PersistAnt lane).
+- Corpus, real translator, DML, all allowances granted (docs/CORPUS-*.txt; SHAs auth@4582a64f
+  lightbulb@34e5432b humboldt@b7cd95e7; text produced, NOT executed on those schemas). Humboldt src n=339:
+  sqlite 169 translated/106 conditional/24 refused/40 not_in_ir; mysql 24/233/42/40; mariadb 35/241/23/40.
+- Licences (docs/LICENCES.md): SQLGlot MIT, jOOQ Apache-2.0+commercial; nothing derived from either yet.
+  Logo: Openclipart "Unicycle" by GDJ, public domain, SVG byte-verified.
 - User direction (verbatim in DESIGN 0.1/2.1/2.2/5): comprehensive modular dialects, sqlparser replaceable,
-  SQLGlot primary reference, API = text+source+target in, Result<Translation> out, PersistAnt changeable but
-  PM decides disagreements.
+  SQLGlot primary reference, API = text+source+target -> Result<Translation>, PersistAnt changeable but PM
+  decides disagreements.
 
-## Open / next
-- Next slice candidates: SQLite reader (so SQLite->Postgres); DISTINCT ON emulation; NOWAIT/SKIP LOCKED in IR;
-  window functions; PRAGMA-off control case for LIKE; map the 44 unmapped Humboldt functions with tests;
-  matrix file in the agreed row schema (DESIGN 5.4); MySQL dialect to test the trait boundary (DESIGN 2.1).
-- Any code derived from SQLGlot: trace file+SHA, keep MIT notice (LICENCES.md).
-- Rule table in `measure/` and tiers in DESIGN 3.1 share an author; the differential suite is the check.
+## Known limits / open
+- Residual not_in_ir (Humboldt src): `= ANY($1)` array params (binding-shape change, needs a param-codec
+  decision), aggregate ORDER BY (string_agg(.. ORDER BY ..)), PG catalog types (regclass: refusal correct),
+  `EXTRACT(EPOCH FROM ..)`, `TRIM(LEADING FROM x)` is a sqlparser gap.
+- MariaDB `UPDATE .. RETURNING` is not detected as unsupported (hook has no statement kind).
+- No MySQL reader, no DDL translation (D6: DML first), no matrix merge reader (PersistAnt's side).
+- Rule table in `measure/` and DESIGN 3.1 share an author; the differential suites are the check.
+- Next candidates: `= ANY` via json_each + param codec; aggregate ORDER BY; MySQL reader; more mappings
+  (date_trunc, to_char, extract); derive from SQLGlot only with file+SHA trace and MIT notice.
