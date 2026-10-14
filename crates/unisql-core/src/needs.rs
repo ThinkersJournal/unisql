@@ -58,6 +58,9 @@ impl Walk<'_> {
             }
             Statement::Query(q) => self.query(q),
             Statement::Insert(i) => {
+                if i.replace {
+                    self.add("replace_into");
+                }
                 match &i.source {
                     InsertSource::Query(q) => self.query(q),
                     InsertSource::Values(rows) => rows.iter().flatten().for_each(|e| self.expr(e)),
@@ -265,7 +268,15 @@ impl Walk<'_> {
                 right,
                 kind,
                 on,
+                using,
+                natural,
             } => {
+                if *natural {
+                    self.add("join.natural");
+                }
+                if !using.is_empty() {
+                    self.add("join.using");
+                }
                 self.add(match kind {
                     JoinKind::Inner => "join:inner_join",
                     JoinKind::Left => "join:left_join",

@@ -370,6 +370,7 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
                 return;
             };
             schema.drop_table(&name);
+            schema.mark_columns_complete(name.0.clone());
             for c in &ct.columns {
                 schema.set_column(name.0.clone(), ident(&c.name), column_from_def(c));
                 for o in &c.options {
@@ -1066,19 +1067,26 @@ fn table_with_joins(t: sp::TableWithJoins) -> R<TableRef> {
             sp::JoinOperator::CrossJoin(c) => (JoinKind::Cross, c),
             other => return no("join_kind", &head(&other)),
         };
-        let on = match constraint {
-            sp::JoinConstraint::On(e) => Some(expr(e)?),
-            sp::JoinConstraint::None => None,
-            sp::JoinConstraint::Using(_) => {
-                return no("join_using", "JOIN .. USING is not in the IR yet");
-            }
-            sp::JoinConstraint::Natural => return no("natural_join", "NATURAL JOIN"),
+        let (on, using, natural) = match constraint {
+            sp::JoinConstraint::On(e) => (Some(expr(e)?), Vec::new(), false),
+            sp::JoinConstraint::None => (None, Vec::new(), false),
+            sp::JoinConstraint::Using(cols) => (
+                None,
+                cols.iter().map(single_name).collect::<R<Vec<_>>>()?,
+                false,
+            ),
+            sp::JoinConstraint::Natural => (None, Vec::new(), true),
         };
+        if natural && kind == JoinKind::Cross {
+            return no("natural_join", "NATURAL CROSS JOIN");
+        }
         cur = TableRef::Join {
             left: Box::new(cur),
             right: Box::new(table_factor(relation)?),
             kind,
             on,
+            using,
+            natural,
         };
     }
     Ok(cur)
@@ -1151,7 +1159,6 @@ fn insert(i: sp::Insert) -> R<Statement> {
         || partitioned.is_some()
         || !after_columns.is_empty()
         || output.is_some()
-        || replace_into
         || priority.is_some()
         || insert_alias.is_some()
         || settings.is_some()
@@ -1283,6 +1290,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
     };
     Ok(Statement::Insert(Insert {
         table,
+        replace: replace_into,
         columns,
         source,
         on_conflict,

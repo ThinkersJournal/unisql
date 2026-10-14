@@ -124,6 +124,9 @@ ordered_comparison	`<`, `<=`, `>`, `>=` and BETWEEN compare two values; text com
 recursive_cte	WITH RECURSIVE evaluates the recursive term to a fixed point and returns its rows.
 returning	RETURNING returns the affected rows after the statement's changes.
 returning.update	UPDATE ... RETURNING returns the updated rows. Refused where RETURNING is not supported on UPDATE.
+join.natural	NATURAL JOIN joins on every column name the two sides share, once, and a shared column appears once in SELECT *.
+join.using	JOIN .. USING (a, b) joins on equality of the named columns of both sides; each appears once in SELECT *, and an unqualified reference to it is not ambiguous.
+replace_into	REPLACE INTO t deletes every existing row that conflicts with a new row on any unique key, then inserts it. Written as an upsert (allowance replace_is_upsert) it updates in place instead; refused where the schema does not state all the columns and the one unique key.
 row_lock	FOR UPDATE locks the selected rows until the transaction ends. Refused where there are no row locks.
 row_lock.nowait	FOR UPDATE/SHARE ... NOWAIT raises an error at once when a selected row is locked by another transaction, and behaves as without NOWAIT when none is.
 row_lock.of	FOR UPDATE/SHARE OF <table> locks only the rows of that table in a join. Refused where unsupported.

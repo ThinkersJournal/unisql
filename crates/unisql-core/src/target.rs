@@ -394,6 +394,14 @@ pub trait Target {
         Ok(s)
     }
 
+    /// The native spelling of an insert that replaces conflicting rows (`REPLACE INTO` on MySQL and
+    /// MariaDB, `INSERT OR REPLACE INTO` on SQLite). `None` (the default, PostgreSQL) means there is
+    /// none: the printer then writes an upsert when the schema states the table's columns and its
+    /// one unique key, and refuses (leaf `replace_into`) otherwise.
+    fn replace_keyword(&self) -> Option<&'static str> {
+        None
+    }
+
     /// Whether an upsert must name its conflict key columns (PostgreSQL and SQLite do; MySQL and
     /// MariaDB fire on any unique key). When it does and the source stated none, the printer takes
     /// the key from the schema if the table has exactly one stated unique key.

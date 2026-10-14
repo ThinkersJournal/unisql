@@ -86,12 +86,24 @@ const ALL: &[A] = &[
     A::DateAsText,
     A::TimestampAsText,
     A::TimestampMillisecondResolution,
+    A::ReplaceIsUpsert,
     A::LenientCast,
     A::TimestampArithmeticAsText,
     A::PipesAsLogicalOr,
     A::IgnoreCoversOnlyUniqueConflicts,
     A::SubstringStartAssumedPositive,
 ];
+
+/// `kv` as the fixtures define it: columns k, v, n; one unique key (k).
+fn kv_schema() -> unisql::Schema {
+    let mut s = unisql::Schema::new()
+        .with_column("kv", "k", unisql::Column::text())
+        .with_column("kv", "v", unisql::Column::text())
+        .with_column("kv", "n", unisql::Column::numeric())
+        .with_unique_key("kv", &["k"]);
+    s.mark_columns_complete(vec!["kv".to_string()]);
+    s
+}
 
 fn c_only(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
     Case {
@@ -406,6 +418,38 @@ fn cases(dir: Dir) -> Vec<Case> {
             c("refuse_interval_month", "SELECT NOW() - INTERVAL 1 MONTH"),
             Expect::Refused("fn:make_interval.month_year"),
         ),
+        c(
+            "join_using",
+            "SELECT id, amount FROM users JOIN orders USING (id) ORDER BY id",
+        ),
+        c(
+            "left_join_using",
+            "SELECT id, amount FROM users LEFT JOIN orders USING (id) ORDER BY id",
+        ),
+        c(
+            "natural_join",
+            "SELECT id, amount FROM users NATURAL JOIN orders ORDER BY id",
+        ),
+        c(
+            "natural_left_join",
+            "SELECT id, amount FROM users NATURAL LEFT JOIN orders ORDER BY id",
+        ),
+        Case {
+            schema: Some(kv_schema()),
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "replace_into_existing",
+                "REPLACE INTO kv (k, v) VALUES ('a', 'rep')",
+            )
+        },
+        Case {
+            schema: Some(kv_schema()),
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "replace_into_new",
+                "REPLACE INTO kv (k, v, n) VALUES ('fresh', 'x', 9)",
+            )
+        },
         Case {
             after: Some("SELECT * FROM kv ORDER BY 1"),
             ..c("insert_set", "INSERT INTO kv SET k = 'sx', v = 'y', n = 7")
@@ -457,6 +501,14 @@ fn cases(dir: Dir) -> Vec<Case> {
     if matches!(dir, Dir::MysqlToPg | Dir::MariadbToPg) {
         // MySQL `1/0` is NULL; PostgreSQL raises an error. (SQLite agrees with MySQL here.)
         v.push(exp(c("diverge_div_zero", "SELECT 1 / 0"), Expect::Diverges));
+        // No schema: PostgreSQL has no REPLACE and the columns and key are unknown.
+        v.push(exp(
+            c(
+                "refuse_replace_no_schema",
+                "REPLACE INTO kv (k, v) VALUES ('a', 'rep')",
+            ),
+            Expect::Refused("replace_into"),
+        ));
     }
     v
 }
