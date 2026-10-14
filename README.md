@@ -7,8 +7,9 @@
 Write SQL in one dialect; get it back in another. Pronounced "unicycle".
 
 **Status: pre-release (0.16.x), not published.** The crate names are held at `0.0.0` placeholders
-by the project owner; every crate here is still `publish = false` and the repository is private. The
-state of the release work is `docs/PUBLISHING.md`.
+by the project owner; the manifests are release-ready (`cargo publish --workspace --dry-run --locked`
+passes) but nothing has been published and the repository is private. The state of the release work
+is `docs/PUBLISHING.md`.
 
 ```rust
 use unisql::{translate, Options};

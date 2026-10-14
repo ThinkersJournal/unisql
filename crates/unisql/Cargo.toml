@@ -9,8 +9,6 @@ rust-version.workspace = true
 keywords.workspace = true
 categories.workspace = true
 readme = "README.md"
-# tests/leaf_contracts.rs reads the workspace (docs/, sibling crates): it runs in the repository only.
-exclude = ["tests/leaf_contracts.rs"]
 description = "Translate SQL text from one dialect to another. No I/O, no driver."
 
 [dependencies]

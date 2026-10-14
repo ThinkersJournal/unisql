@@ -1,7 +1,8 @@
-# Publishing checklist (draft; nothing here has been run against the registry)
+# Publishing checklist (nothing here has been run against the registry; `publish = true` is set)
 
 Written 2026-10-14 by the unisql lane at origin/main 2b663a0 (0.16.0), for the PM. **Publishing is the
-PM's and CireSnave's call**; every crate is still `publish = false`. This file is the list of what must
+PM's and CireSnave's call**; the manifests are ready (`publish = true` on the six crates,
+`publish = false` on `unisql-differential`) and nothing has been published. This file is the list of what must
 be true first, what was checked, and what was found.
 
 ## 1. State of the names (crates.io API, read-only, 2026-10-14)
@@ -57,7 +58,7 @@ cannot select `unisql-core ^0.16.1` (the registry has 0.0.0) until it is publish
 | `keywords` (5) and `categories` | `sql, dialect, translate, postgres, sqlite`; `database, parser-implementations` |
 | `repository` | `https://github.com/ThinkersJournal/unisql` (private until the flip: **must be public** when the crates are, or the crates.io link is dead) |
 | `rust-version` | 1.94, checked by the MSRV job (`cargo check` on the manifest's own version) |
-| Files that read outside the package | `tests/leaf_contracts.rs` reads `docs/` and sibling crates: excluded from the `unisql` package, it runs in the repository only |
+| Files that read outside the package | the leaf-contract and licence-copy checks read `docs/` and sibling crates: they live in the unpublished `unisql-differential` crate (`tests/leaf_contracts.rs`), run by their own CI step, and no package refers to them |
 | Matrix files | shipped inside the three dialect crates (`matrix-*.tsv`), as the data a gate reads |
 
 ## 4. Order and checks

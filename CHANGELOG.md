@@ -2,6 +2,18 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.16.3 - 2026-10-14
+
+Release preparation; no code or behaviour change. **Nothing is published.**
+
+- `publish = true` in `[workspace.package]` (the six crates inherit it); `unisql-differential` states
+  `publish = false` itself.
+- The leaf-contract and licence-copy checks moved from the `unisql` package's tests to the unpublished
+  `unisql-differential` crate (`tests/leaf_contracts.rs`, run by its own CI step, no engine), so the
+  `unisql` package has no excluded test and `cargo publish --workspace --dry-run --locked` is
+  warning-free.
+- README status paragraph and `docs/PUBLISHING.md` updated.
+
 ## 0.16.2 - 2026-10-14
 
 - `docs/PUBLISHING.md`: the clean-archive `cargo publish --workspace --dry-run --locked` result, and a

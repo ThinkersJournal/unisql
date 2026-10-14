@@ -20,7 +20,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/ThinkersJournal/unisql"
 keywords = ["sql", "dialect", "translate", "postgres", "sqlite"]
 categories = ["database", "parser-implementations"]
-publish = false
+publish = true
 rust-version = "1.94"
 
 [workspace.dependencies]
