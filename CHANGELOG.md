@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.4.0 - 2026-10-14
 
 - **Row locks:** `FOR UPDATE | FOR SHARE [OF table] [NOWAIT | SKIP LOCKED]` are in the IR
   (`RowLockClause`). Leaves: `row_lock` (FOR UPDATE), `row_lock.share`, `row_lock.of`,
