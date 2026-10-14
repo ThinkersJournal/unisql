@@ -6,9 +6,9 @@
 
 Write SQL in one dialect; get it back in another. Pronounced "unicycle".
 
-**Status: design phase, unreleased.** Nothing is published, no crate name is reserved, and the
-repository location and ownership are undecided. The crates in this workspace are
-`publish = false`.
+**Status: pre-release (0.16.x), not published.** The crate names are held at `0.0.0` placeholders
+by the project owner; every crate here is still `publish = false` and the repository is private. The
+state of the release work is `docs/PUBLISHING.md`.
 
 ```rust
 use unisql::{translate, Options};
@@ -25,12 +25,12 @@ from its statement catalogue):
 
 ```rust
 let a = unisql::analyse("SELECT CAST(name AS UUID) FROM users", "postgres")?;
-assert!(a.constructs.contains("cast"));             // the construct ids the matrix files use
-assert!(a.refused.contains("cast.refused"));        // this form is refused by some target
+assert!(a.constructs.contains("cast.to_uuid"));     // the leaf ids the matrix files use
+assert!(a.refused.contains("cast.to_uuid"));        // this form is refused by some target
 ```
 
-`constructs` come from the IR alone; `refused` is the set of `<construct>.refused` subjects across every
-registered target with every allowance granted. A target stops at its first refusal, so a statement with
+`constructs` come from the IR alone; `refused` is the set of leaf ids some registered target refuses,
+with every allowance granted (each is also in `constructs`). A target stops at its first refusal, so a statement with
 two refused forms reports one per target. `unreadable` names a construct outside the IR.
 
 What it does and does not promise, in one paragraph: a statement is translated only when the target
@@ -43,6 +43,8 @@ instead. There is no best-effort mode.
 - `docs/MEASUREMENT.md`: how much of three real codebases' SQL translates (rule-table counts).
 - `docs/DIFFERENTIAL-postgres-sqlite.txt`: the latest differential run against real engines.
 - `docs/LICENCES.md`: licences of the projects we learn from, read from their files.
+- `docs/PUBLISHING.md`: the publish checklist and its findings (nothing is published).
+- `ROADMAP.md` and `CHANGELOG.md`: what is next, and what each version changed.
 
 ## Layout
 

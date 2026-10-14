@@ -6,5 +6,9 @@ license.workspace = true
 repository.workspace = true
 publish.workspace = true
 rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "The UniSQL core: a dialect-neutral SQL IR, tiers and reports, a shared printer and the Target hooks."
 
 [dependencies]

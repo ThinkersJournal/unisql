@@ -83,3 +83,26 @@ fn the_check_can_fail() {
     assert!(base_of_allowance_leaf("cast.to_text").is_none());
     assert!(!contracts.contains("cast.to_klingon"));
 }
+
+/// Each publishable crate carries its own copy of the licence texts (crates.io shows what a package
+/// contains); they must be byte-identical to the workspace root's.
+#[test]
+fn every_published_crate_carries_the_root_licence_texts() {
+    let root = workspace_root();
+    let mut checked = 0;
+    for dir in std::fs::read_dir(root.join("crates")).unwrap() {
+        let dir = dir.unwrap().path();
+        let name = dir.file_name().unwrap().to_string_lossy().to_string();
+        if name == "unisql-differential" {
+            continue; // publish = false
+        }
+        for lic in ["LICENSE-MIT", "LICENSE-APACHE"] {
+            let ours =
+                std::fs::read(dir.join(lic)).unwrap_or_else(|e| panic!("{name} has no {lic}: {e}"));
+            assert_eq!(ours, std::fs::read(root.join(lic)).unwrap(), "{name}/{lic}");
+            checked += 1;
+        }
+        assert!(dir.join("README.md").exists(), "{name} has no README.md");
+    }
+    assert_eq!(checked, 12, "six crates, two licence files each");
+}

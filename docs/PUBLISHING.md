@@ -1,0 +1,96 @@
+# Publishing checklist (draft; nothing here has been run against the registry)
+
+Written 2026-10-14 by the unisql lane at origin/main 2b663a0 (0.16.0), for the PM. **Publishing is the
+PM's and CireSnave's call**; every crate is still `publish = false`. This file is the list of what must
+be true first, what was checked, and what was found.
+
+## 1. State of the names (crates.io API, read-only, 2026-10-14)
+
+| Crate | On crates.io | Owner | Publish? |
+|---|---|---|---|
+| `unisql` | 0.0.0 placeholder, created 2026-10-12 | `ciresnave` | yes (the facade) |
+| `unisql-core` | 0.0.0 placeholder | `ciresnave` | yes |
+| `unisql-sqlparser-adapter` | 0.0.0 placeholder | `ciresnave` | yes |
+| `unisql-dialect-postgres` | 0.0.0 placeholder | `ciresnave` | yes |
+| `unisql-dialect-sqlite` | 0.0.0 placeholder | `ciresnave` | yes |
+| `unisql-dialect-mysql` | 0.0.0 placeholder | `ciresnave` | yes |
+| `unisql-differential` | not present (404) | none | **no**: `publish = false`, needs real engines, do not claim |
+
+Nothing to claim. A real release publishes `0.x.y` over the placeholder from the same owner account.
+
+## 2. What a release changes in the repository
+
+1. Remove `publish = false` from `[workspace.package]` and put it on `unisql-differential` only.
+2. Set the release version (one number for all crates; the PM allocates) in `[workspace.package]`, the
+   `[workspace.dependencies]` pins, the two member pins in `unisql-dialect-postgres` and
+   `unisql-dialect-sqlite`, `Cargo.lock` and the `CHANGELOG.md` heading.
+3. Update the status paragraph of `README.md` (it must say what is true at that tag).
+4. Tag, then publish in dependency order (section 4).
+
+## 3. Package contents (checked with `cargo package --list --offline -p <crate>` at 0.16.1)
+
+| Check | Result |
+|---|---|
+| `description` on every crate | present (three were missing until this change) |
+| `license = "MIT OR Apache-2.0"` and both licence texts inside each package | present (copies of the root files; `every_published_crate_carries_the_root_licence_texts` keeps them identical) |
+| `readme` inside each package | present (`crates/<name>/README.md`) |
+| `keywords` (5) and `categories` | `sql, dialect, translate, postgres, sqlite`; `database, parser-implementations` |
+| `repository` | `https://github.com/ThinkersJournal/unisql` (private until the flip: **must be public** when the crates are, or the crates.io link is dead) |
+| `rust-version` | 1.94, checked by the MSRV job (`cargo check` on the manifest's own version) |
+| Files that read outside the package | `tests/leaf_contracts.rs` reads `docs/` and sibling crates: excluded from the `unisql` package, it runs in the repository only |
+| Matrix files | shipped inside the three dialect crates (`matrix-*.tsv`), as the data a gate reads |
+
+## 4. Order and checks
+
+Dependency order (each waits for the previous one to appear in the index):
+
+1. `unisql-core`
+2. `unisql-sqlparser-adapter`
+3. `unisql-dialect-postgres`, `unisql-dialect-sqlite`, `unisql-dialect-mysql`
+4. `unisql`
+
+Before each: `cargo publish --dry-run -p <crate>` (it needs its dependencies already on crates.io, so
+only step 1 can be dry-run before anything is published). After step 4: `cargo add unisql` in a scratch
+project and run the README example.
+
+Gates that must be green on the release commit (they are the six required CI contexts): build, test,
+clippy, fmt on ubuntu and windows; MSRV; `cargo deny`; the SPDX gate; the differential suites against
+the digest-pinned engines. Run locally the same set by exit code:
+
+```
+cargo fmt --all --check
+cargo clippy --workspace --all-targets -- -D warnings
+cargo deny check advisories licenses bans sources
+bash .github/spdx_gate.sh
+cargo test --workspace
+RUSTDOCFLAGS="-D warnings" cargo doc --no-deps -p unisql -p unisql-core -p unisql-sqlparser-adapter \
+  -p unisql-dialect-postgres -p unisql-dialect-sqlite -p unisql-dialect-mysql
+```
+
+## 5. docs.rs
+
+`cargo doc --no-deps` with `-D warnings` is clean for all six crates at 0.16.0. The crates have no
+features, no build scripts and no network access, so the docs.rs build needs no `[package.metadata.docs.rs]`.
+The facade's crate documentation carries a doc-test; the README example is not compiled (it is the
+same text): re-check it by hand on release.
+
+## 6. Provenance and licence
+
+- The project is `MIT OR Apache-2.0`; every tracked source file declares it (SPDX gate, floor 20 files).
+- `docs/LICENCES.md` records the licences read for SQLGlot (MIT) and jOOQ (Apache-2.0 plus commercial):
+  **nothing is derived from either**; a mapping derived later needs its origin file and SHA and the MIT
+  notice kept (and a `THIRD-PARTY-NOTICES` file in the package). Re-read the licence at the SHA used.
+- `cargo deny` licences check passes for the dependency tree (`sqlparser` is Apache-2.0).
+- The logo (`assets/Unicycle.svg`) is Openclipart "Unicycle" by GDJ, public domain; the PNG copies
+  are unverified and not part of any package.
+
+## 7. Open points for the PM / CireSnave
+
+- **Public flip first**: the repository link in every package points at a private repository.
+- **Branch protection** (six contexts) is set at the flip (the PM).
+- **Consumers**: PersistAnt (and Humboldt) cannot depend on `unisql` until it is published (the
+  crates.io-only rule); `0.x` releases are breaking by their second number, so they should pin
+  `=0.16` style or a tilde requirement.
+- **Yank policy**: a release with a wrong mapping is yanked and replaced; the CHANGELOG states the
+  gate-verdict flips of each release, which is what a consumer needs to decide.
+- **Which version is the first real release** (0.16.x is the current line; the placeholders are 0.0.0).

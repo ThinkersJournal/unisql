@@ -2,6 +2,19 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.16.1 - 2026-10-14
+
+Packaging only; no code or behaviour change.
+
+- **Publish checklist** `docs/PUBLISHING.md`: names (all six held by `ciresnave` at 0.0.0; `unisql-
+  differential` unclaimed and stays unpublished), what a release changes, package contents, order,
+  docs.rs, provenance, open points. Nothing is published.
+- **Findings fixed:** `description` on `unisql-core`, `unisql-dialect-postgres`, `unisql-dialect-sqlite`
+  (crates.io requires one); `LICENSE-MIT` and `LICENSE-APACHE` and a `README.md` inside every package
+  (a test keeps the licence copies identical to the root's); `tests/leaf_contracts.rs` (reads the
+  workspace layout) is excluded from the `unisql` package; `keywords` and `categories`.
+- `README.md` no longer says "design phase, no crate name reserved"; its example uses the leaf ids.
+
 ## 0.16.0 - 2026-10-14
 
 PM task part (b): sweep the statements of auth-framework (`origin/main` 1b31e902) and lightbulb
