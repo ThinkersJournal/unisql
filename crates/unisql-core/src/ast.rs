@@ -293,6 +293,13 @@ pub enum Expr {
         case_insensitive: bool,
         escape: Option<Box<Expr>>,
     },
+    /// `expr [NOT] REGEXP pattern` (MySQL `REGEXP`/`RLIKE`, PostgreSQL `~` / `!~`): the pattern
+    /// is a regular expression and an unanchored match is true. NULL in, NULL out.
+    Regexp {
+        expr: Box<Expr>,
+        pattern: Box<Expr>,
+        negated: bool,
+    },
     Case {
         operand: Option<Box<Expr>>,
         branches: Vec<(Expr, Expr)>,

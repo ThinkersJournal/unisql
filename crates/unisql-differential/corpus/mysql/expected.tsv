@@ -47,8 +47,8 @@ case_expr	expression	curated	ok	ok	translated	translated	translated
 mod_div	expression	curated	ok	ok	syntax	syntax	syntax
 xor	expression	curated	ok	ok	not_in_ir:binary_operator	not_in_ir:binary_operator	not_in_ir:binary_operator
 bit_ops	expression	curated	ok	ok	not_in_ir:binary_operator	not_in_ir:binary_operator	not_in_ir:binary_operator
-regexp	expression	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
-rlike	expression	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
+regexp	expression	curated	ok	ok	conditional:regexp_flavor	refused:regexp	conditional:regexp_flavor
+rlike	expression	curated	ok	ok	conditional:regexp_flavor	refused:regexp	conditional:regexp_flavor
 like_binary	expression	curated	ok	ok	not_in_ir:data_type	not_in_ir:data_type	not_in_ir:data_type
 like_escape	expression	curated	ok	ok	conditional:like_case_sensitivity_is_connection_setting	conditional:like_case_sensitivity_is_connection_setting	conditional:like_case_sensitivity_is_connection_setting+text_collation
 hex_literal	expression	curated	ok	ok	not_in_ir:literal	not_in_ir:literal	not_in_ir:literal

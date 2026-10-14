@@ -84,6 +84,16 @@ impl Target for Sqlite {
         }
     }
 
+    fn regexp(&self, _lhs: &str, _rhs: &str, _negated: bool, ctx: &mut Ctx) -> R<String> {
+        // SQLite parses `REGEXP` but ships no implementation: it calls an application-defined
+        // function that a plain connection does not have, so the statement would fail at run time.
+        Err(ctx.refuse(
+            "regexp",
+            "SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)",
+            &["LIKE or GLOB for simple patterns"],
+        ))
+    }
+
     fn rewrite_query(&self, q: &Query, ctx: &mut Ctx) -> R<Option<Query>> {
         if let SetExpr::Select(s) = &q.body
             && matches!(s.distinct, Distinct::On(_))

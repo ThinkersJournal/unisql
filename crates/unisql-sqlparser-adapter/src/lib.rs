@@ -1487,6 +1487,16 @@ fn expr(e: sp::Expr) -> R<Expr> {
             }
             like_expr(*x, *pattern, escape_char, negated, ci)?
         }
+        E::RLike {
+            negated,
+            expr: x,
+            pattern,
+            ..
+        } => Expr::Regexp {
+            expr: boxed(*x)?,
+            pattern: boxed(*pattern)?,
+            negated,
+        },
         E::ILike {
             negated,
             any,
@@ -1509,6 +1519,18 @@ fn expr(e: sp::Expr) -> R<Expr> {
             Expr::Unary {
                 op,
                 expr: boxed(*x)?,
+            }
+        }
+        E::BinaryOp { left, op, right }
+            if matches!(
+                op,
+                sp::BinaryOperator::PGRegexMatch | sp::BinaryOperator::PGRegexNotMatch
+            ) =>
+        {
+            Expr::Regexp {
+                expr: boxed(*left)?,
+                pattern: boxed(*right)?,
+                negated: matches!(op, sp::BinaryOperator::PGRegexNotMatch),
             }
         }
         E::BinaryOp { left, op, right } => {

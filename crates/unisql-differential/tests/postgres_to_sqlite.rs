@@ -155,6 +155,14 @@ fn cases() -> Vec<Case> {
             "SELECT id FROM users WHERE (age > 30) IS NOT FALSE",
             &[],
         ),
+        exp(
+            c(
+                "refuse_regexp_match",
+                "SELECT id FROM users WHERE city ~ '^O'",
+                &[],
+            ),
+            Expect::Refused("regexp"),
+        ),
         c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",

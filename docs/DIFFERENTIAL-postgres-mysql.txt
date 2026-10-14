@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=124
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=125
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -13,6 +13,8 @@ PASS is_false                     same
        -> SELECT `id` FROM `users` WHERE (`age` > 30) IS FALSE
 PASS is_not_false                 same
        -> SELECT `id` FROM `users` WHERE (`age` > 30) IS NOT FALSE
+PASS regexp_match                 same
+       -> SELECT `id` FROM `users` WHERE (`city` REGEXP '^O.l') OR (`name` NOT REGEXP 'a$')
 PASS in_list                      same
        -> SELECT `id` FROM `users` WHERE (`id` IN (1, 3, 5)) AND (`id` NOT IN (5))
 PASS between                      same
@@ -221,7 +223,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 96 passing translated cases:
+MATRIX (construct, tier) from 97 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_bigint               conditional
@@ -277,6 +279,7 @@ MATRIX (construct, tier) from 96 passing translated cases:
   order_by                     conditional
   ordered_comparison           exact
   recursive_cte                exact
+  regexp                       conditional
   row_lock                     exact
   row_lock.nowait              exact
   row_lock.of                  exact

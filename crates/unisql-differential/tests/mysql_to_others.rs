@@ -92,6 +92,7 @@ const ALL: &[A] = &[
     A::PipesAsLogicalOr,
     A::IgnoreCoversOnlyUniqueConflicts,
     A::SubstringStartAssumedPositive,
+    A::RegexpFlavor,
 ];
 
 /// `kv` as the fixtures define it: columns k, v, n; one unique key (k).
@@ -528,6 +529,15 @@ fn cases(dir: Dir) -> Vec<Case> {
             Expect::Refused("fn:date_format"),
         ),
     ];
+    if matches!(dir, Dir::MysqlToSqlite) {
+        v.push(exp(
+            c(
+                "refuse_regexp",
+                "SELECT id FROM users WHERE city REGEXP '^O'",
+            ),
+            Expect::Refused("regexp"),
+        ));
+    }
     if matches!(dir, Dir::MysqlToPg | Dir::MariadbToPg) {
         // MySQL `1/0` is NULL; PostgreSQL raises an error. (SQLite agrees with MySQL here.)
         v.push(exp(c("diverge_div_zero", "SELECT 1 / 0"), Expect::Diverges));
@@ -538,6 +548,14 @@ fn cases(dir: Dir) -> Vec<Case> {
         v.push(c(
             "reverse_text",
             "SELECT id, REVERSE(name) FROM users ORDER BY id",
+        ));
+        v.push(c(
+            "regexp",
+            "SELECT id FROM users WHERE city REGEXP '^O.l' OR name RLIKE 'a$'",
+        ));
+        v.push(c(
+            "not_regexp",
+            "SELECT id FROM users WHERE city NOT REGEXP '^O.l'",
         ));
         v.push(exp(
             c(

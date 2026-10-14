@@ -119,6 +119,7 @@ join:inner_join	INNER JOIN returns the pairs of rows satisfying the condition.
 join:left_join	LEFT JOIN returns every left row, with NULLs where no right row matches.
 json_get	`doc -> key` yields the JSON value at key.
 json_get_text	`doc ->> key` yields the value at key as text, NULL when absent.
+regexp	`a REGEXP p` / `a ~ p` is true when the regular expression p matches anywhere in a (unanchored), false when it does not, NULL when either side is NULL. Sound only for patterns in the syntax the engines share (literals, `.`, `^`, `$`, `*`, `+`, `?`, `[...]`, `|`, `()`); classes, lookaround and flags differ.
 like	`a LIKE p` is a case-sensitive pattern match with `%` and `_` wildcards.
 limit	LIMIT n returns at most n rows of the ordered result.
 named_arg	`f(name => value)` calls a function with a named argument. Refused where function arguments are positional only.

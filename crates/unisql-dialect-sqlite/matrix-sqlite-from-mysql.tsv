@@ -70,6 +70,7 @@ construct	ordered_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=
 construct	pipes_as_or	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mysql
 construct	pipes_as_or.pipes_as_logical_or	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	allowance=pipes_as_logical_or	mysql
 construct	recursive_cte	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::with_recursive		mysql
+construct	regexp	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_regexp	SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)	mysql
 construct	text_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	text_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	allowance=text_collation	mysql
 construct	upsert	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate		mysql

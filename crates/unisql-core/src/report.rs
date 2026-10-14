@@ -103,6 +103,9 @@ pub enum Allowance {
     UpsertAnyUniqueKey,
     /// An aggregated string is silently truncated at a server setting (`group_concat_max_len`).
     AggregateStringTruncation,
+    /// A regular expression is matched by the target's own engine: syntax beyond the common subset
+    /// (classes, lookaround, `\\d`) and case sensitivity may differ from the source's.
+    RegexpFlavor,
 }
 
 impl Allowance {
@@ -131,6 +134,7 @@ impl Allowance {
         Allowance::IntegerDivisionAssumed,
         Allowance::UpsertAnyUniqueKey,
         Allowance::AggregateStringTruncation,
+        Allowance::RegexpFlavor,
         Allowance::ArrayNullSemantics,
         Allowance::DecimalDivisionAsFloat,
     ];
@@ -164,6 +168,7 @@ impl Allowance {
             Allowance::IntegerDivisionAssumed => "integer_division_assumed",
             Allowance::UpsertAnyUniqueKey => "upsert_any_unique_key",
             Allowance::AggregateStringTruncation => "aggregate_string_truncation",
+            Allowance::RegexpFlavor => "regexp_flavor",
         }
     }
 }
