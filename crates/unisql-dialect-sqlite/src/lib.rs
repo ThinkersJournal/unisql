@@ -355,6 +355,22 @@ impl Target for Sqlite {
                     order.as_deref(),
                 ))
             }
+            // Same construction as on MySQL, from randomblob(): verified over 2000 values.
+            "gen_random_uuid" => {
+                ctx.note(
+                    "fn:gen_random_uuid",
+                    Tier::Emulated,
+                    "assembled from randomblob(): version 4, variant 10xx",
+                    None,
+                )?;
+                Ok(
+                    "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || \
+                    substr(hex(randomblob(2)), 2) || '-' || \
+                    substr('89ab', 1 + (abs(random()) % 4), 1) || \
+                    substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))"
+                        .to_string(),
+                )
+            }
             "now" => {
                 ctx.note(
                     "fn:now",
@@ -440,12 +456,42 @@ impl Target for Sqlite {
         Ok(format!("{lhs} IS {rhs}"))
     }
 
-    fn extract(&self, field: &str, _expr: &str, ctx: &mut Ctx) -> R<String> {
-        Err(ctx.refuse(
-            &format!("extract.{field}"),
-            &format!("SQLite: no verified mapping for EXTRACT({field} ..) yet"),
-            &["compute the field in the application"],
-        ))
+    /// Verified on SQLite 3.53 against PostgreSQL's results: the fields are read from the timestamp
+    /// text with `strftime`; the epoch of a timestamp is `strftime('%s')`, whole seconds. Other fields
+    /// and the epoch of an interval have no verified mapping.
+    fn extract(&self, field: &str, expr: &str, interval: bool, ctx: &mut Ctx) -> R<String> {
+        let leaf = unisql_core::target::extract_leaf(field, interval);
+        let fmt = match field {
+            "year" => "%Y",
+            "month" => "%m",
+            "day" => "%d",
+            "hour" => "%H",
+            "minute" => "%M",
+            "epoch" if !interval => "%s",
+            _ => {
+                return Err(ctx.refuse(
+                    &leaf,
+                    &format!("SQLite: no verified mapping for EXTRACT({field} ..) yet"),
+                    &["compute the field in the application"],
+                ));
+            }
+        };
+        if fmt == "%s" {
+            ctx.note(
+                leaf,
+                Tier::Conditional,
+                "strftime('%s') gives whole seconds; PostgreSQL's epoch has the fraction",
+                Some(Allowance::EpochWholeSeconds),
+            )?;
+        } else {
+            ctx.note(
+                leaf,
+                Tier::Conditional,
+                "the field is read from the timestamp's text (YYYY-MM-DD HH:MM:SS, UTC)",
+                Some(Allowance::TimestampAsText),
+            )?;
+        }
+        Ok(format!("CAST(strftime('{fmt}', {expr}) AS INTEGER)"))
     }
 
     fn array_literal(&self, _items: &[String], ctx: &mut Ctx) -> R<String> {

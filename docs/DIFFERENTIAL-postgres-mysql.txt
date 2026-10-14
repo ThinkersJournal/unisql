@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=112
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=115
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -191,17 +191,24 @@ PASS schema_numeric_column_needs_no_allowance same
        -> SELECT `id` FROM `users` WHERE (`age` > ?) AND (`age` BETWEEN 20 AND 60)
 PASS schema_text_column_still_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
 PASS no_schema_unknown_column_is_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
-PASS refuse_extract_year          refused `extract.year`: MySQL/MariaDB: no verified mapping for EXTRACT(year ..) yet
+PASS refuse_extract_dow           refused `extract.dow`: MySQL/MariaDB: no verified mapping for EXTRACT(dow ..) yet
 PASS refuse_array_literal         refused `array_literal`: MySQL/MariaDB has no array type
 PASS refuse_current_user          refused `fn:current_user`: no verified mapping for this function on MySQL/MariaDB yet
+PASS extract_fields               same
+       -> SELECT `id`, CAST(EXTRACT(YEAR FROM `at`) AS SIGNED), CAST(EXTRACT(MONTH FROM `at`) AS SIGNED), CAST(EXTRACT(DAY FROM `at`) AS SIGNED), CAST(EXTRACT(HOUR FROM `at`) AS SIGNED), CAST(EXTRACT(MINUTE FROM `at`) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
+PASS extract_epoch                same
+       -> SELECT `id`, CAST(UNIX_TIMESTAMP(`at`) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
+PASS gen_random_uuid_v4           360 values: all v4-shaped and distinct; control rejected
+       -> SELECT CAST(LOWER(CONCAT(HEX(RANDOM_BYTES(4)), '-', HEX(RANDOM_BYTES(2)), '-4', SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', ELT(1 + (ORD(RANDOM_BYTES(1)) & 3), '8', '9', 'a', 'b'), SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', HEX(RANDOM_BYTES(6)))) AS CHAR) FROM `users`
 PASS lock_share                   same
        -> SELECT `id` FROM `users` WHERE `id` = 4 FOR SHARE
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 86 passing translated cases:
+MATRIX (construct, tier) from 89 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
+  cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_integer              conditional
   cast.to_text                 conditional
@@ -209,12 +216,19 @@ MATRIX (construct, tier) from 86 passing translated cases:
   distinct_on                  emulated
   division                     conditional
   division_integer             conditional
+  extract.day                  exact
+  extract.epoch                conditional
+  extract.hour                 exact
+  extract.minute               exact
+  extract.month                exact
+  extract.year                 exact
   fn:avg                       exact
   fn:btrim                     emulated
   fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
   fn:current_date              exact
+  fn:gen_random_uuid           emulated
   fn:length                    emulated
   fn:ltrim                     exact
   fn:make_interval             exact

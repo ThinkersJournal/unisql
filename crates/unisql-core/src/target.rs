@@ -226,8 +226,8 @@ pub trait Target {
 
     /// `EXTRACT(field FROM expr)`, operand printed. Default (PostgreSQL): exact, one leaf per field
     /// (`extract.year`, `extract.epoch`, ...): a target maps a field only once it is verified.
-    fn extract(&self, field: &str, expr: &str, ctx: &mut Ctx) -> R<String> {
-        ctx.note(format!("extract.{field}"), Tier::Exact, "", None)?;
+    fn extract(&self, field: &str, expr: &str, interval: bool, ctx: &mut Ctx) -> R<String> {
+        ctx.note(extract_leaf(field, interval), Tier::Exact, "", None)?;
         Ok(format!("EXTRACT({} FROM {expr})", field.to_uppercase()))
     }
 
@@ -558,6 +558,16 @@ pub fn pg_type_name(ty: &SqlType) -> String {
         SqlType::Bytes => "BYTEA".into(),
         SqlType::Json => "JSON".into(),
         SqlType::Jsonb => "JSONB".into(),
+    }
+}
+
+/// The leaf of `EXTRACT(field FROM x)`: `extract.<field>`, and `extract.epoch.interval` when the operand
+/// is a difference of timestamps (an interval), which is not the epoch of a timestamp.
+pub fn extract_leaf(field: &str, interval: bool) -> String {
+    if interval && field == "epoch" {
+        "extract.epoch.interval".to_string()
+    } else {
+        format!("extract.{field}")
     }
 }
 

@@ -6,6 +6,8 @@ construct	array_subquery	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-
 construct	at_time_zone	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_at_time_zone	SQLite has no time zones: its datetimes are text in UTC	postgres
 construct	boolean_literal	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
 construct	boolean_literal.boolean_as_integer	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::insert_values	allowance=boolean_as_integer	postgres
+construct	cast.to_bigint	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_epoch	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_bigint.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_epoch	allowance=lenient_cast	postgres
 construct	cast.to_double	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_double.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast	allowance=lenient_cast	postgres
 construct	cast.to_integer	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
@@ -20,8 +22,20 @@ construct	distinct_on.star_projection	sqlite	3.53.2	schema=none	no	missing	suite
 construct	division	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	division.division_by_zero_is_null	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	allowance=division_by_zero_is_null	postgres
 construct	division_integer	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division		postgres
-construct	extract.epoch	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_epoch	SQLite: no verified mapping for EXTRACT(epoch ..) yet	postgres
-construct	extract.year	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_year	SQLite: no verified mapping for EXTRACT(year ..) yet	postgres
+construct	extract.day	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.day.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	allowance=timestamp_as_text	postgres
+construct	extract.dow	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_dow	SQLite: no verified mapping for EXTRACT(dow ..) yet	postgres
+construct	extract.epoch	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_epoch	diverges from the strict contract unless accepted: allowance=epoch_whole_seconds	postgres
+construct	extract.epoch.epoch_whole_seconds	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_epoch	allowance=epoch_whole_seconds	postgres
+construct	extract.epoch.interval	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_epoch	SQLite: no verified mapping for EXTRACT(epoch ..) yet	postgres
+construct	extract.hour	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.hour.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	allowance=timestamp_as_text	postgres
+construct	extract.minute	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.minute.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	allowance=timestamp_as_text	postgres
+construct	extract.month	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.month.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	allowance=timestamp_as_text	postgres
+construct	extract.year	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.year.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	allowance=timestamp_as_text	postgres
 construct	filter_clause	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	fn:avg	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast		postgres
 construct	fn:btrim	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::btrim_forms		postgres
@@ -33,6 +47,7 @@ construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-s
 construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::current_date_text	allowance=date_as_text	postgres
 construct	fn:current_schema	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_schema	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:current_user	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_user	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
+construct	fn:gen_random_uuid	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::gen_random_uuid_v4		postgres
 construct	fn:lag	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres
 construct	fn:lead	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres
 construct	fn:length	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::string_funcs		postgres

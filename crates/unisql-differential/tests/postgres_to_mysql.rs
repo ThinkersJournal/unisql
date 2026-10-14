@@ -22,6 +22,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
+CREATE TABLE fixed_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
+INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30+00'), (2, '1999-12-31 23:59:59+00'), (3, '2024-02-29 00:00:00+00');
 INSERT INTO events VALUES (1, now() - interval '10 seconds'),(2, now() - interval '120 seconds'),(3, now() - interval '3600 seconds');
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,true,9.5,'Oslo'),
@@ -41,6 +43,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL, amount in
                      FOREIGN KEY (user_id) REFERENCES users(id));
 CREATE TABLE kv (`key` varchar(64) PRIMARY KEY, value varchar(64), n integer);
 CREATE TABLE events (id integer PRIMARY KEY, at datetime NOT NULL);
+CREATE TABLE fixed_ts (id integer PRIMARY KEY, at datetime NOT NULL);
+INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30'), (2, '1999-12-31 23:59:59'), (3, '2024-02-29 00:00:00');
 INSERT INTO events VALUES (1, now() - interval 10 second),(2, now() - interval 120 second),(3, now() - interval 3600 second);
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,1,9.5,'Oslo'),
@@ -64,6 +68,8 @@ const ALL: &[A] = &[
     A::DivisionByZeroIsNull,
     A::BooleanAsInteger,
     A::NowAsText,
+    A::TimestampAsText,
+    A::EpochWholeSeconds,
     A::TimestampArithmeticAsText,
     A::IntegerDivisionAssumed,
     A::UpsertAnyUniqueKey,
@@ -717,9 +723,9 @@ fn cases(maria: bool) -> Vec<Case> {
     }
     for (name, sql, leaf) in [
         (
-            "refuse_extract_year",
-            "SELECT EXTRACT(YEAR FROM now())",
-            "extract.year",
+            "refuse_extract_dow",
+            "SELECT EXTRACT(DOW FROM now())",
+            "extract.dow",
         ),
         (
             "refuse_array_literal",
@@ -734,6 +740,22 @@ fn cases(maria: bool) -> Vec<Case> {
     ] {
         v.push(exp(c(name, sql), Expect::Refused(leaf)));
     }
+    // ---- verified mappings (fixed timestamps; fields compared with PostgreSQL's on the engine)
+    v.push(ord(c(
+        "extract_fields",
+        "SELECT id, CAST(EXTRACT(YEAR FROM at) AS INTEGER), CAST(EXTRACT(MONTH FROM at) AS INTEGER), CAST(EXTRACT(DAY FROM at) AS INTEGER), CAST(EXTRACT(HOUR FROM at) AS INTEGER), CAST(EXTRACT(MINUTE FROM at) AS INTEGER) FROM fixed_ts ORDER BY id",
+    )));
+    v.push(ord(c(
+        "extract_epoch",
+        "SELECT id, CAST(EXTRACT(EPOCH FROM at) AS BIGINT) FROM fixed_ts ORDER BY id",
+    )));
+    v.push(exp(
+        c(
+            "gen_random_uuid_v4",
+            "SELECT CAST(gen_random_uuid() AS TEXT) FROM users",
+        ),
+        Expect::RandomUuidV4,
+    ));
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.
     let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";
