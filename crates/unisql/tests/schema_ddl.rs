@@ -185,3 +185,20 @@ fn bytewise_collation_names() {
         assert!(!b(n), "{n}");
     }
 }
+
+/// A quoted identifier in DDL reads (it used to panic: the reader context was not installed).
+#[test]
+fn quoted_identifiers_in_ddl_are_read() {
+    let m = schema_from_ddl(
+        "CREATE TABLE `kv` (`key` VARCHAR(10) NOT NULL PRIMARY KEY, `Value` TEXT);",
+        "mysql",
+    )
+    .unwrap();
+    let t = Name::simple("kv");
+    assert_eq!(m.schema.get(&t, "key").unwrap().class, ColumnClass::Text);
+    // MySQL column names are case-insensitive: a quoted name folds.
+    assert_eq!(m.schema.get(&t, "value").unwrap().class, ColumnClass::Text);
+    let p = schema_from_ddl(r#"CREATE TABLE kv ("Key" text, n integer);"#, "postgres").unwrap();
+    // PostgreSQL keeps a quoted name's case.
+    assert_eq!(p.schema.get(&t, "Key").unwrap().class, ColumnClass::Text);
+}

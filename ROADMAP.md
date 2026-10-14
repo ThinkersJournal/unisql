@@ -20,9 +20,9 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    (`data_type` 25 are PostgreSQL catalog types, refused correctly; `statement` 65 and
    `multiple_statements` 34 are DDL and scripts, out of scope.) The PostgreSQL-source DML corpus has no residual the IR cannot read (`current_user`,
    `Extract` and `Array` are read and refused by leaf). The MySQL reader gaps found earlier
-   (`<=>`, `INSERT IGNORE`, `||` as OR, `SUBSTRING`) were **done at 0.10.0**. The corpus is
-   PostgreSQL-source only, so MySQL-source gaps are not yet measurable: a MySQL-source corpus and
-   harness is the next step (below the list of known gaps once measured).
+   (`<=>`, `INSERT IGNORE`, `||` as OR, `SUBSTRING`) were **done at 0.10.0**. The MySQL-source
+   corpus now exists (`crates/unisql-differential/corpus/mysql/`, test `mysql_corpus`); its gap list
+   is the next section.
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
 2. **Schema, what is left.** `Schema`, `schema_from_ddl` and collation interpretation are in. The live
    catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6. Possible extensions: view
@@ -50,6 +50,58 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 - **Executing statements.** UniSQL returns text and bindings; drivers are the caller's.
 - **Publishing is the PM's call**: 0.16.3 is on crates.io; each later version is an ordinary bump
   (`docs/PUBLISHING.md`). The repository's public flip is CireSnave's.
+
+## MySQL-source corpus: the gap list
+
+Measured by `cargo test -p unisql-differential --test mysql_corpus` (verdicts in
+`corpus/mysql/expected.tsv`, regenerated with `UNISQL_BLESS=1`). The corpus is 129 statements: 111
+curated MySQL/MariaDB idioms (written from the reference manuals, not from any project; **their
+counts say what is reachable, not how common it is**) and 18 DML statements of auth-framework's
+MySQL storage backend (read at `881c696d`, real code). Every statement is accepted by MySQL 8.4 or
+MariaDB 11.4 (`PREPARE` over the corpus schema); the translation to PostgreSQL, SQLite and MariaDB
+runs with all allowances and the schema read from the corpus DDL, and each translated text is
+prepared on the PostgreSQL / SQLite engine. What it does *not* do: execute and compare results (that
+stays the per-mapping differential cases), and it is only as wide as the idioms listed.
+
+At the first run: 129 statements; to PostgreSQL 57 translated or conditional, 27 refused by leaf,
+39 not in the IR, 4 syntax errors (SQLite and MariaDB differ by a few). It found four defects, **fixed**
+with the corpus: `schema_from_ddl` panicked on any quoted identifier in DDL; `UPDATE LOW_PRIORITY t`
+was written as a table named `low_priority`; `DEFAULT` in `VALUES` was written as the identifier
+`"default"`; SQLite `group_concat(DISTINCT x, ',')` is invalid (now `group_concat(DISTINCT x)`, or a
+refusal for another separator).
+
+Gaps, by what closing them takes (statement ids in the corpus in parentheses):
+
+- **Reader (not in the IR), would be mappable:** `INSERT .. SET` (`insert_set`); `REPLACE INTO`
+  (`replace_into`; with `INSERT OR REPLACE`, one IR form); `JOIN .. USING` (`join_using`) and
+  `NATURAL JOIN` (`natural_join`); `UPDATE/DELETE .. ORDER BY .. LIMIT` (`update_limit`,
+  `delete_limit`: PostgreSQL has no direct form, needs a key subquery, SQLite needs a compile
+  option); multi-table `UPDATE .. JOIN` / `DELETE t FROM .. JOIN` (`update_join`, `delete_join`);
+  `DEFAULT` as a value (`insert_default`); `INSERT .. AS alias ON DUPLICATE KEY UPDATE a = alias.x`
+  (`upsert_alias`, MySQL 8.0.19+ only); `LIKE BINARY`, `REGEXP`/`RLIKE`, `IS TRUE`, `XOR`, bitwise
+  operators, `CAST(x AS CHAR)`/`CONVERT`, `WITH ROLLUP`, `LOCATE`/`INSTR`/`POSITION`, `CEIL`, hex and
+  bit literals, `DATE_ADD(x, INTERVAL n unit)` (read via the `+ INTERVAL` path only).
+- **Reader, parser-bound (sqlparser 0.63.0 rejects the text):** `7 DIV 2`, `LOCK IN SHARE MODE`,
+  `SELECT .. INTO OUTFILE`, `TABLE t`. Upstream issues to file if a consumer needs them.
+- **Reader, dialect-specific and not worth an IR form:** double-quoted strings (`"alice"`, a MySQL
+  default that conflicts with SQL's identifier quoting: needs `ANSI_QUOTES` known), `STRAIGHT_JOIN`,
+  `SQL_CALC_FOUND_ROWS`, index hints, user variables (`@x := ..`), `MATCH .. AGAINST`, `VALUES ROW(..)`
+  with a column alias list, `LOW_PRIORITY`/`IGNORE`/`QUICK` modifiers.
+- **Statements that are not DML** (`SET`, `SHOW`, `EXPLAIN`, `USE`, transactions, `CALL`,
+  `TRUNCATE`): out of scope by design (translation is of DML; DDL and session control stay with the
+  caller).
+- **Target mappings missing (refused by leaf, a verified mapping would close them):**
+  `UTC_TIMESTAMP()` (2 auth-framework statements: PostgreSQL `now() AT TIME ZONE 'UTC'`, SQLite
+  `datetime('now')`), `CURDATE()`/`DATE()`/`DATE_FORMAT`/`UNIX_TIMESTAMP`/`DATEDIFF`/`TIMESTAMPDIFF`,
+  `CONCAT_WS`, `LEFT`/`RIGHT`/`LPAD`/`REPEAT`/`REVERSE`, `MD5`/`SHA1`/`SHA2`, `FIELD`, `RAND`,
+  `UUID` (v1, not v4), `LAST_INSERT_ID`/`ROW_COUNT`/`VERSION`/`SLEEP`, the JSON function family.
+- **`ON DUPLICATE KEY UPDATE` to PostgreSQL/SQLite is refused** (`upsert.no_conflict_key`: 3
+  auth-framework statements): the conflict target is not in the statement. The key is in the DDL:
+  `Schema` could carry primary and unique keys, and the target then writes `ON CONFLICT (key)` for
+  the unambiguous (single unique key) case. This is the highest-value item on the list for a real
+  MySQL-backed consumer: it is all 3 of auth-framework's upserts.
+- **`text_collation` on almost everything:** the schema's string columns carry
+  `utf8mb4_unicode_ci` (stated), so every comparison needs the allowance by design.
 
 ## Known gaps (documented, not planned)
 

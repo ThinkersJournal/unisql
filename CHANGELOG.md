@@ -2,6 +2,23 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased
+
+- **MySQL-source corpus and harness** (`crates/unisql-differential/corpus/mysql/`, test
+  `mysql_corpus`): 129 statements validated on real MySQL 8.4 and MariaDB 11.4, translated to
+  PostgreSQL, SQLite and MariaDB, the output prepared on the target engines; verdicts in
+  `expected.tsv`; the gap list is in ROADMAP.md. `corpus` binary: `UNISQL_SHOW_SQL=1` prints the
+  translated text, and it grants `Allowance::ALL`.
+- **Fixed, found by the corpus** (statements that were mistranslated now read or refuse):
+  - `schema_from_ddl` panicked on a quoted identifier in DDL (`` `key` ``, `"Key"`).
+  - `UPDATE LOW_PRIORITY|IGNORE t ..` was written with a table named `low_priority`/`ignore`:
+    now refused (`update_option`).
+  - `DEFAULT` as a value (`VALUES (?, DEFAULT)`) was written as the identifier `"default"`: now
+    refused by the reader (`default_value`), in every source dialect.
+  - SQLite output `group_concat(DISTINCT x, ',')` is invalid in SQLite: now `group_concat(DISTINCT x)`
+    for the default separator, refused (`fn:string_agg`) for another.
+  No AST or API change; behaviour changes only where the previous output was wrong.
+
 ## 0.17.1 - 2026-10-14
 
 - Docs only: ROADMAP item 1 no longer points at a list that does not exist; no code change.

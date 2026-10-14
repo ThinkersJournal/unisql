@@ -347,6 +347,19 @@ impl Target for Sqlite {
                     None,
                 )?;
                 let order = ctx.agg_order.take();
+                // SQLite: a DISTINCT aggregate takes exactly one argument (the separator is ',').
+                let args = if f.distinct {
+                    if args[1] != "','" {
+                        return Err(ctx.refuse(
+                            "fn:string_agg",
+                            "SQLite group_concat(DISTINCT ..) cannot take a separator",
+                            &["aggregate without DISTINCT, or use the default ',' separator"],
+                        ));
+                    }
+                    &args[..1]
+                } else {
+                    args
+                };
                 Ok(generic_call_ordered(
                     "group_concat",
                     args,
