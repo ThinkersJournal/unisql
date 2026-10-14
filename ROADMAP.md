@@ -1,6 +1,6 @@
 # UniSQL roadmap
 
-Written 2026-10-14 by the unisql lane at origin/main 0844289 (0.2.0); updated at 1317552 (0.2.1). It records what is *not* done,
+Written 2026-10-14 by the unisql lane at origin/main 0844289 (0.2.0); updated at e68dc8f (0.3.0) and again after row locks. It records what is *not* done,
 in the order the lane intends to take it, with the reason and how each item would be verified. It is
 not a promise of dates, and the PM may reorder it. Direction comes from `docs/DESIGN.md` (sections
 0.1, 2.1, 2.2, 5 carry the user's words verbatim): comprehensive dialect coverage rather than
@@ -12,17 +12,13 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 
 ## Next
 
-1. **Row locks: `FOR UPDATE OF`, `NOWAIT`, `SKIP LOCKED`.** The IR has `row_lock` only. Residual in the
-   Humboldt corpus (`docs/CORPUS-*-D.txt`), and PersistAnt names `rel.row_lock(skip_locked)`. PostgreSQL
-   and MySQL 8 have all three, MariaDB has `NOWAIT` and `SKIP LOCKED` (versions to be read from its documentation and tested on the pinned 11.4, not assumed), SQLite none (refused, as now).
-   *Verified by:* two-connection tests (a locked row is skipped / raises) on the engines.
-2. **Date and time functions** (`date_trunc`, `to_char`, `extract`, `age`, `date_part`). The largest
+1. **Date and time functions** (`date_trunc`, `to_char`, `extract`, `age`, `date_part`). The largest
    remaining corpus residual. Start from what the three engines agree on, and refuse the rest by
    leaf (`fn:date_trunc.week` etc.) rather than the whole function.
-3. **MySQL reader gaps:** `||` (MySQL means OR; the parser gives it concatenation precedence),
+2. **MySQL reader gaps:** `||` (MySQL means OR; the parser gives it concatenation precedence),
    `SUBSTRING(s FROM n)` (start-position semantics), `INSERT IGNORE`, `<=>`. Each is a reader rule in
    `unisql-sqlparser-adapter` or a parser-level workaround; none needs an IR change except `<=>`.
-4. **Schema input.** Whether `age > $1` compares numbers or text is syntactic today, so it records
+3. **Schema input.** Whether `age > $1` compares numbers or text is syntactic today, so it records
    `text_comparison`. An optional column-type map would make that exact and shrink the number of
    statements that need an allowance. *Open design question:* where the map comes from (PersistAnt's
    catalog read, or the caller).

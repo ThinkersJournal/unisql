@@ -119,6 +119,15 @@ fn partial_forms_have_their_own_leaves() {
         )
         .contains("fn:string_agg.order_by")
     );
+    let lock = n(
+        "SELECT t.a FROM t JOIN u ON u.a = t.a FOR SHARE OF t SKIP LOCKED",
+        "postgres",
+    );
+    for leaf in ["row_lock.share", "row_lock.of", "row_lock.skip_locked"] {
+        assert!(lock.contains(leaf), "{leaf} missing: {lock:?}");
+    }
+    assert!(!lock.contains("row_lock"), "FOR SHARE is not FOR UPDATE");
+    assert!(n("SELECT a FROM t FOR UPDATE NOWAIT", "postgres").contains("row_lock.nowait"));
     assert!(
         n("SELECT DISTINCT ON (a) * FROM t ORDER BY a", "postgres")
             .contains("distinct_on.star_projection")
@@ -225,6 +234,19 @@ fn analysis_covers_every_construct_a_report_records() {
             "SELECT DISTINCT ON (city) * FROM users ORDER BY city",
         ),
         ("postgres", "SELECT id FROM users WHERE id = 1 FOR UPDATE"),
+        ("postgres", "SELECT id FROM users WHERE id = 1 FOR SHARE"),
+        (
+            "postgres",
+            "SELECT u.id FROM users u JOIN orders o ON o.user_id = u.id FOR UPDATE OF u NOWAIT",
+        ),
+        (
+            "postgres",
+            "SELECT id FROM users WHERE age > 3 FOR UPDATE SKIP LOCKED",
+        ),
+        (
+            "mysql",
+            "SELECT id FROM users WHERE id = 1 FOR UPDATE NOWAIT",
+        ),
         ("postgres", "SELECT md5(name), current_schema() FROM users"),
     ];
     let mut checked = 0;

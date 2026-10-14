@@ -211,8 +211,11 @@ pub trait Target {
         ctx.note("distinct_on", Tier::Exact, "", None)
     }
 
-    fn row_lock(&self, _lock: RowLock, ctx: &mut Ctx) -> R<()> {
-        ctx.note("row_lock", Tier::Exact, "", None)
+    /// A row-locking clause. The default (PostgreSQL) gives every form; each form is its own leaf:
+    /// `row_lock` (FOR UPDATE), `row_lock.share`, `row_lock.of`, `row_lock.nowait`,
+    /// `row_lock.skip_locked`.
+    fn row_lock(&self, lock: &RowLockClause, ctx: &mut Ctx) -> R<()> {
+        note_row_lock_leaves(lock, ctx)
     }
 
     fn returning(&self, _kind: StmtKind, ctx: &mut Ctx) -> R<()> {
@@ -504,4 +507,26 @@ pub fn pg_type_name(ty: &SqlType) -> String {
         SqlType::Json => "JSON".into(),
         SqlType::Jsonb => "JSONB".into(),
     }
+}
+
+/// The base leaf of a locking clause: `row_lock` for FOR UPDATE, `row_lock.share` for FOR SHARE.
+pub fn row_lock_leaf(lock: &RowLockClause) -> &'static str {
+    match lock.strength {
+        RowLock::Update => "row_lock",
+        RowLock::Share => "row_lock.share",
+    }
+}
+
+/// Records every leaf a locking clause uses (the same set `needs::constructs` names), all Exact.
+pub fn note_row_lock_leaves(lock: &RowLockClause, ctx: &mut Ctx) -> R<()> {
+    ctx.note(row_lock_leaf(lock), Tier::Exact, "", None)?;
+    if lock.of.is_some() {
+        ctx.note("row_lock.of", Tier::Exact, "", None)?;
+    }
+    match lock.wait {
+        LockWait::Block => {}
+        LockWait::NoWait => ctx.note("row_lock.nowait", Tier::Exact, "", None)?,
+        LockWait::SkipLocked => ctx.note("row_lock.skip_locked", Tier::Exact, "", None)?,
+    }
+    Ok(())
 }

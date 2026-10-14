@@ -398,6 +398,28 @@ impl Target for Mysql {
         Err(ctx.refuse("distinct_on", "unexpected DISTINCT ON", &[]))
     }
 
+    fn row_lock(&self, lock: &RowLockClause, ctx: &mut Ctx) -> R<()> {
+        if self.flavor == Flavor::MariaDb {
+            // Probed on MariaDB 11.4: `FOR SHARE` and `FOR UPDATE OF t` are syntax errors there
+            // (`LOCK IN SHARE MODE` is its spelling of a shared lock).
+            if lock.strength == RowLock::Share {
+                return Err(ctx.refuse(
+                    "row_lock.share",
+                    "MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)",
+                    &["use FOR UPDATE, or LOCK IN SHARE MODE in the target's own text"],
+                ));
+            }
+            if lock.of.is_some() {
+                return Err(ctx.refuse(
+                    "row_lock.of",
+                    "MariaDB has no FOR UPDATE OF <table>",
+                    &["lock all tables of the query, or split the query"],
+                ));
+            }
+        }
+        unisql_core::target::note_row_lock_leaves(lock, ctx)
+    }
+
     fn returning(&self, kind: StmtKind, ctx: &mut Ctx) -> R<()> {
         match (self.flavor, kind) {
             (Flavor::MariaDb, StmtKind::Update) => Err(ctx.refuse(

@@ -282,15 +282,20 @@ fn query(q: sp::Query) -> R<Query> {
                 of,
                 nonblock,
             } = locks.into_iter().next().unwrap();
-            if of.is_some() || nonblock.is_some() {
-                return no(
-                    "row_lock_option",
-                    "FOR UPDATE OF / NOWAIT / SKIP LOCKED is not in the IR yet",
-                );
-            }
-            lock = Some(match lock_type {
-                sp::LockType::Update => RowLock::Update,
-                sp::LockType::Share => RowLock::Share,
+            lock = Some(RowLockClause {
+                strength: match lock_type {
+                    sp::LockType::Update => RowLock::Update,
+                    sp::LockType::Share => RowLock::Share,
+                },
+                of: match of {
+                    Some(n) => Some(object_name(&n)?),
+                    None => None,
+                },
+                wait: match nonblock {
+                    None => LockWait::Block,
+                    Some(sp::NonBlock::Nowait) => LockWait::NoWait,
+                    Some(sp::NonBlock::SkipLocked) => LockWait::SkipLocked,
+                },
             });
         }
         _ => return no("row_lock_multiple", "several locking clauses"),

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=86
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=93
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -69,6 +69,16 @@ PASS offset_only                  same
        -> SELECT `id` FROM `users` ORDER BY (`id` IS NULL), `id` LIMIT 18446744073709551615 OFFSET 4
 PASS order_text                   same
        -> SELECT `name` FROM `users` ORDER BY (`name` IS NULL), `name`
+PASS lock_nowait_on_locked_row    both raise: postgres: query: db error; mariadb: execute: MySqlError { ERROR 1205 (HY000): Lock wait timeout exceeded; try restarting transaction }
+       -> SELECT `id` FROM `users` WHERE `id` = 1 FOR UPDATE NOWAIT
+PASS lock_nowait_on_free_row      same
+       -> SELECT `id` FROM `users` WHERE `id` = 2 FOR UPDATE NOWAIT
+PASS lock_skip_locked             same
+       -> SELECT `id` FROM `users` WHERE `id` IN (1, 2, 3) ORDER BY (`id` IS NULL), `id` FOR UPDATE SKIP LOCKED
+PASS lock_skip_locked_limit       same
+       -> SELECT `id` FROM `users` ORDER BY (`id` IS NULL), `id` LIMIT 1 FOR UPDATE SKIP LOCKED
+PASS lock_for_update_plain        same
+       -> SELECT `id` FROM `users` WHERE `id` = 4 FOR UPDATE
 PASS like_param                   same
        -> SELECT `name` FROM `users` WHERE `name` LIKE ?
 PASS like_case_sensitive          same
@@ -157,8 +167,10 @@ PASS insert_returning             same
 PASS delete_returning             same
        -> DELETE FROM `orders` WHERE `status` = 'open' RETURNING `id`
 PASS refuse_update_returning      refused `returning.update`: MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE
+PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
+PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 72 passing translated cases:
+MATRIX (construct, tier) from 77 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -196,6 +208,9 @@ MATRIX (construct, tier) from 72 passing translated cases:
   order_by                     conditional
   recursive_cte                exact
   returning                    exact
+  row_lock                     exact
+  row_lock.nowait              exact
+  row_lock.skip_locked         exact
   text_comparison              conditional
   trim                         exact
   upsert                       conditional
