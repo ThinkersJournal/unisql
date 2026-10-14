@@ -22,6 +22,7 @@ construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suit
 construct	fn:coalesce	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
 construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
 construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
+construct	fn:current_date	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::current_date_text		postgres
 construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:make_interval	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours		postgres

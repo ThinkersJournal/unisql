@@ -1,4 +1,4 @@
-sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=53
+sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=55
 PASS ph_question                  same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_numbered_reorder          same
@@ -65,6 +65,8 @@ PASS group_concat_ordered         same
        -> SELECT STRING_AGG("name", '|' ORDER BY "age" NULLS FIRST, "id" NULLS FIRST) FROM "users"
 PASS string_funcs                 same
        -> SELECT LENGTH("name"), REPLACE("name", 'a', 'A'), TRIM('  x '), LTRIM('  x'), LOWER("name"), UPPER("name") FROM "users"
+PASS current_date_text            same
+       -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
 PASS current_timestamp            same
        -> SELECT "id" FROM "users" WHERE (NOW() IS NOT NULL) AND ("id" = 1)
 PASS int_division                 same
@@ -84,6 +86,7 @@ PASS update_returning             same
 PASS delete_where                 same
        -> DELETE FROM "orders" WHERE "amount" < 100
 PASS gate_like_source             refused without allowance: conditional: needs allowance `like_case_sensitivity_is_connection_setting`: the source LIKE is ASCII case-insensitive only while its connection setting is at the default
+PASS gate_current_date            refused without allowance: conditional: needs allowance `date_as_text`: the source CURRENT_DATE is text 'YYYY-MM-DD' (the UTC date), not a date
 PASS gate_current_timestamp       refused without allowance: conditional: needs allowance `now_as_text`: the source CURRENT_TIMESTAMP is text 'YYYY-MM-DD HH:MM:SS' (UTC), not a timestamptz
 PASS gate_division                refused without allowance: conditional: needs allowance `division_by_zero_is_null`: the source yields NULL on a zero divisor; PostgreSQL raises an error
 PASS diverge_division_by_zero     diverges: sqlite returns [[Null]]; postgres errors (query: db error)
@@ -97,7 +100,7 @@ PASS refuse_instr                 refused `fn:instr`: no verified mapping for th
 PASS ir_insert_or_replace         not in IR `insert_option`: an INSERT form other than INSERT INTO t [(cols)] VALUES|query
 PASS ir_glob                      not in IR `binary_operator`: Glob (JSON/array/regex/bitwise operators are not in the IR)
 
-MATRIX (construct, tier) from 44 passing translated cases:
+MATRIX (construct, tier) from 45 passing translated cases:
   cast.to_integer              conditional
   cast.to_text                 conditional
   division                     conditional
@@ -105,6 +108,8 @@ MATRIX (construct, tier) from 44 passing translated cases:
   filter_clause                exact
   fn:coalesce                  exact
   fn:count                     exact
+  fn:current_date              conditional
+  fn:current_date              exact
   fn:length                    exact
   fn:lower                     exact
   fn:ltrim                     exact

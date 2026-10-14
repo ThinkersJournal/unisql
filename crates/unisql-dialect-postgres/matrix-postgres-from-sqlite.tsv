@@ -9,6 +9,8 @@ construct	division_integer	postgres	16.15	lc_collate=C	yes		tier=native;suite=sq
 construct	filter_clause	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
 construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::ifnull_coalesce		sqlite
 construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
+construct	fn:current_date	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	sqlite
+construct	fn:current_date.date_as_text	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	allowance=date_as_text	sqlite
 construct	fn:instr	postgres	16.15	lc_collate=C	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_instr	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:length	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
 construct	fn:lower	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite

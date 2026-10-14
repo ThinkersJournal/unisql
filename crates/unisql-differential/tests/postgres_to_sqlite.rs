@@ -431,6 +431,11 @@ fn cases() -> Vec<Case> {
             &[],
         ),
         c(
+            "current_date_text",
+            "SELECT CAST(CURRENT_DATE AS TEXT) FROM users WHERE id = 1",
+            &[A::DateAsText, A::LenientCast],
+        ),
+        c(
             "now_as_text",
             "SELECT id FROM users WHERE now() IS NOT NULL AND id = 1",
             &[A::NowAsText],
@@ -451,6 +456,10 @@ fn cases() -> Vec<Case> {
             &[A::DivisionByZeroIsNull],
         ),
         // ---- the allowance gate: without the allowance there is NO text
+        exp(
+            c("gate_current_date", "SELECT CURRENT_DATE", &[]),
+            Expect::NeedsAllowance(A::DateAsText),
+        ),
         exp(
             c("gate_now", "SELECT now()", &[]),
             Expect::NeedsAllowance(A::NowAsText),

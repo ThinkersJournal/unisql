@@ -22,6 +22,7 @@ construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=p
 construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
 construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
+construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
 construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres

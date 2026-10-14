@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=100
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=101
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -133,6 +133,8 @@ PASS interval_secs                same
 PASS interval_wide                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
 PASS refuse_interval_positional   refused `fn:make_interval.standalone`: only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated
+PASS current_date_text            same
+       -> SELECT CAST(CURRENT_DATE AS CHAR) FROM `users` WHERE `id` = 1
 PASS interval_literal_minute      same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (1) MINUTE))
 PASS interval_literal_minutes     same
@@ -181,7 +183,7 @@ PASS refuse_update_returning      refused `returning.update`: MariaDB supports R
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 81 passing translated cases:
+MATRIX (construct, tier) from 82 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -195,6 +197,7 @@ MATRIX (construct, tier) from 81 passing translated cases:
   fn:btrim                     emulated
   fn:coalesce                  exact
   fn:count                     exact
+  fn:current_date              exact
   fn:length                    emulated
   fn:ltrim                     exact
   fn:make_interval             exact

@@ -43,6 +43,7 @@ fn:count	count(x) counts non-NULL x; count(*) counts rows.
 fn:current_schema	current_schema() names the session's current schema. Refused where there is no such catalog.
 fn:date_format	date_format(ts, fmt) formats a timestamp by a MySQL format string. Refused: no verified mapping.
 fn:instr	instr(s, t) is the 1-based position of t in s, 0 if absent. Refused: no verified mapping.
+fn:current_date	CURRENT_DATE is the date of the current day in the session time zone.
 fn:lag	lag(x) OVER (...) is x of the previous row in the window.
 fn:lead	lead(x) OVER (...) is x of the next row in the window.
 fn:length	length(s) is the number of characters of s.

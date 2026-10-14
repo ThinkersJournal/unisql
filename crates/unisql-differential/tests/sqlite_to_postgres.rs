@@ -264,6 +264,11 @@ fn cases() -> Vec<Case> {
             &[A::AsciiOnlyCaseFolding],
         ),
         c(
+            "current_date_text",
+            "SELECT CAST(CURRENT_DATE AS TEXT) FROM users WHERE id = 1",
+            &[A::DateAsText, A::LenientCast],
+        ),
+        c(
             "current_timestamp",
             "SELECT id FROM users WHERE CURRENT_TIMESTAMP IS NOT NULL AND id = 1",
             &[A::NowAsText],
@@ -331,6 +336,10 @@ fn cases() -> Vec<Case> {
                 &[],
             ),
             Expect::NeedsAllowance(A::LikeCaseSensitivityIsConnectionSetting),
+        ),
+        exp(
+            c("gate_current_date", "SELECT CURRENT_DATE", &[]),
+            Expect::NeedsAllowance(A::DateAsText),
         ),
         exp(
             c("gate_current_timestamp", "SELECT CURRENT_TIMESTAMP", &[]),

@@ -211,6 +211,10 @@ impl Target for Mysql {
                     args[1]
                 ))
             }
+            "current_date" => {
+                ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
+                Ok("CURRENT_DATE".to_string())
+            }
             "now" => {
                 ctx.note(
                     "fn:now",
