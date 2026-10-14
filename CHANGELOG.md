@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.12.1 - 2026-10-14
 
 - **`unisql::schema_from_ddl(ddl, dialect)`** (option B): fills a `Schema` from DDL text (a project's
   migrations, concatenated in order). Reads `CREATE TABLE`, `ALTER TABLE .. ADD | DROP | ALTER COLUMN ..
