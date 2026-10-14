@@ -178,11 +178,12 @@ pub struct Untranslatable {
 }
 
 impl Untranslatable {
-    /// The matrix subject a gate should look up for this refusal: always `<construct>.refused`.
-    /// (Proven forms keep `<construct>`; a statement that uses a refused form needs the `.refused`
-    /// subject, so the split between the two is visible to a gate that keys on subject.)
+    /// The leaf id a gate should look up for this refusal. A refusal names the form that cannot be
+    /// translated (`cast.to_uuid`, `upsert.no_conflict_key`) or, where the whole construct is
+    /// refused, the construct itself (`fn:md5`). A backend that refuses a leaf has no enabled row
+    /// for it.
     pub fn subject(&self) -> String {
-        format!("{}.refused", self.construct)
+        self.construct.clone()
     }
 }
 

@@ -11,31 +11,28 @@ fn all() -> Options {
 }
 
 #[test]
-fn a_plain_cast_needs_cast_and_nothing_refused() {
+fn a_plain_cast_needs_its_leaf_and_nothing_refused() {
     let a = analyse("SELECT CAST(id AS TEXT) FROM users", "postgres").unwrap();
-    assert!(a.constructs.contains("cast"));
-    assert!(!a.refused.contains("cast.refused"), "{:?}", a.refused);
+    assert!(a.constructs.contains("cast.to_text"), "{:?}", a.constructs);
+    assert!(!a.refused.contains("cast.to_text"), "{:?}", a.refused);
     assert_eq!(a.unreadable, None);
 }
 
 #[test]
-fn a_cast_to_uuid_yields_the_refused_subject() {
+fn a_cast_to_uuid_names_its_own_leaf_as_refused() {
     let a = analyse("SELECT CAST(name AS UUID) FROM users", "postgres").unwrap();
-    assert!(a.refused.contains("cast.refused"), "{:?}", a.refused);
+    assert!(a.constructs.contains("cast.to_uuid"), "{:?}", a.constructs);
+    assert!(a.refused.contains("cast.to_uuid"), "{:?}", a.refused);
 }
 
 #[test]
 fn forms_refused_by_some_target_are_listed() {
     let lock = analyse("SELECT id FROM users WHERE id = 1 FOR UPDATE", "postgres").unwrap();
     assert!(lock.constructs.contains("row_lock"));
-    assert!(
-        lock.refused.contains("row_lock.refused"),
-        "{:?}",
-        lock.refused
-    );
+    assert!(lock.refused.contains("row_lock"), "{:?}", lock.refused);
 
     let md5 = analyse("SELECT md5(name) FROM users", "postgres").unwrap();
-    assert!(md5.refused.contains("fn:md5.refused"), "{:?}", md5.refused);
+    assert!(md5.refused.contains("fn:md5"), "{:?}", md5.refused);
 
     let star = analyse(
         "SELECT DISTINCT ON (city) * FROM users ORDER BY city",
@@ -43,7 +40,7 @@ fn forms_refused_by_some_target_are_listed() {
     )
     .unwrap();
     assert!(
-        star.refused.contains("distinct_on.refused"),
+        star.refused.contains("distinct_on.star_projection"),
         "{:?}",
         star.refused
     );
@@ -84,6 +81,47 @@ fn source_dialect_constructs_are_normalised() {
         m.constructs.contains("limit") && m.constructs.contains("offset"),
         "{:?}",
         m.constructs
+    );
+}
+
+#[test]
+fn partial_forms_have_their_own_leaves() {
+    let n = |sql: &str, src: &str| analyse(sql, src).unwrap().constructs;
+    assert!(
+        n(
+            "INSERT INTO kv (k, v) VALUES (1, 2) ON CONFLICT (k) DO UPDATE SET v = 2",
+            "postgres"
+        )
+        .contains("upsert")
+    );
+    assert!(
+        !n(
+            "INSERT INTO kv (k, v) VALUES (1, 2) ON CONFLICT (k) DO UPDATE SET v = 2",
+            "postgres"
+        )
+        .contains("upsert.no_conflict_key")
+    );
+    assert!(
+        n(
+            "INSERT INTO kv (k, v) VALUES (1, 2) ON DUPLICATE KEY UPDATE v = 2",
+            "mysql"
+        )
+        .contains("upsert.no_conflict_key")
+    );
+    assert!(n("UPDATE t SET a = 1 RETURNING a", "postgres").contains("returning.update"));
+    assert!(!n("DELETE FROM t RETURNING a", "postgres").contains("returning.update"));
+    assert!(n("SELECT trim(both 'xy' from name) FROM t", "postgres").contains("trim.multi_char"));
+    assert!(!n("SELECT trim(both 'x' from name) FROM t", "postgres").contains("trim.multi_char"));
+    assert!(
+        n(
+            "SELECT string_agg(name, ',' ORDER BY age) FROM t",
+            "postgres"
+        )
+        .contains("fn:string_agg.order_by")
+    );
+    assert!(
+        n("SELECT DISTINCT ON (a) * FROM t ORDER BY a", "postgres")
+            .contains("distinct_on.star_projection")
     );
 }
 
@@ -172,6 +210,22 @@ fn analysis_covers_every_construct_a_report_records() {
             "mysql",
             "INSERT INTO kv (k, v) VALUES (?, ?) ON DUPLICATE KEY UPDATE v = VALUES(v)",
         ),
+        (
+            "postgres",
+            "SELECT CAST(name AS UUID), CAST(age AS BIGINT) FROM users",
+        ),
+        (
+            "postgres",
+            "UPDATE users SET age = 1 WHERE id = $1 RETURNING id",
+        ),
+        ("postgres", "SELECT trim(both 'xy' from name) FROM users"),
+        ("postgres", "SELECT sum(age ORDER BY age) FROM users"),
+        (
+            "postgres",
+            "SELECT DISTINCT ON (city) * FROM users ORDER BY city",
+        ),
+        ("postgres", "SELECT id FROM users WHERE id = 1 FOR UPDATE"),
+        ("postgres", "SELECT md5(name), current_schema() FROM users"),
     ];
     let mut checked = 0;
     for (source, sql) in catalogue {
@@ -182,7 +236,17 @@ fn analysis_covers_every_construct_a_report_records() {
             a.unreadable
         );
         for target in unisql::dialects() {
-            // Refusals are fine: they carry no report, and are accounted for in `refused`.
+            // A refusal carries no report; the leaf it names must be one the analysis already
+            // listed, or a gate that looks only at `constructs` would let the statement through.
+            if let Err(unisql::Error::Untranslatable(u)) = translate(sql, source, target, &all()) {
+                assert!(
+                    a.constructs.contains(&u.subject()),
+                    "`{sql}` ({source} -> {target}) is refused as `{}` but analyse = {:?}",
+                    u.subject(),
+                    a.constructs
+                );
+                assert!(a.refused.contains(&u.subject()), "{:?}", a.refused);
+            }
             if let Ok(t) = translate(sql, source, target, &all()) {
                 for e in &t.report.entries {
                     assert!(

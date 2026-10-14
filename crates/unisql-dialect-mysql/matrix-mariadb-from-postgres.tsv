@@ -1,47 +1,71 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
-construct	array_param	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=array_null_semantics	postgres
-construct	boolean_literal	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=boolean_as_integer	postgres
-construct	cast	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=lenient_cast	postgres
-construct	cast.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
-construct	concat	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	distinct_on	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb		postgres
-construct	division	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=division_by_zero_is_null	postgres
-construct	division_integer	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=integer_division_assumed	postgres
-construct	filter_clause.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	MySQL has no FILTER (WHERE ..) on aggregates	postgres
-construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb		postgres
-construct	fn:coalesce	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:concat.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
-construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb		postgres
-construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:max	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=text_collation	postgres
-construct	fn:min	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=text_collation	postgres
-construct	fn:now	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=now_as_text	postgres
-construct	fn:nullif	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:replace	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:row_number	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:string_agg	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=aggregate_string_truncation	postgres
-construct	fn:substr.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
-construct	fn:sum	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	fn:sum.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	this target cannot honour an ORDER BY inside this aggregate	postgres
-construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=like_case_sensitivity_is_connection_setting	postgres
-construct	interval_arithmetic	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=timestamp_arithmetic_as_text	postgres
-construct	join:inner_join	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	join:left_join	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	json_get_text.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
-construct	like	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=like_case_sensitivity_is_connection_setting	postgres
-construct	limit	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	null_ordering	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb		postgres
-construct	offset	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb		postgres
-construct	order_by	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=text_collation	postgres
-construct	recursive_cte	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	returning	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	returning.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE	postgres
-construct	text_comparison	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=text_collation	postgres
-construct	trim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
-construct	trim.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
-construct	update_from.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb		postgres
-construct	upsert	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb	allowance=upsert_any_unique_key	postgres
-construct	upsert_where.refused	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
-construct	window_function	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb		postgres
+construct	array_param	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
+construct	array_param.array_null_semantics	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::all_ne_empty_array	allowance=array_null_semantics	postgres
+construct	boolean_literal	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	boolean_literal.boolean_as_integer	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::insert_values	allowance=boolean_as_integer	postgres
+construct	cast.to_double	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_double.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast	allowance=lenient_cast	postgres
+construct	cast.to_integer	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_integer.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::cast_int_text	allowance=lenient_cast	postgres
+construct	cast.to_text	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_text.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::cast_int_text	allowance=lenient_cast	postgres
+construct	cast.to_uuid	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
+construct	concat	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::concat_op		postgres
+construct	distinct_on	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
+construct	division	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
+construct	division.division_by_zero_is_null	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=division_by_zero_is_null	postgres
+construct	division_integer	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
+construct	division_integer.integer_division_assumed	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=integer_division_assumed	postgres
+construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
+construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
+construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::btrim_default		postgres
+construct	fn:coalesce	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
+construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
+construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
+construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:max	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
+construct	fn:max	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	fn:max.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	allowance=text_collation	postgres
+construct	fn:min	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
+construct	fn:min	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_min_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	fn:min.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	allowance=text_collation	postgres
+construct	fn:now	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
+construct	fn:now.now_as_text	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	allowance=now_as_text	postgres
+construct	fn:nullif	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
+construct	fn:replace	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:row_number	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
+construct	fn:string_agg	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	postgres
+construct	fn:string_agg.aggregate_string_truncation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	allowance=aggregate_string_truncation	postgres
+construct	fn:string_agg.order_by	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls		postgres
+construct	fn:substr	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_substr	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
+construct	fn:sum	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
+construct	fn:sum.order_by	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
+construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	postgres
+construct	ilike.like_case_sensitivity_is_connection_setting	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=like_case_sensitivity_is_connection_setting	postgres
+construct	interval_arithmetic	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic.timestamp_arithmetic_as_text	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	allowance=timestamp_arithmetic_as_text	postgres
+construct	join:inner_join	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::cte		postgres
+construct	join:left_join	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::left_join		postgres
+construct	json_get_text	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
+construct	like	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::like_case_sensitive	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	postgres
+construct	like.like_case_sensitivity_is_connection_setting	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::like_case_sensitive	allowance=like_case_sensitivity_is_connection_setting	postgres
+construct	limit	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::limit_offset		postgres
+construct	null_ordering	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls		postgres
+construct	offset	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::limit_offset		postgres
+construct	order_by	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	premise=text_collation, read from config; see the known-bad row	postgres
+construct	order_by	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_order_by_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	order_by.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	allowance=text_collation	postgres
+construct	recursive_cte	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::with_recursive		postgres
+construct	returning	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::delete_returning		postgres
+construct	returning.update	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_update_returning	MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE	postgres
+construct	text_comparison	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::any_with_scalar_reorder	premise=text_collation, read from config; see the known-bad row	postgres
+construct	text_comparison	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_text_equality	known-bad control: the result diverged from the source engine under this config	postgres
+construct	text_comparison.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::any_with_scalar_reorder	allowance=text_collation	postgres
+construct	trim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_both_char		postgres
+construct	trim.multi_char	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_trim_set	PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
+construct	update_from	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_update_from		postgres
+construct	upsert	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::upsert_do_nothing	diverges from the strict contract unless accepted: allowance=upsert_any_unique_key	postgres
+construct	upsert.upsert_any_unique_key	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::upsert_do_nothing	allowance=upsert_any_unique_key	postgres
+construct	upsert_where	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_upsert_where	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
+construct	window_function	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres

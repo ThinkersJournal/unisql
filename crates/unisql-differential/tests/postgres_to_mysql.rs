@@ -13,7 +13,7 @@
 use std::fmt::Write as _;
 
 use unisql::Allowance as A;
-use unisql_differential::{Case, Dir, Engines, Expect, Param, run_case_dir};
+use unisql_differential::{Case, Dir, Engines, Expect, KnownBad, Param, run_case_dir};
 
 const PG: &str = r#"
 CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age integer,
@@ -339,7 +339,7 @@ fn cases(maria: bool) -> Vec<Case> {
                 "refuse_agg_order_sum",
                 "SELECT sum(amount ORDER BY id) FROM orders",
             ),
-            Expect::Refused("fn:sum"),
+            Expect::Refused("fn:sum.order_by"),
         ),
         c(
             "now_not_null",
@@ -484,7 +484,7 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         exp(
             c("refuse_trim_set", "SELECT trim(both 'xy' from 'xyxhi')"),
-            Expect::Refused("trim"),
+            Expect::Refused("trim.multi_char"),
         ),
         exp(
             c(
@@ -495,7 +495,7 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         exp(
             c("refuse_cast_uuid", "SELECT CAST(name AS UUID) FROM users"),
-            Expect::Refused("cast"),
+            Expect::Refused("cast.to_uuid"),
         ),
     ];
     if maria {
@@ -514,7 +514,7 @@ fn cases(maria: bool) -> Vec<Case> {
                 "refuse_update_returning",
                 "UPDATE users SET age = age + 1 WHERE city = 'Oslo' RETURNING id, age",
             ),
-            Expect::Refused("returning"),
+            Expect::Refused("returning.update"),
         ));
     } else {
         v.push(exp(
@@ -526,6 +526,90 @@ fn cases(maria: bool) -> Vec<Case> {
         ));
     }
     v
+}
+
+/// Known-bad controls for the `text_collation` premise. The suite above runs under `utf8mb4_bin`,
+/// where text equality, ordering and min/max agree with PostgreSQL's `C` locale. Here the same
+/// statements run against tables left at the server's *default* `utf8mb4` collation (MySQL
+/// `utf8mb4_0900_ai_ci`, MariaDB `utf8mb4_uca1400_ai_ci`): case- and accent-insensitive, so every
+/// one of them must **diverge** from PostgreSQL. A control that agrees fails the suite, because
+/// then the passing runs above prove nothing about the collation.
+fn known_bad_controls(maria: bool, dir: Dir) -> Vec<KnownBad> {
+    const PG_PROBE: &str = "CREATE TABLE probe (id integer PRIMARY KEY, s text NOT NULL);
+        INSERT INTO probe VALUES (1,'a'),(2,'B'),(3,'b'),(4,'Z');";
+    let mut e = Engines::open_mysql(PG_PROBE, "CREATE TABLE _c (x integer);", maria)
+        .unwrap_or_else(|m| panic!("ENGINE UNAVAILABLE (test must not be skipped): {m}"));
+    let coll = e.mysql_default_collation();
+    assert!(
+        !coll.is_empty(),
+        "could not read the default utf8mb4 collation"
+    );
+    assert_ne!(
+        coll, "utf8mb4_bin",
+        "the control must not run under the fixture collation"
+    );
+    let my = format!(
+        "CREATE TABLE probe (id integer PRIMARY KEY, s varchar(16) NOT NULL)          DEFAULT CHARSET=utf8mb4 COLLATE={coll};
+         INSERT INTO probe VALUES (1,'a'),(2,'B'),(3,'b'),(4,'Z');"
+    );
+    let mut e = Engines::open_mysql(PG_PROBE, &my, maria)
+        .unwrap_or_else(|m| panic!("ENGINE UNAVAILABLE (test must not be skipped): {m}"));
+    // (leaf, case name, statement, result order matters)
+    let probes: [(&str, &'static str, &'static str, bool); 4] = [
+        (
+            "text_comparison",
+            "known_bad_text_equality",
+            "SELECT id FROM probe WHERE s = 'b' ORDER BY id",
+            true,
+        ),
+        (
+            "order_by",
+            "known_bad_order_by_text",
+            "SELECT s FROM probe ORDER BY s",
+            true,
+        ),
+        (
+            "fn:max",
+            "known_bad_max_text",
+            "SELECT max(s) FROM probe",
+            false,
+        ),
+        (
+            "fn:min",
+            "known_bad_min_text",
+            "SELECT min(s) FROM probe",
+            false,
+        ),
+    ];
+    let mut out = Vec::new();
+    for (leaf, name, sql, ordered) in probes {
+        let needs = unisql::analyse(sql, "postgres").unwrap().constructs;
+        assert!(
+            needs.contains(leaf),
+            "control `{name}` does not use leaf `{leaf}`: {needs:?}"
+        );
+        let case = Case {
+            name,
+            sql,
+            params: vec![],
+            allow: ALL.to_vec(),
+            ordered,
+            after: None,
+            expect: Expect::Diverges,
+        };
+        let o = run_case_dir(&mut e, &case, dir);
+        assert!(
+            o.passed,
+            "known-bad control `{name}` did NOT diverge under {coll}: {}",
+            o.detail
+        );
+        out.push(KnownBad {
+            leaf,
+            config: format!("collation={coll}"),
+            case: name,
+        });
+    }
+    out
 }
 
 fn run(maria: bool) {
@@ -561,6 +645,7 @@ fn run(maria: bool) {
             writeln!(log, "       -> {t}").unwrap();
         }
     }
+    let known_bad = known_bad_controls(maria, dir);
     let matrix = unisql_differential::matrix_rows(&outcomes);
     writeln!(
         log,
@@ -592,7 +677,7 @@ fn run(maria: bool) {
             "../unisql-dialect-mysql/matrix-{}-from-postgres.tsv",
             dir.target()
         )),
-        unisql_differential::matrix_tsv(&outcomes, dir.target(), &v, "postgres"),
+        unisql_differential::matrix_tsv(&outcomes, dir.target(), &v, "postgres", &known_bad),
     );
     println!("{log}");
     let failed: Vec<_> = outcomes.iter().filter(|o| !o.passed).collect();

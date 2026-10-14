@@ -2,7 +2,7 @@
 //! The shared printer: IR -> SQL text for any [`Target`].
 
 use crate::ast::*;
-use crate::report::{Options, ParamBinding, Translation, Untranslatable};
+use crate::report::{Options, ParamBinding, Tier, Translation, Untranslatable};
 use crate::target::{Ctx, Escape, StmtKind, Target};
 
 type R<T> = Result<T, Untranslatable>;
@@ -647,12 +647,15 @@ impl Printer<'_> {
                 let s = self.t.function(f, &args, c);
                 if c.agg_order.take().is_some() && s.is_ok() {
                     return Err(c.refuse(
-                        &format!("fn:{}", f.name),
+                        &format!("fn:{}.order_by", f.name),
                         "this target cannot honour an ORDER BY inside this aggregate",
                         &["order in a subquery", "use string_agg, which is translated"],
                     ));
                 }
                 let mut s = s?;
+                if !f.order_by.is_empty() {
+                    c.note(format!("fn:{}.order_by", f.name), Tier::Exact, "", None)?;
+                }
                 if let Some(flt) = &f.filter {
                     self.t.feature("filter_clause", c)?;
                     s.push_str(&format!(" FILTER (WHERE {})", self.expr(flt, c)?));

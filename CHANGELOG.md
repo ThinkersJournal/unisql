@@ -2,6 +2,20 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **Breaking (ids, matrix files, `analyse`):** constructs are now leaf ids. `cast` becomes
+  `cast.to_<type>`; partial forms get their own leaf (`upsert.no_conflict_key`, `returning.update`,
+  `trim.multi_char`, `fn:<agg>.order_by`, `distinct_on.star_projection`, `distinct_on.row_lock`,
+  `distinct_on.set_operation`). `Untranslatable::subject()` returns the leaf; the `.refused` suffix
+  is gone, a refusal is `enabled=no, reason=missing`. `analyse().constructs` names every form a
+  statement needs, refused ones included (tested for every target).
+- Matrix rows: a divergence a caller may accept is its own leaf `<construct>.<allowance>`; the strict
+  leaf is `no/wrong`. Text collation is read from `config`: `yes` under the fixture collation, with a
+  known-bad control (default MySQL/MariaDB `utf8mb4` collation, must diverge) recorded as `no/wrong`.
+  `metadata` carries `suite` and `test`.
+- `docs/LEAF-CONTRACTS.tsv` with a test that keeps it in step with the matrix files.
+
 ## 0.1.0 - 2026-10-14
 
 - **Breaking (matrix files):** rows follow PersistAnt's merged row schema (DESIGN-KINDS.md section

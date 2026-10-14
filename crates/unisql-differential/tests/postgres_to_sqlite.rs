@@ -417,7 +417,7 @@ fn cases() -> Vec<Case> {
                 "SELECT sum(amount ORDER BY id) FROM orders",
                 COLL,
             ),
-            Expect::Refused("fn:sum"),
+            Expect::Refused("fn:sum.order_by"),
         ),
         c(
             "btrim_forms",
@@ -515,7 +515,7 @@ fn cases() -> Vec<Case> {
                 "SELECT CAST(name AS UUID) FROM users",
                 &[A::LenientCast],
             ),
-            Expect::Refused("cast"),
+            Expect::Refused("cast.to_uuid"),
         ),
         // ---- reader: not in the IR (an error, never a pass-through)
         exp(
@@ -644,7 +644,7 @@ fn cases() -> Vec<Case> {
                 "SELECT DISTINCT ON (city) * FROM users ORDER BY city, id",
                 COLL,
             ),
-            Expect::Refused("distinct_on"),
+            Expect::Refused("distinct_on.star_projection"),
         ),
         // ---- window functions, FILTER, frames
         ord(c(
@@ -882,7 +882,7 @@ fn postgres_to_sqlite_differential() {
     let _ = std::fs::write(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../unisql-dialect-sqlite/matrix-sqlite-from-postgres.tsv"),
-        unisql_differential::matrix_tsv(&outcomes, "sqlite", &v, "postgres"),
+        unisql_differential::matrix_tsv(&outcomes, "sqlite", &v, "postgres", &[]),
     );
     println!("{log}");
     if !failed.is_empty() {

@@ -99,7 +99,7 @@ impl Target for Sqlite {
                         )?;
                     Ok(Some(q2))
                 }
-                Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
+                Err(c) => Err(ctx.refuse(c.leaf, &c.why, &["list the columns explicitly"])),
             };
         }
         Ok(None)
@@ -366,14 +366,14 @@ impl Target for Sqlite {
             SqlType::Text | SqlType::Varchar(_) => "TEXT",
             other => {
                 return Err(ctx.refuse(
-                    "cast",
+                    &format!("cast.to_{}", other.leaf()),
                     &format!("CAST to {other:?} has no SQLite equivalent that preserves meaning"),
                     &["store as TEXT/INTEGER and convert in the application"],
                 ));
             }
         };
         ctx.note(
-            "cast",
+            format!("cast.to_{}", ty.leaf()),
             Tier::Conditional,
             "SQLite casts leniently: a malformed value becomes 0 or a numeric prefix instead of an error",
             Some(Allowance::LenientCast),
@@ -412,7 +412,7 @@ impl Target for Sqlite {
     ) -> R<String> {
         if !do_nothing && conflict_cols.is_empty() {
             return Err(ctx.refuse(
-                "upsert",
+                "upsert.no_conflict_key",
                 "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns",
                 &["state the conflict key columns in the statement"],
             ));

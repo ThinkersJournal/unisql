@@ -1,0 +1,96 @@
+# Leaf contracts (UniSQL). One line per leaf id: `leaf<TAB>contract`. Lines starting `#` are comments.
+#
+# A leaf id never changes meaning; a change in meaning is a new id. A contract is the sentence a test
+# must satisfy. "Same as the source" means: for the statement forms tested, the target returns the same
+# rows (and, for writes, the same table state afterwards) as the source engine run on the source text.
+#
+# `<base>.<allowance>` leaves (a divergence a caller may accept) need no line of their own: the
+# contract is the base leaf's, except that the divergence the named allowance describes
+# (`Allowance` in crates/unisql-core/src/report.rs) is accepted. A base leaf that is `enabled=no,
+# reason=wrong` in a matrix row is exactly the strict form of that sentence failing.
+#
+# Comparator canonicalisations (what "same" means when two results are compared by a test):
+#   - booleans are read as 0/1 on both sides;
+#   - a DECIMAL/NUMERIC value returned as text is compared as an integer when it has no fractional
+#     part and as a double otherwise;
+#   - an integer is never equal to a float (strict int-vs-float);
+#   - result rows are compared as a multiset unless the case is marked ordered.
+#
+# Stronger implies weaker: where `<base>` is enabled, every `<base>.<allowance>` holds too.
+#
+# A leaf whose matrix row is `reason=missing` is a form the translator refuses; its contract below
+# says what it would mean, and no backend has it on.
+array_param	`x = ANY($n)` / `x <> ALL($n)` with an array parameter gives the source's three-valued result, including NULL elements and a NULL array.
+boolean_literal	TRUE and FALSE literals evaluate and read back with the source's truth value.
+cast.to_bigint	CAST to a 64-bit integer returns the source's value; a malformed or out-of-range operand raises an error as at the source.
+cast.to_double	CAST to a double-precision float returns the source's value; a malformed operand raises an error as at the source.
+cast.to_integer	CAST to a 32-bit integer returns the source's value; a malformed or out-of-range operand raises an error as at the source.
+cast.to_text	CAST to text yields the source's text form of the operand.
+cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
+concat	`a || b` concatenates text; a NULL operand gives NULL.
+distinct_on	`SELECT DISTINCT ON (keys) ...` keeps exactly one row per distinct key tuple, the first by ORDER BY; without ORDER BY which row survives is unspecified on both engines.
+distinct_on.star_projection	DISTINCT ON combined with a `*` projection. Refused: the emulation's helper columns would appear in the result.
+division	`/` and `%` on the tested operands give the source's value; division by zero raises an error as at the source.
+division_integer	Division of two integers truncates toward zero and yields an integer.
+filter_clause	`agg(...) FILTER (WHERE p)` aggregates only the rows for which p is true.
+fn:avg	avg() over non-NULL inputs gives the source's mean and NULL over no rows.
+fn:btrim	btrim(s) removes leading and trailing spaces.
+fn:char_length	char_length(s) is the number of characters of s.
+fn:coalesce	coalesce(a, b, ...) returns the first non-NULL argument.
+fn:concat	concat(a, b, ...) treats NULL arguments as empty strings. Refused where the target's CONCAT returns NULL if any argument is NULL.
+fn:convert_to	convert_to(s, enc) returns the bytes of s in encoding enc. Refused where no such function is built in.
+fn:count	count(x) counts non-NULL x; count(*) counts rows.
+fn:current_schema	current_schema() names the session's current schema. Refused where there is no such catalog.
+fn:date_format	date_format(ts, fmt) formats a timestamp by a MySQL format string. Refused: no verified mapping.
+fn:instr	instr(s, t) is the 1-based position of t in s, 0 if absent. Refused: no verified mapping.
+fn:lag	lag(x) OVER (...) is x of the previous row in the window.
+fn:lead	lead(x) OVER (...) is x of the next row in the window.
+fn:length	length(s) is the number of characters of s.
+fn:lower	lower(s) maps every character of s to lower case.
+fn:ltrim	ltrim(s) removes leading spaces.
+fn:make_interval	make_interval(...) builds an interval from named parts. Refused where month/year arithmetic differs.
+fn:max	max(x) is the greatest non-NULL x under the source's ordering of x.
+fn:md5	md5(s) is the lower-case hexadecimal MD5 digest of the bytes of s. Refused where no hashing is built in.
+fn:min	min(x) is the least non-NULL x under the source's ordering of x.
+fn:now	now() is the start time of the current transaction as a timestamp with time zone.
+fn:nullif	nullif(a, b) is NULL when a = b, else a.
+fn:octet_length	octet_length(s) is the number of bytes of s in the database encoding.
+fn:random	random() is a value in [0, 1). Refused: no verified mapping.
+fn:rank	rank() OVER (...) is the rank with gaps of the row within its partition.
+fn:regexp_replace	regexp_replace(s, pattern, repl) replaces the first match of a POSIX pattern. Refused where there is no regular-expression function.
+fn:replace	replace(s, from, to) replaces every occurrence of from by to.
+fn:row_number	row_number() OVER (...) numbers the rows of a partition from 1 in window order.
+fn:strftime	strftime(fmt, ts) formats a timestamp by a SQLite format string. Refused: no verified mapping.
+fn:string_agg	string_agg(x, sep) concatenates the non-NULL x with sep between them; NULL over no rows.
+fn:string_agg.order_by	string_agg(x, sep ORDER BY k) concatenates in the order given by k.
+fn:substr	substr(s, start[, len]) is the substring from the 1-based start. Refused where start positions before 1 behave differently.
+fn:sum	sum(x) over non-NULL inputs gives the source's total and NULL over no rows.
+fn:sum.order_by	sum(x ORDER BY k): an aggregate with an ORDER BY clause. Refused by every target that cannot honour the ordering inside the aggregate.
+fn:to_regclass	to_regclass(name) resolves a relation name in the catalog. Refused where there is no such catalog.
+fn:typeof	typeof(x) names the storage class of x. Refused: no verified mapping.
+fn:upper	upper(s) maps every character of s to upper case.
+ilike	`a ILIKE p` is a case-insensitive LIKE with `%` and `_` wildcards.
+interval_arithmetic	`ts +/- make_interval(secs => n)` shifts a timestamp by n seconds.
+join:inner_join	INNER JOIN returns the pairs of rows satisfying the condition.
+join:left_join	LEFT JOIN returns every left row, with NULLs where no right row matches.
+json_get	`doc -> key` yields the JSON value at key.
+json_get_text	`doc ->> key` yields the value at key as text, NULL when absent.
+like	`a LIKE p` is a case-sensitive pattern match with `%` and `_` wildcards.
+limit	LIMIT n returns at most n rows of the ordered result.
+named_arg	`f(name => value)` calls a function with a named argument. Refused where function arguments are positional only.
+null_ordering	NULLS FIRST / NULLS LAST places NULLs as stated; the default places NULLs last for ASC and first for DESC.
+offset	OFFSET n skips the first n rows of the ordered result.
+order_by	ORDER BY orders by the keys, ascending unless stated, comparing text bytewise in the C locale.
+ordered_comparison	`<`, `<=`, `>`, `>=` and BETWEEN compare two values; text compares bytewise in the C locale.
+recursive_cte	WITH RECURSIVE evaluates the recursive term to a fixed point and returns its rows.
+returning	RETURNING returns the affected rows after the statement's changes.
+returning.update	UPDATE ... RETURNING returns the updated rows. Refused where RETURNING is not supported on UPDATE.
+row_lock	FOR UPDATE locks the selected rows until the transaction ends. Refused where there are no row locks.
+text_comparison	`=` and `<>` on text compare bytewise (the C locale).
+trim	trim(chars FROM s) removes the single character chars (or spaces) from the stated side(s).
+trim.multi_char	trim with a set of several characters. Refused where the target trims a repeated string instead of a set.
+update_from	UPDATE ... FROM joins other tables into the update. Refused where unsupported.
+upsert	INSERT ... ON CONFLICT (key) DO UPDATE/NOTHING resolves a conflict on the stated key.
+upsert.no_conflict_key	An upsert that states no conflict key. Refused where the target needs the key columns.
+upsert_where	ON CONFLICT ... DO UPDATE ... WHERE applies the update only when the condition holds. Refused where there is no WHERE on the conflict action.
+window_function	`f(...) OVER (PARTITION BY ... ORDER BY ...)` evaluates over each partition in order.

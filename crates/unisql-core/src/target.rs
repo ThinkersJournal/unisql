@@ -196,13 +196,13 @@ pub trait Target {
     fn cast(&self, expr: &str, ty: &SqlType, ctx: &mut Ctx) -> R<String> {
         if ctx.lenient_source() {
             ctx.note(
-                "cast",
+                format!("cast.to_{}", ty.leaf()),
                 Tier::Conditional,
                 "the source casts leniently (a malformed value becomes 0); the target raises an error",
                 Some(Allowance::LenientCast),
             )?;
         } else {
-            ctx.note("cast", Tier::Exact, "", None)?;
+            ctx.note(format!("cast.to_{}", ty.leaf()), Tier::Exact, "", None)?;
         }
         Ok(format!("CAST({expr} AS {})", pg_type_name(ty)))
     }
@@ -338,7 +338,7 @@ pub trait Target {
     ) -> R<String> {
         if !do_nothing && conflict_cols.is_empty() {
             return Err(ctx.refuse(
-                "upsert",
+                "upsert.no_conflict_key",
                 "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns",
                 &["state the conflict key columns in the statement"],
             ));
