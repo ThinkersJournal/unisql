@@ -733,6 +733,18 @@ impl Printer<'_> {
                 let ch = chars.as_ref().map(|x| self.expr(x, c)).transpose()?;
                 self.t.trim(*side, &e, ch.as_deref(), c)?
             }
+            Expr::AtTimeZone { expr, zone } => {
+                self.t.at_time_zone(c)?;
+                format!(
+                    "({} AT TIME ZONE {})",
+                    self.expr(expr, c)?,
+                    self.expr(zone, c)?
+                )
+            }
+            Expr::ArraySubquery(q) => {
+                self.t.array_subquery(c)?;
+                format!("ARRAY({})", self.query(q, c)?)
+            }
             Expr::Subquery(q) => format!("({})", self.query(q, c)?),
             Expr::Exists { query, negated } => format!(
                 "{}EXISTS ({})",

@@ -296,6 +296,13 @@ pub enum Expr {
         param: u32,
         negated: bool,
     },
+    /// `expr AT TIME ZONE zone` (PostgreSQL).
+    AtTimeZone {
+        expr: Box<Expr>,
+        zone: Box<Expr>,
+    },
+    /// `ARRAY(SELECT ..)` (PostgreSQL): the rows of a one-column query as an array.
+    ArraySubquery(Box<Query>),
     /// `TRIM([LEADING|TRAILING|BOTH] [chars FROM] expr)`; `chars` absent means whitespace.
     Trim {
         expr: Box<Expr>,

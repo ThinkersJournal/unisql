@@ -401,6 +401,15 @@ impl Walk {
                 self.add("array_param");
                 self.expr(expr);
             }
+            Expr::AtTimeZone { expr, zone } => {
+                self.add("at_time_zone");
+                self.expr(expr);
+                self.expr(zone);
+            }
+            Expr::ArraySubquery(q) => {
+                self.add("array_subquery");
+                self.query(q);
+            }
             Expr::Trim { expr, chars, .. } => {
                 self.add("trim");
                 // MySQL removes a repeated string where PostgreSQL removes a set: they agree only

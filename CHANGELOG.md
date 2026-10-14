@@ -2,6 +2,18 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **`expr AT TIME ZONE zone`** and **`ARRAY(SELECT ..)`** are in the IR (`Expr::AtTimeZone`,
+  `Expr::ArraySubquery`) with leaves `at_time_zone` and `array_subquery`: PostgreSQL writes them back
+  (round trip tested on the engine), SQLite and MySQL/MariaDB refuse them by leaf instead of failing the
+  read. **`E'..'` strings** read as the string they denote (the parser resolves the escapes).
+- Corpus effect: 2 `AtTimeZone`, 2 `function_subquery` (`ARRAY(SELECT ..)`) and 2 `EscapedStringLiteral`
+  rows are no longer `not_in_ir`. The statements that hold them (`to_char(..)`, `r::text`, `md5(..)`)
+  stay untranslatable for those other reasons: this is classification, not new coverage.
+- `Expr` and `Target` gain variants/hooks (`at_time_zone`, `array_subquery`): breaking for consumers
+  of `unisql-core::ast`.
+
 ## 0.8.0 - 2026-10-14
 
 - **`WITH` before a modifying statement and data-modifying CTEs** (the 6 `not_in_ir set_expr Insert` rows

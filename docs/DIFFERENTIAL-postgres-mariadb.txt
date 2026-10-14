@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=105
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=108
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -184,10 +184,15 @@ PASS refuse_data_modifying_cte    refused `cte.data_modifying`: MySQL/MariaDB ha
 PASS with_update                  refused `with.update`: MariaDB has no WITH before this statement (probed: a syntax error)
 PASS with_delete                  refused `with.delete`: MariaDB has no WITH before this statement (probed: a syntax error)
 PASS with_insert                  refused `with.insert`: MariaDB has no WITH before this statement (probed: a syntax error)
+PASS escape_string_literal        same
+       -> SELECT CHAR_LENGTH('a
+b	\\') FROM `users` WHERE `id` = 1
+PASS refuse_at_time_zone          refused `at_time_zone`: MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp
+PASS refuse_array_subquery        refused `array_subquery`: MySQL/MariaDB has no array type
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 82 passing translated cases:
+MATRIX (construct, tier) from 83 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -199,6 +204,7 @@ MATRIX (construct, tier) from 82 passing translated cases:
   division_integer             conditional
   fn:avg                       exact
   fn:btrim                     emulated
+  fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
   fn:current_date              exact

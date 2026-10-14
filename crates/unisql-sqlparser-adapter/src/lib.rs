@@ -1287,6 +1287,13 @@ fn expr(e: sp::Expr) -> R<Expr> {
             negated,
         },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
+        E::AtTimeZone {
+            timestamp,
+            time_zone,
+        } => Expr::AtTimeZone {
+            expr: boxed(*timestamp)?,
+            zone: boxed(*time_zone)?,
+        },
         E::Function(f) => function(f)?,
         other => return no("expression", &head(&other)),
     })
@@ -1397,6 +1404,8 @@ fn value(v: sp::Value) -> R<Expr> {
             Expr::Literal(Literal::Number(n))
         }
         sp::Value::SingleQuotedString(s) => Expr::Literal(Literal::String(s)),
+        // The tokenizer has already resolved the backslash escapes of `E'..'`.
+        sp::Value::EscapedStringLiteral(s) => Expr::Literal(Literal::String(s)),
         sp::Value::Boolean(b) if rules().name == "mysql" => {
             // MySQL TRUE/FALSE are the integers 1 and 0.
             Expr::Literal(Literal::Number(if b { "1" } else { "0" }.into()))
@@ -1514,6 +1523,9 @@ fn function(f: sp::Function) -> R<Expr> {
                 }));
             }
             return no("bare_function", &format!("`{base}` without parentheses"));
+        }
+        sp::FunctionArguments::Subquery(q) if base == "array" => {
+            return Ok(Expr::ArraySubquery(Box::new(query(*q)?)));
         }
         sp::FunctionArguments::Subquery(_) => {
             return no("function_subquery", "function over a subquery");
