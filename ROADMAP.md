@@ -64,7 +64,7 @@ prepared on the PostgreSQL / SQLite engine. What it does *not* do: execute and c
 stays the per-mapping differential cases), and it is only as wide as the idioms listed.
 
 At the first run: 129 statements; to PostgreSQL 57 translated or conditional, 27 refused by leaf,
-39 not in the IR, 4 syntax errors (SQLite and MariaDB differ by a few). It found four defects, **fixed**
+41 not in the IR, 4 syntax errors (SQLite and MariaDB differ by a few). It found four defects, **fixed**
 with the corpus: `schema_from_ddl` panicked on any quoted identifier in DDL; `UPDATE LOW_PRIORITY t`
 was written as a table named `low_priority`; `DEFAULT` in `VALUES` was written as the identifier
 `"default"`; SQLite `group_concat(DISTINCT x, ',')` is invalid (now `group_concat(DISTINCT x)`, or a

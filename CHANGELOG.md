@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.17.2 - 2026-10-14
 
 - **MySQL-source corpus and harness** (`crates/unisql-differential/corpus/mysql/`, test
   `mysql_corpus`): 129 statements validated on real MySQL 8.4 and MariaDB 11.4, translated to
