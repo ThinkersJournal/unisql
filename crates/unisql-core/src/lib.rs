@@ -17,5 +17,5 @@ pub use report::{
     Allowance, Entry, Options, ParamBinding, Read, ReadError, ReadNote, Report, Tier, Translation,
     Untranslatable,
 };
-pub use schema::{Column, ColumnClass, Schema};
+pub use schema::{Column, ColumnClass, Schema, is_bytewise_collation};
 pub use target::{Ctx, Target};

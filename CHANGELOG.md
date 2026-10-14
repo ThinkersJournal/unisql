@@ -2,6 +2,23 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate; bump in this PR)
+
+- **Column collation is interpreted** (the `Schema` field was only carried until now). A comparison
+  (`=`, `<>`, `<`, `<=`, `>`, `>=`, `BETWEEN`) or an `ORDER BY` on a text column whose stated collation is
+  not bytewise (`en_US`, `NOCASE`, `utf8mb4_0900_ai_ci`, ...), translated to another dialect, now needs the
+  new allowance `source_collation_not_bytewise`: the target compares bytes, so the result may differ for
+  the same data. Leaves: `text_comparison` / `order_by` with `.source_collation_not_bytewise`.
+  `is_bytewise_collation(name)`: `C`, `POSIX`, `ucs_basic`, `BINARY`, `*_bin`.
+- A bytewise stated collation changes nothing (the target half of `text_collation` is still the caller's
+  or the gate's); a column with **no** stated collation stays unknown, never "the database default"
+  (PersistAnt's ask). The same dialect in and out is the identity: nothing to accept.
+- **Behaviour change:** a statement over such a column that translated with `text_collation` alone now
+  also needs `source_collation_not_bytewise` (only when a `Schema` with that column was passed).
+- Fix: an `ORDER BY` is printed with its SELECT's tables in scope (it was resolved after the scope
+  ended, so a schema never reached it).
+- New `Allowance` variant (the enum is `#[non_exhaustive]`).
+
 ## 0.12.1 - 2026-10-14
 
 - **`unisql::schema_from_ddl(ddl, dialect)`** (option B): fills a `Schema` from DDL text (a project's

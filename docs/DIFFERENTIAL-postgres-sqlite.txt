@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=144
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=146
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -158,6 +158,9 @@ PASS schema_numeric_column_needs_no_allowance same
        -> SELECT "id" FROM "users" WHERE ("age" > ?1) AND ("id" <> 3)
 PASS schema_numeric_between_and_alias same
        -> SELECT "u"."id" FROM "users" AS "u" WHERE ("u"."age" BETWEEN 25 AND 41) AND ("u"."active" = 1)
+PASS schema_bytewise_collation_is_accepted same
+       -> SELECT "id" FROM "users" WHERE "email" = ?1
+PASS schema_locale_collation_needs_its_allowance refused without allowance: conditional: needs allowance `source_collation_not_bytewise`: the column's collation `en_US` compares and orders text by locale rules; the target compares bytes
 PASS schema_text_column_still_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the target's collation (BINARY by default)
 PASS no_schema_unknown_column_is_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the target's collation (BINARY by default)
 PASS pg_identity_data_modifying_cte identity: same rows and state
@@ -255,7 +258,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 110 passing translated cases:
+MATRIX (construct, tier) from 111 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional

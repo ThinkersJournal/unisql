@@ -22,10 +22,10 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    except `current_user` 1, `Extract` 1 and `Array` 1).
    allowance names that MySQL `UUID()` is a v1 UUID.
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
-2. **Schema: interpret the collation.** `Schema` and `schema_from_ddl` are in. A column with a known
-   bytewise collation could make `text_comparison` Exact when the target's collation is read from config;
-   a column with **no** stated collation stays unknown, never "the database default" (PersistAnt's ask).
-   The live-catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6.
+2. **Schema, what is left.** `Schema`, `schema_from_ddl` and collation interpretation are in. The live
+   catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6. Possible extensions: view
+   columns from `CREATE VIEW`, `LIKE`/`ILIKE` against a column's collation (a different allowance than
+   the one used for comparisons today).
 
 ## Later
 
