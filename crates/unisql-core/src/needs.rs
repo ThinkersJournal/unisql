@@ -402,7 +402,12 @@ impl Walk<'_> {
                 self.expr(expr);
             }
             Expr::Function(f) => {
-                self.add(format!("fn:{}", f.name));
+                // date_trunc with a literal field is one leaf per field (a target maps a field only
+                // once it is verified); the generic leaf is the dynamic-field form.
+                match crate::target::date_trunc_field(f) {
+                    Some(field) => self.add(format!("fn:date_trunc.{field}")),
+                    None => self.add(format!("fn:{}", f.name)),
+                }
                 self.month_year(f);
                 if f.name == "make_interval" {
                     // Outside `ts +/- make_interval(..)`: no target translates it on its own.

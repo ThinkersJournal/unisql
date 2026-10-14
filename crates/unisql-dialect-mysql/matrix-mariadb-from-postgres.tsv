@@ -6,8 +6,8 @@ construct	array_subquery	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	mi
 construct	at_time_zone	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_at_time_zone	MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp	postgres
 construct	boolean_literal	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
 construct	boolean_literal.boolean_as_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::insert_values	allowance=boolean_as_integer	postgres
-construct	cast.to_bigint	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_epoch	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
-construct	cast.to_bigint.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_epoch	allowance=lenient_cast	postgres
+construct	cast.to_bigint	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_bigint.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields	allowance=lenient_cast	postgres
 construct	cast.to_double	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_double.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast	allowance=lenient_cast	postgres
 construct	cast.to_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
@@ -22,13 +22,14 @@ construct	division	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	su
 construct	division.division_by_zero_is_null	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=division_by_zero_is_null	postgres
 construct	division_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
 construct	division_integer.integer_division_assumed	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=integer_division_assumed	postgres
-construct	extract.day	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_fields		postgres
+construct	extract.day	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	extract.dow	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_extract_dow	MySQL/MariaDB: no verified mapping for EXTRACT(dow ..) yet	postgres
-construct	extract.epoch	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_epoch	diverges from the strict contract unless accepted: allowance=epoch_whole_seconds	postgres
-construct	extract.epoch.epoch_whole_seconds	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_epoch	allowance=epoch_whole_seconds	postgres
-construct	extract.hour	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_fields		postgres
-construct	extract.minute	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_fields		postgres
-construct	extract.month	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_fields		postgres
+construct	extract.epoch	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields	diverges from the strict contract unless accepted: allowance=epoch_whole_seconds	postgres
+construct	extract.epoch.epoch_whole_seconds	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields	allowance=epoch_whole_seconds	postgres
+construct	extract.epoch.interval	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::epoch_of_difference		postgres
+construct	extract.hour	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	extract.minute	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	extract.month	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	extract.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_fields		postgres
 construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
@@ -39,6 +40,12 @@ construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing
 construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
 construct	fn:current_date	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::current_date_text		postgres
 construct	fn:current_user	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_current_user	no verified mapping for this function on MySQL/MariaDB yet	postgres
+construct	fn:date_trunc.day	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:date_trunc.hour	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:date_trunc.minute	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:date_trunc.month	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:date_trunc.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_date_trunc_week	no verified mapping for date_trunc('week', ..) on MySQL/MariaDB yet	postgres
+construct	fn:date_trunc.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	fn:gen_random_uuid	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::gen_random_uuid_v4		postgres
 construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
@@ -62,6 +69,7 @@ construct	fn:string_agg.order_by	mariadb	11.4.13	collation=utf8mb4_bin;schema=no
 construct	fn:substr	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_substr	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
 construct	fn:sum	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
 construct	fn:sum.order_by	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
+construct	fn:to_timestamp	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::to_timestamp_epoch		postgres
 construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.text_collation	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=text_collation	postgres

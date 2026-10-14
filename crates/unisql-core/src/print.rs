@@ -833,6 +833,14 @@ impl Printer<'_> {
                 self.t.trim(*side, &e, ch.as_deref(), c)?
             }
             Expr::Extract { field, expr } => {
+                if field == "epoch"
+                    && let Some((a, b)) = difference_operands(expr)
+                {
+                    let (l, r) = (self.operand(a, c)?, self.operand(b, c)?);
+                    if let Some(text) = self.t.epoch_of_difference(&l, &r, c)? {
+                        return Ok(text);
+                    }
+                }
                 let e = self.expr(expr, c)?;
                 self.t.extract(field, &e, is_difference(expr), c)?
             }
@@ -898,6 +906,19 @@ pub(crate) fn is_numeric(e: &Expr) -> bool {
                 | SqlType::Numeric { .. }
         ),
         _ => false,
+    }
+}
+
+/// The operands of a (possibly parenthesised) subtraction.
+fn difference_operands(e: &Expr) -> Option<(&Expr, &Expr)> {
+    match e {
+        Expr::Nested(x) => difference_operands(x),
+        Expr::Binary {
+            op: BinaryOp::Minus,
+            left,
+            right,
+        } => Some((left, right)),
+        _ => None,
     }
 }
 

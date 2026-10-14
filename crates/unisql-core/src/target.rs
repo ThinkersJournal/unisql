@@ -231,6 +231,13 @@ pub trait Target {
         Ok(format!("EXTRACT({} FROM {expr})", field.to_uppercase()))
     }
 
+    /// `EXTRACT(EPOCH FROM a - b)`, operands printed: the seconds between two timestamps.
+    /// `None` (the default) means "no verified mapping": the printer then goes the generic way and
+    /// the `extract` hook decides (PostgreSQL writes it back, the others refuse).
+    fn epoch_of_difference(&self, _a: &str, _b: &str, _ctx: &mut Ctx) -> R<Option<String>> {
+        Ok(None)
+    }
+
     /// `ARRAY[..]`, elements printed. Default (PostgreSQL): exact; a target without an array type
     /// refuses the leaf `array_literal`.
     fn array_literal(&self, items: &[String], ctx: &mut Ctx) -> R<String> {
@@ -558,6 +565,17 @@ pub fn pg_type_name(ty: &SqlType) -> String {
         SqlType::Bytes => "BYTEA".into(),
         SqlType::Json => "JSON".into(),
         SqlType::Jsonb => "JSONB".into(),
+    }
+}
+
+/// `date_trunc('<field>', x)` with a literal field: that field, lower-cased.
+pub fn date_trunc_field(f: &Function) -> Option<String> {
+    if f.name != "date_trunc" {
+        return None;
+    }
+    match f.args.first() {
+        Some(FunctionArg::Expr(Expr::Literal(Literal::String(s)))) => Some(s.to_ascii_lowercase()),
+        _ => None,
     }
 }
 

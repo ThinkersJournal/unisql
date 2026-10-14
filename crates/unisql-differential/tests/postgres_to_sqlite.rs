@@ -676,6 +676,49 @@ fn cases() -> Vec<Case> {
             "SELECT id, CAST(EXTRACT(EPOCH FROM at) AS BIGINT) FROM fixed_ts ORDER BY id",
             &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
         )),
+        c(
+            "to_timestamp_epoch",
+            "SELECT CAST(EXTRACT(YEAR FROM to_timestamp(1592228730)) AS INTEGER), CAST(EXTRACT(HOUR FROM to_timestamp(1592228730)) AS INTEGER), CAST(EXTRACT(EPOCH FROM to_timestamp(1592228730)) AS BIGINT)",
+            &[
+                A::LenientCast,
+                A::TimestampAsText,
+                A::TimestampWholeSeconds,
+                A::EpochWholeSeconds,
+            ],
+        ),
+        ord(c(
+            "date_trunc_fields",
+            "SELECT id, CAST(EXTRACT(MINUTE FROM date_trunc('hour', at)) AS INTEGER), CAST(EXTRACT(HOUR FROM date_trunc('day', at)) AS INTEGER), CAST(EXTRACT(DAY FROM date_trunc('month', at)) AS INTEGER), CAST(EXTRACT(MONTH FROM date_trunc('year', at)) AS INTEGER), CAST(EXTRACT(EPOCH FROM date_trunc('minute', at)) AS BIGINT) FROM fixed_ts ORDER BY id",
+            &[
+                A::LenientCast,
+                A::TimestampAsText,
+                A::EpochWholeSeconds,
+                A::TextCollation,
+            ],
+        )),
+        ord(c(
+            "cast_to_timestamp",
+            "SELECT id, CAST(EXTRACT(EPOCH FROM CAST(at AS TIMESTAMP)) AS BIGINT) FROM fixed_ts ORDER BY id",
+            &[
+                A::LenientCast,
+                A::TimestampAsText,
+                A::EpochWholeSeconds,
+                A::TextCollation,
+            ],
+        )),
+        ord(c(
+            "epoch_of_difference",
+            "SELECT a.id, b.id, CAST(EXTRACT(EPOCH FROM (a.at - b.at)) AS BIGINT) FROM fixed_ts a JOIN fixed_ts b ON a.id < b.id ORDER BY a.id, b.id",
+            &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
+        )),
+        exp(
+            c(
+                "refuse_date_trunc_week",
+                "SELECT date_trunc('week', now())",
+                &[A::NowAsText],
+            ),
+            Expect::Refused("fn:date_trunc.week"),
+        ),
         exp(
             c(
                 "gen_random_uuid_v4",
@@ -686,11 +729,11 @@ fn cases() -> Vec<Case> {
         ),
         exp(
             c(
-                "refuse_extract_epoch",
-                "SELECT EXTRACT(EPOCH FROM (at - now())) FROM events",
-                &[A::NowAsText, A::TimestampArithmeticAsText],
+                "refuse_extract_week",
+                "SELECT EXTRACT(WEEK FROM now())",
+                &[A::NowAsText],
             ),
-            Expect::Refused("extract.epoch.interval"),
+            Expect::Refused("extract.week"),
         ),
         exp(
             c(

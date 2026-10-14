@@ -2,6 +2,36 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.16.0 - 2026-10-14
+
+PM task part (b): sweep the statements of auth-framework (`origin/main` 1b31e902) and lightbulb
+(`origin/main` c5b7fd77) for gaps, read through `git show`, never a working tree.
+
+- **Sweep result** (the PostgreSQL-source DML literals of both repos: 36 + 12 statements, all allowances
+  granted): the `?`-placeholder statements of `auth-framework/src/authorization_enhanced/storage.rs` were
+  read as PostgreSQL by the old runner (a runner limit, not a gap: they are SQLite/MySQL text). With
+  `UNISQL_SOURCE=sqlite|mysql` (new, `corpus` runner) 11 of 12 translate; the 12th is `INSERT OR REPLACE`
+  (SQLite replace semantics, no conflict key: not in the IR). Of the PostgreSQL-source statements the
+  real gaps were `date_trunc`, `to_timestamp`, `EXTRACT(EPOCH FROM a - b)` and `::timestamp` on SQLite;
+  all four are mapped below. Left, with reasons: `AT TIME ZONE` (no verified zone mapping),
+  `ON CONFLICT .. DO UPDATE .. WHERE` on MySQL (ODKU has no WHERE; emulating it with IF() depends on
+  assignment order), `::inet` (a PostgreSQL network type: not in the IR).
+- **`date_trunc('year'|'month'|'day'|'hour'|'minute', ts)`** on MySQL/MariaDB (`DATE_FORMAT` then
+  `CAST AS DATETIME`, exact) and SQLite (`strftime`, text, `timestamp_as_text`); one leaf per field
+  (`fn:date_trunc.<field>`), other fields stay refused.
+- **`to_timestamp(seconds)`**: `FROM_UNIXTIME` on MySQL/MariaDB (exact, fraction kept); `datetime(x,
+  'unixepoch')` on SQLite (text, whole seconds: `timestamp_as_text` + the new `timestamp_whole_seconds`).
+  The two-argument formatter form is not mapped.
+- **`EXTRACT(EPOCH FROM a - b)`** (`extract.epoch.interval`): `TIMESTAMPDIFF(MICROSECOND ..) / 1000000`
+  on MySQL/MariaDB (exact, fraction kept); whole seconds between the two timestamp texts on SQLite
+  (`epoch_whole_seconds`).
+- **`CAST(x AS TIMESTAMP)`** on SQLite (it was refused): keeps the text (`timestamp_as_text`,
+  `lenient_cast`).
+- Each mapping is a differential case on the real engines against PostgreSQL's value on fixed
+  timestamps; the refusals (`date_trunc('week')`, `EXTRACT(WEEK)`, `EXTRACT(DOW)`) are cases too.
+- `corpus` runner: `UNISQL_SOURCE`; `Allowance::TimestampWholeSeconds` (non_exhaustive enum);
+  `Target::epoch_of_difference` (default `None`).
+
 ## 0.15.0 - 2026-10-14
 
 PM task: verify and enable one mapping per refused leaf, largest first. Each mapping below was run

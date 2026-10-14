@@ -227,6 +227,38 @@ impl Target for Mysql {
                     SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', HEX(RANDOM_BYTES(6))))"
                     .to_string())
             }
+            // to_timestamp(seconds): FROM_UNIXTIME, a DATETIME in the session zone (UTC here); the
+            // fraction of a fractional argument is kept. The two-argument (text, format) form is
+            // PostgreSQL's formatter and is not mapped.
+            "to_timestamp" if args.len() == 1 => {
+                ctx.note("fn:to_timestamp", Tier::Exact, "FROM_UNIXTIME", None)?;
+                Ok(format!("FROM_UNIXTIME({})", args[0]))
+            }
+            // date_trunc('<field>', ts): the timestamp text cut at the field, read back as a DATETIME.
+            "date_trunc" if args.len() == 2 && unisql_core::target::date_trunc_field(f).is_some() => {
+                let field = unisql_core::target::date_trunc_field(f).unwrap_or_default();
+                let fmt = match field.as_str() {
+                    "year" => "%Y-01-01 00:00:00",
+                    "month" => "%Y-%m-01 00:00:00",
+                    "day" => "%Y-%m-%d 00:00:00",
+                    "hour" => "%Y-%m-%d %H:00:00",
+                    "minute" => "%Y-%m-%d %H:%i:00",
+                    _ => {
+                        return Err(ctx.refuse(
+                            &format!("fn:date_trunc.{field}"),
+                            &format!("no verified mapping for date_trunc('{field}', ..) on MySQL/MariaDB yet"),
+                            &["truncate in the application"],
+                        ));
+                    }
+                };
+                ctx.note(
+                    format!("fn:date_trunc.{field}"),
+                    Tier::Exact,
+                    "DATE_FORMAT then CAST AS DATETIME",
+                    None,
+                )?;
+                Ok(format!("CAST(DATE_FORMAT({}, '{fmt}') AS DATETIME)", args[1]))
+            }
             "current_date" => {
                 ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
                 Ok("CURRENT_DATE".to_string())
@@ -475,6 +507,19 @@ impl Target for Mysql {
                 &["compute the field in the application"],
             )),
         }
+    }
+
+    /// Seconds between two timestamps: microsecond difference over a million (the fraction is kept).
+    fn epoch_of_difference(&self, a: &str, b: &str, ctx: &mut Ctx) -> R<Option<String>> {
+        ctx.note(
+            "extract.epoch.interval",
+            Tier::Exact,
+            "TIMESTAMPDIFF in microseconds",
+            None,
+        )?;
+        Ok(Some(format!(
+            "(TIMESTAMPDIFF(MICROSECOND, {b}, {a}) / 1000000)"
+        )))
     }
 
     fn array_literal(&self, _items: &[String], ctx: &mut Ctx) -> R<String> {

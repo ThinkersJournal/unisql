@@ -45,6 +45,8 @@ pub enum Allowance {
     TimestampAsText,
     /// `EXTRACT(EPOCH FROM ts)` has no fractional seconds on the target: it is whole seconds.
     EpochWholeSeconds,
+    /// A timestamp value has whole-second resolution on the target: a fraction of a second is dropped.
+    TimestampWholeSeconds,
     /// The column's collation (from the caller's `Schema`) orders and compares text by locale rules
     /// (case- or accent-insensitive, language order); the target compares bytes, so the result may
     /// differ for the same data.
@@ -103,6 +105,7 @@ impl Allowance {
         Allowance::NowAsText,
         Allowance::TimestampAsText,
         Allowance::EpochWholeSeconds,
+        Allowance::TimestampWholeSeconds,
         Allowance::SourceCollationNotBytewise,
         Allowance::PipesAsLogicalOr,
         Allowance::IgnoreCoversOnlyUniqueConflicts,
@@ -129,6 +132,7 @@ impl Allowance {
             Allowance::NowAsText => "now_as_text",
             Allowance::TimestampAsText => "timestamp_as_text",
             Allowance::EpochWholeSeconds => "epoch_whole_seconds",
+            Allowance::TimestampWholeSeconds => "timestamp_whole_seconds",
             Allowance::SourceCollationNotBytewise => "source_collation_not_bytewise",
             Allowance::PipesAsLogicalOr => "pipes_as_logical_or",
             Allowance::IgnoreCoversOnlyUniqueConflicts => "ignore_covers_only_unique_conflicts",
