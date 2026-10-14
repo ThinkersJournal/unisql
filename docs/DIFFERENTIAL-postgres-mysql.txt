@@ -1,10 +1,18 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=120
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=124
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
        -> SELECT `id` FROM `users` WHERE ((`id` = ?) OR (`id` = ?)) OR (`id` = ?)
 PASS is_null                      same
        -> SELECT `id` FROM `users` WHERE (`age` IS NULL) OR (`city` IS NULL)
+PASS is_true                      same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS TRUE
+PASS is_not_true                  same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS NOT TRUE
+PASS is_false                     same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS FALSE
+PASS is_not_false                 same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS NOT FALSE
 PASS in_list                      same
        -> SELECT `id` FROM `users` WHERE (`id` IN (1, 3, 5)) AND (`id` NOT IN (5))
 PASS between                      same
@@ -213,7 +221,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 92 passing translated cases:
+MATRIX (construct, tier) from 96 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_bigint               conditional

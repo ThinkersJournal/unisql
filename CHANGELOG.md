@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.19.0 - 2026-10-14
+
+- **Breaking (AST):** new `Expr::IsBool { expr, value, negated }` for `expr IS [NOT] TRUE` and
+  `IS [NOT] FALSE` (never NULL; `NULL IS TRUE` is false, `NULL IS NOT TRUE` is true). The reader
+  produces it from any source dialect and the printer writes it unchanged for PostgreSQL, SQLite and
+  MySQL/MariaDB. Differential cases against the real engines compare the NULL arm. Code that matches
+  `Expr` exhaustively must add the arm.
+
 ## 0.18.3 - 2026-10-14
 
 - Docs only: ROADMAP gains the integration proposal for auth-framework's storage SQL (measured at

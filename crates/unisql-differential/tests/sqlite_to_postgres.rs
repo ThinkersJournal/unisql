@@ -126,6 +126,26 @@ fn cases() -> Vec<Case> {
             &[],
         ),
         c(
+            "is_true",
+            "SELECT id FROM users WHERE (age > 30) IS TRUE",
+            &[],
+        ),
+        c(
+            "is_not_true",
+            "SELECT id FROM users WHERE (age > 30) IS NOT TRUE",
+            &[],
+        ),
+        c(
+            "is_false",
+            "SELECT id FROM users WHERE (age > 30) IS FALSE",
+            &[],
+        ),
+        c(
+            "is_not_false",
+            "SELECT id FROM users WHERE (age > 30) IS NOT FALSE",
+            &[],
+        ),
+        c(
             "in_between",
             "SELECT id FROM users WHERE id IN (1,3,5) AND age BETWEEN 25 AND 41",
             COLL,

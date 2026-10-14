@@ -138,6 +138,16 @@ fn cases(maria: bool) -> Vec<Case> {
             "is_null",
             "SELECT id FROM users WHERE age IS NULL OR city IS NULL",
         ),
+        c("is_true", "SELECT id FROM users WHERE (age > 30) IS TRUE"),
+        c(
+            "is_not_true",
+            "SELECT id FROM users WHERE (age > 30) IS NOT TRUE",
+        ),
+        c("is_false", "SELECT id FROM users WHERE (age > 30) IS FALSE"),
+        c(
+            "is_not_false",
+            "SELECT id FROM users WHERE (age > 30) IS NOT FALSE",
+        ),
         c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
