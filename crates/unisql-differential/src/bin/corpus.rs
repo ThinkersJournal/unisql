@@ -35,6 +35,9 @@ fn main() {
         let line = line.unwrap();
         let mut rec: serde_json::Value = serde_json::from_str(&line).unwrap();
         let sql = rec["sql"].as_str().unwrap_or("").to_string();
+        // What the reader said about a construct it does not represent (empty otherwise): without
+        // it a `not_in_ir  expression` row cannot be told apart from its siblings.
+        let mut note = String::new();
         let (status, detail, allowances): (&str, String, Vec<String>) =
             match unisql::translate(&sql, "postgres", &target, &all) {
                 Ok(t) => {
@@ -54,7 +57,8 @@ fn main() {
                     }
                 }
                 Err(Error::Untranslatable(u)) => ("refused", u.construct, vec![]),
-                Err(Error::Read(unisql::ReadError::NotInIr { construct, .. })) => {
+                Err(Error::Read(unisql::ReadError::NotInIr { construct, detail })) => {
+                    note = detail.chars().take(120).collect();
                     ("not_in_ir", construct, vec![])
                 }
                 Err(Error::Read(unisql::ReadError::Syntax(m))) => {
@@ -66,6 +70,7 @@ fn main() {
         obj.remove("sql");
         obj.insert("status".into(), status.into());
         obj.insert("detail".into(), detail.into());
+        obj.insert("note".into(), note.into());
         obj.insert("allowances".into(), allowances.into());
         println!("{rec}");
     }
