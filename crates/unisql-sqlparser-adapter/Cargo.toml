@@ -6,6 +6,9 @@ license.workspace = true
 repository.workspace = true
 publish.workspace = true
 rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
 description = "Internal: sqlparser AST -> UniSQL IR, parameterised by per-dialect Rules. Replaceable."
 
 [dependencies]
