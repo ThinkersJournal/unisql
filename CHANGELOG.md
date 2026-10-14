@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.10.0 - 2026-10-14
 
 - **MySQL reader gaps closed**, each tested differentially from a MySQL and a MariaDB source against
   PostgreSQL and SQLite, and each with the assumption it carries named:
@@ -18,6 +18,8 @@ One version number for every crate in the workspace. Pre-1.0, the second number 
     Measured: a start of 0 returns '' on MySQL and a prefix on PostgreSQL (a divergence case).
   - A MySQL/MariaDB source's own `SUBSTRING` passes through to a MySQL/MariaDB target unchanged.
 - Three new `Allowance` variants (the enum is `#[non_exhaustive]` since 0.7.0) and `BinaryOp::NullSafeEq`.
+- **Breaking:** `BinaryOp` is now `#[non_exhaustive]` (taken once, like `Allowance` at 0.7.0, so a later
+  operator is not breaking again): a consumer matching it needs a wildcard arm.
 
 ## 0.9.0 - 2026-10-14
 
