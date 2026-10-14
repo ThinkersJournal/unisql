@@ -76,7 +76,7 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
 - **Reader, done at 0.18.0 (IR fields, an AST break):** `REPLACE INTO` (native on MySQL/MariaDB and as
   `INSERT OR REPLACE` on SQLite; on PostgreSQL an upsert over every column when the schema states the
   table and its one unique key, allowance `replace_is_upsert`), `JOIN .. USING` and `NATURAL JOIN`.
-- **Reader, done (IR field `Expr::IsBool`, an AST break):** `IS [NOT] TRUE` / `IS [NOT] FALSE` (`is_true`;
+- **Reader, done at 0.19.0 (IR field `Expr::IsBool`, an AST break):** `IS [NOT] TRUE` / `IS [NOT] FALSE` (`is_true`;
   translated to all three targets, differential cases against PostgreSQL, SQLite, MySQL, MariaDB).
 - **Reader (not in the IR), would be mappable:** `UPDATE/DELETE .. ORDER BY .. LIMIT` (`update_limit`,
   `delete_limit`: PostgreSQL has no direct form, needs a key subquery, SQLite needs a compile
