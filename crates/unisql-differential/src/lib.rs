@@ -559,6 +559,10 @@ pub enum Expect {
     NeedsAllowance(Allowance),
     /// Translates (with the allowance) but the engines **disagree**: proves the allowance is needed.
     Diverges,
+    /// Only the source dialect is exercised: the statement must read, write back as the same
+    /// dialect, and give the same rows and state as the original on the source engine. For forms
+    /// the target refuses (so no matrix row is recorded).
+    Identity,
     /// Translates, and **both** engines raise an error (for example `NOWAIT` on a locked row).
     BothError,
     /// The reader refuses it: the construct is not in the IR (named).
@@ -700,6 +704,35 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         rows: 0,
     };
     let tr = unisql::translate(c.sql, src, tgt, &opts);
+    if matches!(c.expect, Expect::Identity) {
+        match unisql::translate(c.sql, src, src, &opts) {
+            Ok(t) => {
+                out.translated = Some(t.sql.clone());
+                let orig = e.run_on(src, c.sql, &c.params, c.after);
+                let ident = e.run_on(src, &t.sql, &c.params, c.after);
+                match (orig, ident) {
+                    (Ok(o), Ok(i))
+                        if rows_equal(&o.0, &i.0, c.ordered)
+                            && rows_equal(&o.1, &i.1, c.ordered) =>
+                    {
+                        out.passed = true;
+                        out.detail = "identity: same rows and state".into();
+                    }
+                    (o, i) => {
+                        out.detail = format!(
+                            "{src}->{src} differs or failed: {:?} / {:?}
+  sql: {}",
+                            o.map(|x| (x.0, x.1)),
+                            i.map(|x| (x.0, x.1)),
+                            t.sql
+                        )
+                    }
+                }
+            }
+            Err(err) => out.detail = format!("{src}->{src} failed: {err}"),
+        }
+        return out;
+    }
     // Row locks held by a second session on each engine, released when the case ends.
     let mut _held: Vec<Held> = Vec::new();
     if let Some(h) = c.hold {
@@ -804,7 +837,11 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
             }
         }
         (
-            Expect::Refused(_) | Expect::NeedsAllowance(_) | Expect::NotInIr(_) | Expect::ParserGap,
+            Expect::Refused(_)
+            | Expect::NeedsAllowance(_)
+            | Expect::NotInIr(_)
+            | Expect::Identity
+            | Expect::ParserGap,
             Ok(t),
         ) => {
             out.detail = format!("expected a refusal but got text: {}", t.sql);

@@ -11,6 +11,7 @@ construct	cast.to_text	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=pos
 construct	cast.to_text.lenient_cast	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	allowance=lenient_cast	postgres
 construct	cast.to_uuid	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_cast_uuid	CAST to Uuid has no SQLite equivalent that preserves meaning	postgres
 construct	concat	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::concat_op		postgres
+construct	cte.data_modifying	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_data_modifying_cte	SQLite has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error	postgres
 construct	distinct_on	sqlite	3.53.2		yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_basic		postgres
 construct	distinct_on.star_projection	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_star_refused	DISTINCT ON with a * projection cannot be emulated; list the columns explicitly	postgres
 construct	division	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
@@ -87,3 +88,6 @@ construct	update_from	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;t
 construct	upsert	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::upsert_do_nothing		postgres
 construct	upsert_where	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::upsert_where		postgres
 construct	window_function	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_basic		postgres
+construct	with.delete	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::with_delete		postgres
+construct	with.insert	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::with_insert		postgres
+construct	with.update	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::with_update		postgres

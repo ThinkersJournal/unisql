@@ -161,6 +161,39 @@ pub fn read(sql: &str, rules: &'static Rules) -> R<Read> {
 
 fn statement(s: sp::Statement) -> R<Statement> {
     match s {
+        sp::Statement::Query(q)
+            if matches!(
+                &*q.body,
+                sp::SetExpr::Insert(_) | sp::SetExpr::Update(_) | sp::SetExpr::Delete(_)
+            ) =>
+        {
+            // `WITH .. INSERT|UPDATE|DELETE ..` is a query node in the parser's tree.
+            let mut q = *q;
+            let with = q.with.take();
+            if q.to_string() != q.body.to_string() {
+                return no(
+                    "query_clause",
+                    "clauses around a WITH .. INSERT/UPDATE/DELETE",
+                );
+            }
+            let inner = match *q.body {
+                sp::SetExpr::Insert(st) | sp::SetExpr::Update(st) | sp::SetExpr::Delete(st) => {
+                    statement(st)?
+                }
+                _ => unreachable!(),
+            };
+            match with {
+                None => Ok(inner),
+                Some(w) => {
+                    let (ctes, recursive) = read_ctes(w)?;
+                    Ok(Statement::With(WithStatement {
+                        recursive,
+                        ctes,
+                        stmt: Box::new(inner),
+                    }))
+                }
+            }
+        }
         sp::Statement::Query(q) => Ok(Statement::Query(Box::new(query(*q)?))),
         sp::Statement::Insert(i) => insert(i),
         sp::Statement::Update(u) => update(u),
@@ -215,6 +248,60 @@ fn single_name(n: &sp::ObjectName) -> R<String> {
     Ok(nm.0.into_iter().next().unwrap())
 }
 
+/// The `WITH` list of a query or of a data-modifying statement.
+fn read_ctes(w: sp::With) -> R<(Vec<Cte>, bool)> {
+    let sp::With {
+        with_token: _,
+        recursive,
+        cte_tables,
+    } = w;
+    let mut ctes = Vec::new();
+    for c in cte_tables {
+        let sp::Cte {
+            alias,
+            query: cq,
+            from,
+            materialized,
+            closing_paren_token: _,
+        } = c;
+        if from.is_some() || materialized.is_some() {
+            return no("cte_option", "MATERIALIZED / FROM in a CTE");
+        }
+        let mut columns = Vec::new();
+        for col in &alias.columns {
+            if col.data_type.is_some() {
+                return no("cte_column_type", "typed CTE column");
+            }
+            columns.push(ident(&col.name));
+        }
+        let dml = matches!(
+            &*cq.body,
+            sp::SetExpr::Insert(_) | sp::SetExpr::Update(_) | sp::SetExpr::Delete(_)
+        );
+        let cte_body = if dml {
+            // Nothing but the statement itself: a WITH / ORDER BY / LIMIT around it would be
+            // dropped silently otherwise.
+            if cq.to_string() != cq.body.to_string() {
+                return no("cte_dml_clause", "clauses around a data-modifying CTE");
+            }
+            match *cq.body {
+                sp::SetExpr::Insert(st) | sp::SetExpr::Update(st) | sp::SetExpr::Delete(st) => {
+                    CteBody::Dml(Box::new(statement(st)?))
+                }
+                _ => unreachable!(),
+            }
+        } else {
+            CteBody::Query(Box::new(query(*cq)?))
+        };
+        ctes.push(Cte {
+            name: ident(&alias.name),
+            columns,
+            body: cte_body,
+        });
+    }
+    Ok((ctes, recursive))
+}
+
 fn query(q: sp::Query) -> R<Query> {
     let sp::Query {
         with,
@@ -241,36 +328,7 @@ fn query(q: sp::Query) -> R<Query> {
     let mut ctes = Vec::new();
     let mut recursive = false;
     if let Some(w) = with {
-        let sp::With {
-            with_token: _,
-            recursive: rec,
-            cte_tables,
-        } = w;
-        recursive = rec;
-        for c in cte_tables {
-            let sp::Cte {
-                alias,
-                query: cq,
-                from,
-                materialized,
-                closing_paren_token: _,
-            } = c;
-            if from.is_some() || materialized.is_some() {
-                return no("cte_option", "MATERIALIZED / FROM in a CTE");
-            }
-            let mut columns = Vec::new();
-            for col in &alias.columns {
-                if col.data_type.is_some() {
-                    return no("cte_column_type", "typed CTE column");
-                }
-                columns.push(ident(&col.name));
-            }
-            ctes.push(Cte {
-                name: ident(&alias.name),
-                columns,
-                query: query(*cq)?,
-            });
-        }
+        (ctes, recursive) = read_ctes(w)?;
     }
     let mut body = set_expr(*body)?;
     let mut lock = None;

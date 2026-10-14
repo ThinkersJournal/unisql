@@ -619,6 +619,43 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("returning"),
         ));
     }
+    v.push(exp(
+        c(
+            "refuse_data_modifying_cte",
+            "WITH s AS (DELETE FROM orders WHERE amount = 0 RETURNING id) SELECT id FROM s",
+        ),
+        Expect::Refused("cte.data_modifying"),
+    ));
+    // WITH before a modifying statement: MySQL has UPDATE and DELETE (not INSERT), MariaDB none.
+    for (name, sql, leaf, mysql_ok) in [
+        (
+            "with_update",
+            "WITH s AS (SELECT key FROM kv WHERE n = 1) UPDATE kv SET n = n + 10 WHERE key IN (SELECT key FROM s)",
+            "with.update",
+            true,
+        ),
+        (
+            "with_delete",
+            "WITH s AS (SELECT key FROM kv WHERE n = 1) DELETE FROM kv WHERE key IN (SELECT key FROM s)",
+            "with.delete",
+            true,
+        ),
+        (
+            "with_insert",
+            "WITH s AS (SELECT 'z' AS key) INSERT INTO kv (key, value, n) SELECT key, 'v', 9 FROM s",
+            "with.insert",
+            false,
+        ),
+    ] {
+        if mysql_ok && !maria {
+            v.push(Case {
+                after: Some("SELECT * FROM kv ORDER BY 1"),
+                ..c(name, sql)
+            });
+        } else {
+            v.push(exp(c(name, sql), Expect::Refused(leaf)));
+        }
+    }
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.
     let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";

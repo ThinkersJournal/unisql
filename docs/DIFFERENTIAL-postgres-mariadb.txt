@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=101
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=105
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -180,6 +180,10 @@ PASS insert_returning             same
 PASS delete_returning             same
        -> DELETE FROM `orders` WHERE `status` = 'open' RETURNING `id`
 PASS refuse_update_returning      refused `returning.update`: MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE
+PASS refuse_data_modifying_cte    refused `cte.data_modifying`: MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error
+PASS with_update                  refused `with.update`: MariaDB has no WITH before this statement (probed: a syntax error)
+PASS with_delete                  refused `with.delete`: MariaDB has no WITH before this statement (probed: a syntax error)
+PASS with_insert                  refused `with.insert`: MariaDB has no WITH before this statement (probed: a syntax error)
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 

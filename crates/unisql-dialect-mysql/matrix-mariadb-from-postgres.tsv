@@ -11,6 +11,7 @@ construct	cast.to_text	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=post
 construct	cast.to_text.lenient_cast	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::cast_int_text	allowance=lenient_cast	postgres
 construct	cast.to_uuid	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
 construct	concat	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::concat_op		postgres
+construct	cte.data_modifying	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_data_modifying_cte	MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error	postgres
 construct	distinct_on	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
 construct	division	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	division.division_by_zero_is_null	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=division_by_zero_is_null	postgres
@@ -81,3 +82,6 @@ construct	upsert	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-t
 construct	upsert.upsert_any_unique_key	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::upsert_do_nothing	allowance=upsert_any_unique_key	postgres
 construct	upsert_where	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_upsert_where	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
 construct	window_function	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
+construct	with.delete	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::with_delete	MariaDB has no WITH before this statement (probed: a syntax error)	postgres
+construct	with.insert	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::with_insert	MariaDB has no WITH before this statement (probed: a syntax error)	postgres
+construct	with.update	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::with_update	MariaDB has no WITH before this statement (probed: a syntax error)	postgres

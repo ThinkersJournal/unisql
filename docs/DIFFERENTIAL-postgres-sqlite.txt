@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=130
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=135
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -139,6 +139,15 @@ PASS diverge_bad_cast             diverges: postgres errors (prepare: db error);
        -> SELECT CAST('abc' AS INTEGER)
 PASS distinct_on_emulated         same
        -> SELECT "__u0" AS "city", "__u1" AS "id" FROM (SELECT "city" AS "__u0", "id" AS "__u1", "city" AS "__o0", "id" AS "__o1", ROW_NUMBER() OVER (PARTITION BY "city" ORDER BY "city" NULLS LAST, "id" NULLS LAST) AS "__rn" FROM "users" WHERE "city" IS NOT NULL) AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" NULLS LAST
+PASS with_update                  same
+       -> WITH "s" AS (SELECT "key" FROM "kv" WHERE "n" = 1) UPDATE "kv" SET "n" = "n" + 10 WHERE "key" IN (SELECT "key" FROM "s")
+PASS with_delete                  same
+       -> WITH "s" AS (SELECT "key" FROM "kv" WHERE "n" = 1) DELETE FROM "kv" WHERE "key" IN (SELECT "key" FROM "s")
+PASS with_insert                  same
+       -> WITH "s" AS (SELECT 'z' AS "key") INSERT INTO "kv" ("key", "value", "n") SELECT "key", 'v', 9 FROM "s"
+PASS pg_identity_data_modifying_cte identity: same rows and state
+       -> WITH "s" AS (INSERT INTO "kv" ("key", "value", "n") VALUES ('w', 'z', 5) RETURNING "key") UPDATE "kv" SET "n" = "n" + 1 WHERE "key" IN (SELECT "key" FROM "s")
+PASS refuse_data_modifying_cte    refused `cte.data_modifying`: SQLite has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error
 PASS refuse_for_update            refused `row_lock`: SQLite has no row-level locks (it locks the whole database)
 PASS refuse_unmapped_fn           refused `fn:md5`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no SQLite equivalent that preserves meaning
@@ -231,7 +240,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 101 passing translated cases:
+MATRIX (construct, tier) from 105 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -290,3 +299,6 @@ MATRIX (construct, tier) from 101 passing translated cases:
   upsert                       exact
   upsert_where                 exact
   window_function              exact
+  with.delete                  exact
+  with.insert                  exact
+  with.update                  exact

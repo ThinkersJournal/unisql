@@ -15,11 +15,10 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 1. **Corpus-driven reader gaps.** Re-run at the refs the D files were made at (humboldt `b7cd95e7`,
    auth `4582a64f`, lightbulb `34e5432b`) with the `note` field, the `not_in_ir` residual of DML is:
    `Interval` 21 (**done at 0.5.0**: `ts +/- INTERVAL 'n unit'` reads as `make_interval`), `current_date`
-   without parentheses 7 (**done**) and `current_user` 1, `Insert` as a set expression (`WITH .. INSERT`) 6,
+   without parentheses 7 (**done**) and `current_user` 1, `Insert` as a set expression (`WITH .. INSERT`) 6 (**done**),
    `AtTimeZone` 2, `EscapedStringLiteral` 2, a function over a subquery 2, `Extract` 1, `Array` 1.
    (`data_type` 25 are PostgreSQL catalog types, refused correctly; `statement` 65 and
-   `multiple_statements` 34 are DDL and scripts, out of scope.) Next by count: data-modifying CTEs (6),
-   then `AtTimeZone`, `E'..'` strings and functions over subqueries (2 each). Also: `refused fn:gen_random_uuid` 12 stays refused unless an
+   `multiple_statements` 34 are DDL and scripts, out of scope.) Next by count: `AtTimeZone`, `E'..'` strings and functions over subqueries (2 each). Also: `refused fn:gen_random_uuid` 12 stays refused unless an
    allowance names that MySQL `UUID()` is a v1 UUID.
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
 2. **MySQL reader gaps:** `||` (MySQL means OR; the parser gives it concatenation precedence),

@@ -2,6 +2,20 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.8.0 - 2026-10-14
+
+- **`WITH` before a modifying statement and data-modifying CTEs** (the 6 `not_in_ir set_expr Insert` rows
+  of the corpus): `WITH .. INSERT | UPDATE | DELETE ..` and `WITH x AS (INSERT/UPDATE/DELETE ..
+  RETURNING ..) ..` are in the IR (`Statement::With`, `CteBody::Dml`). Leaves `with.insert`,
+  `with.update`, `with.delete`, `cte.data_modifying`. Probed on the pinned engines: PostgreSQL has all;
+  SQLite has `WITH` before all three but no data-modifying CTE; MySQL 8.4 has `WITH` before UPDATE and
+  DELETE only; MariaDB 11.4 has none of the four. Each refusal is its leaf, never a guess.
+- **Breaking for consumers of `unisql-core::ast`:** `Cte::query` became `Cte::body: CteBody`, and
+  `Statement` and `Target` gained a variant / hooks (`Statement::With`, `with_statement`,
+  `data_modifying_cte`).
+- Differential: a new `Expect::Identity` (source dialect round-trip, rows and state compared) for forms
+  no target but the source has; cases for every engine.
+
 ## 0.7.0 - 2026-10-14
 
 - **Bare `CURRENT_DATE`** (7 `not_in_ir bare_function` rows of the corpus, all INSERT values) is read as

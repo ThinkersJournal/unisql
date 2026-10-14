@@ -406,6 +406,38 @@ impl Target for Mysql {
         Err(ctx.refuse("distinct_on", "unexpected DISTINCT ON", &[]))
     }
 
+    fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            "cte.data_modifying",
+            "MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error",
+            &["run the statements separately in one transaction"],
+        ))
+    }
+
+    /// Probed: MySQL 8.4 has `WITH .. UPDATE|DELETE` but not `WITH .. INSERT` (the WITH goes inside
+    /// the INSERT's SELECT there); MariaDB 11.4 has none of the three.
+    fn with_statement(&self, kind: StmtKind, ctx: &mut Ctx) -> R<()> {
+        let refused = match self.flavor {
+            Flavor::MariaDb => true,
+            Flavor::MySql => kind == StmtKind::Insert,
+        };
+        if refused {
+            return Err(ctx.refuse(
+                unisql_core::target::with_leaf(kind),
+                &format!(
+                    "{} has no WITH before this statement (probed: a syntax error)",
+                    if self.flavor == Flavor::MariaDb {
+                        "MariaDB"
+                    } else {
+                        "MySQL"
+                    }
+                ),
+                &["put the WITH inside the INSERT's SELECT, or use a derived table"],
+            ));
+        }
+        ctx.note(unisql_core::target::with_leaf(kind), Tier::Exact, "", None)
+    }
+
     fn row_lock(&self, lock: &RowLockClause, ctx: &mut Ctx) -> R<()> {
         if self.flavor == Flavor::MariaDb {
             // Probed on MariaDB 11.4: `FOR SHARE` and `FOR UPDATE OF t` are syntax errors there

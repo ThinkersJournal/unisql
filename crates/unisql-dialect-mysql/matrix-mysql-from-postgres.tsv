@@ -11,6 +11,7 @@ construct	cast.to_text	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgre
 construct	cast.to_text.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
 construct	cast.to_uuid	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
 construct	concat	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::concat_op		postgres
+construct	cte.data_modifying	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_data_modifying_cte	MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error	postgres
 construct	distinct_on	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
 construct	division	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	division.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=division_by_zero_is_null	postgres
@@ -80,3 +81,6 @@ construct	upsert	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-m
 construct	upsert.upsert_any_unique_key	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	allowance=upsert_any_unique_key	postgres
 construct	upsert_where	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_upsert_where	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
 construct	window_function	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
+construct	with.delete	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_delete		postgres
+construct	with.insert	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::with_insert	MySQL has no WITH before this statement (probed: a syntax error)	postgres
+construct	with.update	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_update		postgres

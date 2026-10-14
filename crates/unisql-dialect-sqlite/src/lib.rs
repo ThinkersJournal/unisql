@@ -414,6 +414,14 @@ impl Target for Sqlite {
         ))
     }
 
+    fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            "cte.data_modifying",
+            "SQLite has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error",
+            &["run the statements separately in one transaction"],
+        ))
+    }
+
     fn returning(&self, _kind: StmtKind, ctx: &mut Ctx) -> R<()> {
         ctx.note("returning", Tier::Exact, "requires SQLite >= 3.35", None)
     }
