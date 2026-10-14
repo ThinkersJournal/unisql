@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=83
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=84
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -79,6 +79,8 @@ PASS not_like                     same
        -> SELECT `id` FROM `users` WHERE `name` NOT LIKE '%a%'
 PASS ilike                        same
        -> SELECT `id` FROM `users` WHERE LOWER(`email`) LIKE LOWER(?)
+PASS ilike_non_ascii              diverges: postgres [[Int(0)]] vs mysql [[Int(1)]]
+       -> SELECT LOWER('É') LIKE LOWER('é')
 PASS insert_values                same
        -> INSERT INTO `users` (`id`, `name`, `active`) VALUES (?, ?, TRUE)
 PASS upsert_do_update             same
@@ -152,7 +154,7 @@ PASS refuse_update_from           refused `update_from`:
 PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
 
-MATRIX (construct, tier) from 69 passing translated cases:
+MATRIX (construct, tier) from 70 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional

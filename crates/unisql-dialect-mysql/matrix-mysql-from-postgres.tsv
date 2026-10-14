@@ -41,15 +41,17 @@ construct	fn:string_agg.order_by	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=na
 construct	fn:substr	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_substr	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
 construct	fn:sum	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:sum.order_by	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
-construct	ilike	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::ilike	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	postgres
-construct	ilike.like_case_sensitivity_is_connection_setting	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=like_case_sensitivity_is_connection_setting	postgres
+construct	ilike	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
+construct	ilike.ascii_only_case_folding	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=ascii_only_case_folding	postgres
+construct	ilike.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=text_collation	postgres
 construct	interval_arithmetic	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_secs	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
 construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_secs	allowance=timestamp_arithmetic_as_text	postgres
 construct	join:inner_join	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::cte		postgres
 construct	join:left_join	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join		postgres
 construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
-construct	like	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	postgres
-construct	like.like_case_sensitivity_is_connection_setting	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	allowance=like_case_sensitivity_is_connection_setting	postgres
+construct	like	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_like_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	like	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	premise=text_collation, read from config; see the known-bad row	postgres
+construct	like.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	allowance=text_collation	postgres
 construct	limit	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
 construct	null_ordering	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres
 construct	offset	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres

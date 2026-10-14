@@ -2,6 +2,15 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.3.0 - 2026-10-14
+
+- **MySQL/MariaDB `LIKE`/`ILIKE`:** the cause is the column collation, not a connection setting (that is
+  SQLite). `like` now carries `text_collation`, so it is read from `config` like the other text leaves:
+  strict `like` is `yes` under `collation=utf8mb4_bin`, with a known-bad control (default collation,
+  must diverge). `ilike` carries `text_collation` and `ascii_only_case_folding` (verified: PostgreSQL's
+  `'É' ILIKE 'é'` is false in the C locale, MySQL's `LOWER()` form is true). The leaf
+  `like.like_case_sensitivity_is_connection_setting` no longer exists for the MySQL/MariaDB targets.
+
 ## 0.2.1 - 2026-10-14
 
 - `ROADMAP.md` (unisql had none). The `Allowance` doc comment now says a variant's name and text are a

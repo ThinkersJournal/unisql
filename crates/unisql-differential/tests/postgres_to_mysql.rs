@@ -260,6 +260,12 @@ fn cases(maria: bool) -> Vec<Case> {
             c("ilike", "SELECT id FROM users WHERE email ILIKE $1"),
             vec![Param::Text("%EXAMPLE.COM")],
         ),
+        // PostgreSQL's ILIKE in the C locale folds ASCII only; MySQL's LOWER() folds Unicode. The
+        // divergence is what the `ascii_only_case_folding` allowance on `ilike` stands for.
+        exp(
+            c("ilike_non_ascii", "SELECT 'É' ILIKE 'é'"),
+            Expect::Diverges,
+        ),
         // ---- DML
         after(
             p(
@@ -555,11 +561,17 @@ fn known_bad_controls(maria: bool, dir: Dir) -> Vec<KnownBad> {
     let mut e = Engines::open_mysql(PG_PROBE, &my, maria)
         .unwrap_or_else(|m| panic!("ENGINE UNAVAILABLE (test must not be skipped): {m}"));
     // (leaf, case name, statement, result order matters)
-    let probes: [(&str, &'static str, &'static str, bool); 4] = [
+    let probes: [(&str, &'static str, &'static str, bool); 5] = [
         (
             "text_comparison",
             "known_bad_text_equality",
             "SELECT id FROM probe WHERE s = 'b' ORDER BY id",
+            true,
+        ),
+        (
+            "like",
+            "known_bad_like_text",
+            "SELECT id FROM probe WHERE s LIKE 'b' ORDER BY id",
             true,
         ),
         (
