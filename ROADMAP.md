@@ -22,10 +22,7 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    except `current_user` 1, `Extract` 1 and `Array` 1).
    allowance names that MySQL `UUID()` is a v1 UUID.
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
-2. **MySQL reader gaps:** `||` (MySQL means OR; the parser gives it concatenation precedence),
-   `SUBSTRING(s FROM n)` (start-position semantics), `INSERT IGNORE`, `<=>`. Each is a reader rule in
-   `unisql-sqlparser-adapter` or a parser-level workaround; none needs an IR change except `<=>`.
-3. **Schema input.** Whether `age > $1` compares numbers or text is syntactic today, so it records
+2. **Schema input.** Whether `age > $1` compares numbers or text is syntactic today, so it records
    `text_comparison`. An optional column-type map would make that exact and shrink the number of
    statements that need an allowance. *Open design question:* where the map comes from (PersistAnt's
    catalog read, or the caller).

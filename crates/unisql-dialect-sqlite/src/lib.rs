@@ -430,6 +430,16 @@ impl Target for Sqlite {
         ))
     }
 
+    fn null_safe_eq(&self, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            "null_safe_eq",
+            Tier::Exact,
+            "SQLite `IS` compares like `<=>`",
+            None,
+        )?;
+        Ok(format!("{lhs} IS {rhs}"))
+    }
+
     fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "cte.data_modifying",

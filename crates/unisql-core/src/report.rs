@@ -40,6 +40,16 @@ impl Tier {
 pub enum Allowance {
     /// `now()` yields text (`YYYY-MM-DD HH:MM:SS`, UTC) rather than a timestamptz.
     NowAsText,
+    /// The source `||` is read as logical OR, which is MySQL's default `sql_mode`; under
+    /// `PIPES_AS_CONCAT` the same text is string concatenation.
+    PipesAsLogicalOr,
+    /// The source `INSERT IGNORE` downgrades every error of the statement (a conversion, a NOT NULL,
+    /// a unique conflict) to a warning; the target ignores unique-key conflicts only.
+    IgnoreCoversOnlyUniqueConflicts,
+    /// The source `SUBSTRING` start (and length) is assumed to be 1 (and 0) or more: a start of 0 or a
+    /// negative start (counted from the end on MySQL) and a negative length are read differently by the
+    /// target.
+    SubstringStartAssumedPositive,
     /// `CURRENT_DATE` yields text (`YYYY-MM-DD`, the UTC date) rather than a date in the session time
     /// zone.
     DateAsText,
@@ -82,6 +92,9 @@ impl Allowance {
     /// Every named allowance (what a caller who accepts all assumptions would grant).
     pub const ALL: &[Allowance] = &[
         Allowance::NowAsText,
+        Allowance::PipesAsLogicalOr,
+        Allowance::IgnoreCoversOnlyUniqueConflicts,
+        Allowance::SubstringStartAssumedPositive,
         Allowance::DateAsText,
         Allowance::LikeCaseSensitivityIsConnectionSetting,
         Allowance::AsciiOnlyCaseFolding,
@@ -102,6 +115,9 @@ impl Allowance {
     pub fn name(self) -> &'static str {
         match self {
             Allowance::NowAsText => "now_as_text",
+            Allowance::PipesAsLogicalOr => "pipes_as_logical_or",
+            Allowance::IgnoreCoversOnlyUniqueConflicts => "ignore_covers_only_unique_conflicts",
+            Allowance::SubstringStartAssumedPositive => "substring_start_assumed_positive",
             Allowance::DateAsText => "date_as_text",
             Allowance::LikeCaseSensitivityIsConnectionSetting => {
                 "like_case_sensitivity_is_connection_setting"

@@ -409,6 +409,8 @@ pub enum BinaryOp {
     Concat,
     /// MySQL `DIV`: integer division (operands assumed integers on other targets).
     IntDivide,
+    /// MySQL `a <=> b`: equality that treats two NULLs as equal and NULL against a value as false.
+    NullSafeEq,
     /// JSON `->` (returns JSON)
     JsonGet,
     /// JSON `->>` (returns text)

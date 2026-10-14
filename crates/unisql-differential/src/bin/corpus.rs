@@ -11,6 +11,9 @@ use unisql::{Allowance, Error, Options, Tier};
 
 const ALL: &[Allowance] = &[
     Allowance::NowAsText,
+    Allowance::PipesAsLogicalOr,
+    Allowance::IgnoreCoversOnlyUniqueConflicts,
+    Allowance::SubstringStartAssumedPositive,
     Allowance::DateAsText,
     Allowance::LikeCaseSensitivityIsConnectionSetting,
     Allowance::AsciiOnlyCaseFolding,

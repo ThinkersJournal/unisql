@@ -142,6 +142,26 @@ pub fn read(sql: &str, rules: &'static Rules) -> R<Read> {
     });
     let out = (|| {
         let d = (rules.dialect)();
+        // MySQL's default sql_mode makes `||` a logical OR with OR's precedence, but the parser
+        // gives it concatenation's. Rewrite the operator token in the text (by position, so nothing
+        // else is re-spelled) before parsing, and say so.
+        let rewritten;
+        let sql = if rules.name == "mysql" {
+            match pipes_to_or(sql, d.as_ref()) {
+                Some(s) => {
+                    add_note(
+                        "pipes_as_or",
+                        "MySQL `||` is logical OR in the default sql_mode; under PIPES_AS_CONCAT it is concatenation",
+                        Allowance::PipesAsLogicalOr,
+                    );
+                    rewritten = s;
+                    rewritten.as_str()
+                }
+                None => sql,
+            }
+        } else {
+            sql
+        };
         let mut stmts =
             Parser::parse_sql(d.as_ref(), sql).map_err(|e| ReadError::Syntax(e.to_string()))?;
         if stmts.len() != 1 {
@@ -157,6 +177,47 @@ pub fn read(sql: &str, rules: &'static Rules) -> R<Read> {
         stmt,
         notes: cx.notes,
     })
+}
+
+/// `sql` with each `||` operator token replaced by ` OR `; `None` when there is none (or the text does
+/// not tokenize, which the parser then reports).
+fn pipes_to_or(sql: &str, dialect: &dyn sqlparser::dialect::Dialect) -> Option<String> {
+    use sqlparser::tokenizer::{Token, Tokenizer};
+    let tokens = Tokenizer::new(dialect, sql).tokenize_with_location().ok()?;
+    let line_starts: Vec<usize> = std::iter::once(0)
+        .chain(
+            sql.chars()
+                .enumerate()
+                .filter(|(_, c)| *c == '\n')
+                .map(|(i, _)| i + 1),
+        )
+        .collect();
+    let mut spots: Vec<usize> = tokens
+        .iter()
+        .filter(|t| t.token == Token::StringConcat)
+        .filter_map(|t| {
+            let line = usize::try_from(t.span.start.line).ok()?.checked_sub(1)?;
+            let col = usize::try_from(t.span.start.column).ok()?.checked_sub(1)?;
+            Some(line_starts.get(line)? + col)
+        })
+        .collect();
+    if spots.is_empty() {
+        return None;
+    }
+    spots.sort_unstable();
+    let chars: Vec<char> = sql.chars().collect();
+    let mut out = String::new();
+    let mut at = 0;
+    for s in spots {
+        if s < at || s + 2 > chars.len() || chars[s] != '|' || chars[s + 1] != '|' {
+            return None;
+        }
+        out.extend(&chars[at..s]);
+        out.push_str(" OR ");
+        at = s + 2;
+    }
+    out.extend(&chars[at..]);
+    Some(out)
 }
 
 fn statement(s: sp::Statement) -> R<Statement> {
@@ -792,7 +853,6 @@ fn insert(i: sp::Insert) -> R<Statement> {
     } = i;
     if !optimizer_hints.is_empty()
         || or.is_some()
-        || ignore
         || table_alias.is_some()
         || overwrite
         || !asg.is_empty()
@@ -895,6 +955,28 @@ fn insert(i: sp::Insert) -> R<Statement> {
             })
         }
         Some(other) => return no("on_insert", &head(&other)),
+    };
+    // MySQL `INSERT IGNORE`: a unique-key conflict skips the row, as `ON CONFLICT DO NOTHING`
+    // (with no target) does. IGNORE also downgrades other errors, hence the allowance.
+    let on_conflict = if ignore {
+        if on_conflict.is_some() {
+            return no(
+                "insert_option",
+                "IGNORE together with ON DUPLICATE KEY UPDATE",
+            );
+        }
+        add_note(
+            "insert_ignore",
+            "INSERT IGNORE downgrades every error of the statement to a warning; ON CONFLICT DO NOTHING \
+             skips unique-key conflicts only",
+            Allowance::IgnoreCoversOnlyUniqueConflicts,
+        );
+        Some(OnConflict {
+            target: vec![],
+            action: ConflictAction::DoNothing,
+        })
+    } else {
+        on_conflict
     };
     Ok(Statement::Insert(Insert {
         table,
@@ -1120,6 +1202,7 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 }
                 B::StringConcat => BinaryOp::Concat,
                 B::MyIntegerDivide => BinaryOp::IntDivide,
+                B::Spaceship => BinaryOp::NullSafeEq,
                 B::Arrow => BinaryOp::JsonGet,
                 B::LongArrow => BinaryOp::JsonGetText,
                 other => {
@@ -1229,10 +1312,25 @@ fn expr(e: sp::Expr) -> R<Expr> {
             shorthand: _,
         } => {
             if rules().name == "mysql" {
-                return no(
-                    "substring",
-                    "MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite",
-                );
+                // From position 1 and a non-negative length the engines agree; any other start
+                // (0, negative, an expression) or length is the caller's stated assumption.
+                let positive = |e: &E, min: u64| {
+                    matches!(
+                        e,
+                        E::Value(v) if matches!(&v.value, sp::Value::Number(n, _)
+                            if n.parse::<u64>().is_ok_and(|x| x >= min))
+                    )
+                };
+                let start_ok = substring_from.as_deref().is_some_and(|f| positive(f, 1));
+                let len_ok = substring_for.as_deref().is_none_or(|l| positive(l, 0));
+                if !(start_ok && len_ok) {
+                    add_note(
+                        "fn:substr.start_position",
+                        "MySQL SUBSTRING counts a start of 0 as empty and a negative start from the end; \
+                         the target does not",
+                        Allowance::SubstringStartAssumedPositive,
+                    );
+                }
             }
             // `substring(x FROM a FOR b)` and `substring(x, a, b)` are `substr(x, a, b)`.
             let mut args = vec![FunctionArg::Expr(expr(*x)?)];

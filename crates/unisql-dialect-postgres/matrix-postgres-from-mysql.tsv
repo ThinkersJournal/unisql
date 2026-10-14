@@ -26,7 +26,12 @@ construct	fn:rank	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-po
 construct	fn:string_agg	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.aggregate_string_truncation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_default	allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep		mysql
+construct	fn:substr	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::substring_expression_start		mysql
+construct	fn:substr.start_position	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mysql
+construct	fn:substr.start_position.substring_start_assumed_positive	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::substring_expression_start	allowance=substring_start_assumed_positive	mysql
 construct	fn:sum	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
+construct	insert_ignore	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
+construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
 construct	interval_arithmetic	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
 construct	join:inner_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::cte		mysql
 construct	join:left_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::left_join		mysql
@@ -34,13 +39,17 @@ construct	like	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test
 construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::like_escape	allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	limit	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::limit_comma		mysql
 construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep		mysql
+construct	null_safe_eq	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::null_safe_eq_null		mysql
 construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::limit_comma		mysql
 construct	order_by	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	order_by.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep	allowance=text_collation	mysql
 construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::backticks	allowance=text_collation	mysql
+construct	pipes_as_or	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mysql
+construct	pipes_as_or.pipes_as_logical_or	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::pipes_as_or	allowance=pipes_as_logical_or	mysql
 construct	recursive_cte	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::with_recursive		mysql
 construct	text_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	text_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cte	allowance=text_collation	mysql
+construct	upsert	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::insert_ignore_duplicate		mysql
 construct	upsert.no_conflict_key	postgres	16.15	lc_collate=C	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mysql
 construct	window_function	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::window_rank		mysql

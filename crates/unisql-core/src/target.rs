@@ -215,6 +215,12 @@ pub trait Target {
         ctx.note("distinct_on", Tier::Exact, "", None)
     }
 
+    /// `a <=> b` (null-safe equality), operands printed. Default (PostgreSQL): `IS NOT DISTINCT FROM`.
+    fn null_safe_eq(&self, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        ctx.note("null_safe_eq", Tier::Exact, "", None)?;
+        Ok(format!("{lhs} IS NOT DISTINCT FROM {rhs}"))
+    }
+
     /// `expr AT TIME ZONE zone`. Default (PostgreSQL): exact. A target without it refuses the leaf
     /// `at_time_zone`.
     fn at_time_zone(&self, ctx: &mut Ctx) -> R<()> {

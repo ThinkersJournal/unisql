@@ -300,6 +300,7 @@ impl Walk {
                     BinaryOp::Lt | BinaryOp::LtEq | BinaryOp::Gt | BinaryOp::GtEq => {
                         self.compare(numeric, true)
                     }
+                    BinaryOp::NullSafeEq => self.add("null_safe_eq"),
                     BinaryOp::JsonGet => self.add("json_get"),
                     BinaryOp::JsonGetText => self.add("json_get_text"),
                     _ => {}

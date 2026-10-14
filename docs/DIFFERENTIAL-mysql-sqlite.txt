@@ -1,4 +1,4 @@
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=45
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=53
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -67,10 +67,27 @@ PASS update_where               same
        -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo'
 PASS gate_div_decimal           refused without allowance: conditional: needs allowance `decimal_division_as_float`: the source `/` is exact (DECIMAL) division; the target divides as double precision
 PASS refuse_odku                refused `upsert.no_conflict_key`: the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns
-PASS ir_insert_ignore           not in IR `insert_option`: an INSERT form other than INSERT INTO t [(cols)] VALUES|query
-PASS ir_pipes_operator          not in IR `pipes_operator`: MySQL `||` is logical OR (default sql_mode) but the parser gives it concatenation precedence; write OR, or CONCAT()
-PASS ir_null_safe_eq            not in IR `binary_operator`: Spaceship (JSON/array/regex/bitwise operators are not in the IR)
-PASS ir_substring               not in IR `substring`: MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite
+PASS insert_ignore_duplicate    same
+       -> INSERT INTO "kv" ("k", "v", "n") VALUES ('a', 'dup', 99) ON CONFLICT DO NOTHING
+PASS insert_ignore_new          same
+       -> INSERT INTO "kv" ("k", "v", "n") VALUES ('new', 'x', 5) ON CONFLICT DO NOTHING
+PASS pipes_as_or                same
+       -> SELECT "id" FROM "users" WHERE ("id" = 1) OR ("id" = 2)
+PASS pipes_inside_string_untouched same
+       -> SELECT "id" FROM "users" WHERE ("name" = 'a||b') OR ("id" = 3)
+PASS null_safe_eq_null          same
+       -> SELECT "id" FROM "users" WHERE ("age" IS NULL)
+PASS null_safe_eq_value         same
+       -> SELECT "id" FROM "users" WHERE ("age" IS 25)
+PASS substring_expression_start same
+       -> SELECT SUBSTR("name", "id", 2) FROM "users"
+PASS substring_positive_start   same
+       -> SELECT SUBSTR("name", 2, 3) FROM "users"
+PASS substring_zero_start_diverges diverges: mysql [[Text("")], [Text("")], [Text("")], [Text("")], [Text("")], [Text("")], [Text("")]] vs sqlite [[Text("al")], [Text("Bo")], [Text("ca")], [Text("da")], [Text("Ev")], [Text("fr")], [Text("hé")]]
+       -> SELECT SUBSTR("name", 0, 3) FROM "users"
+PASS gate_substring_zero_start  refused without allowance: conditional: needs allowance `substring_start_assumed_positive`: MySQL SUBSTRING counts a start of 0 as empty and a negative start from the end; the target does not
+PASS gate_pipes                 refused without allowance: conditional: needs allowance `pipes_as_logical_or`: MySQL `||` is logical OR in the default sql_mode; under PIPES_AS_CONCAT it is concatenation
+PASS gate_insert_ignore         refused without allowance: conditional: needs allowance `ignore_covers_only_unique_conflicts`: INSERT IGNORE downgrades every error of the statement to a warning; ON CONFLICT DO NOTHING skips unique-key conflicts only
 PASS current_date_bare          same
        -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
 PASS current_date_call          same
@@ -82,7 +99,7 @@ PASS interval_hours_plus        same
 PASS refuse_interval_month      refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on SQLite yet
 
-MATRIX (construct, tier) from 37 passing translated cases:
+MATRIX (construct, tier) from 46 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
@@ -103,17 +120,23 @@ MATRIX (construct, tier) from 37 passing translated cases:
   fn:string_agg                conditional
   fn:string_agg                emulated
   fn:string_agg.order_by       exact
+  fn:substr                    exact
+  fn:substr.start_position     conditional
   fn:sum                       exact
+  insert_ignore                conditional
   interval_arithmetic          conditional
   join:inner_join              exact
   join:left_join               exact
   like                         conditional
   limit                        exact
   null_ordering                exact
+  null_safe_eq                 exact
   offset                       exact
   order_by                     conditional
   ordered_comparison           conditional
   ordered_comparison           exact
+  pipes_as_or                  conditional
   recursive_cte                exact
   text_comparison              conditional
+  upsert                       exact
   window_function              exact
