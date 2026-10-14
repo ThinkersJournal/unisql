@@ -59,7 +59,7 @@ pub struct Cte {
 /// What a common table expression holds.
 #[derive(Clone, Debug, PartialEq)]
 pub enum CteBody {
-    Query(Query),
+    Query(Box<Query>),
     /// PostgreSQL's data-modifying CTE: `WITH s AS (INSERT .. RETURNING id) ..`. The statement is an
     /// INSERT, UPDATE or DELETE.
     Dml(Box<Statement>),

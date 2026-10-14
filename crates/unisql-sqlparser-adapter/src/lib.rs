@@ -291,7 +291,7 @@ fn read_ctes(w: sp::With) -> R<(Vec<Cte>, bool)> {
                 _ => unreachable!(),
             }
         } else {
-            CteBody::Query(query(*cq)?)
+            CteBody::Query(Box::new(query(*cq)?))
         };
         ctes.push(Cte {
             name: ident(&alias.name),
