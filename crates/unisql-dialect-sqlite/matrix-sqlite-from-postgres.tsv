@@ -10,10 +10,12 @@ construct	cast.to_integer.lenient_cast	sqlite	3.53.2		yes		tier=conditional;suit
 construct	cast.to_text	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_text.lenient_cast	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	allowance=lenient_cast	postgres
 construct	cast.to_uuid	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_cast_uuid	CAST to Uuid has no SQLite equivalent that preserves meaning	postgres
+construct	concat	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::concat_op		postgres
 construct	distinct_on	sqlite	3.53.2		yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_basic		postgres
 construct	distinct_on.star_projection	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_star_refused	DISTINCT ON with a * projection cannot be emulated; list the columns explicitly	postgres
 construct	division	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	division.division_by_zero_is_null	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	allowance=division_by_zero_is_null	postgres
+construct	division_integer	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division		postgres
 construct	filter_clause	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	fn:avg	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast		postgres
 construct	fn:btrim	sqlite	3.53.2		yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::btrim_forms		postgres
@@ -28,7 +30,9 @@ construct	fn:length	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;tes
 construct	fn:lower	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::lower_upper_ascii	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding	postgres
 construct	fn:lower.ascii_only_case_folding	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::lower_upper_ascii	allowance=ascii_only_case_folding	postgres
 construct	fn:ltrim	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::string_funcs		postgres
+construct	fn:make_interval	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
+construct	fn:make_interval.standalone	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_interval_positional	SQLite has no interval type; only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
 construct	fn:max	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	postgres
 construct	fn:max.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates	allowance=text_collation	postgres
 construct	fn:md5	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_unmapped_fn	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
@@ -72,8 +76,10 @@ construct	ordered_comparison	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;te
 construct	ordered_comparison.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::any_with_scalar	allowance=text_collation	postgres
 construct	recursive_cte	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::with_recursive		postgres
 construct	returning	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::delete_returning		postgres
+construct	returning.update	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::update_returning		postgres
 construct	row_lock	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_update	SQLite has no row-level locks (it locks the whole database)	postgres
 construct	row_lock.share	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_share	SQLite has no row-level locks (it locks the whole database)	postgres
+construct	text_comparison	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	trim	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::trim_both_chars		postgres
 construct	update_from	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::update_from		postgres
 construct	upsert	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::upsert_do_nothing		postgres

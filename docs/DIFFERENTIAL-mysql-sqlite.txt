@@ -82,11 +82,14 @@ MATRIX (construct, tier) from 35 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
+  concat                       exact
   division                     conditional
   division_integer             conditional
+  division_integer             exact
   fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
+  fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
   fn:now                       conditional

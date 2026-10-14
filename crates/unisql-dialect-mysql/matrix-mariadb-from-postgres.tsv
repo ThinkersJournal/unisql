@@ -24,7 +24,9 @@ construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postg
 construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
 construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:make_interval	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
+construct	fn:make_interval.standalone	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_interval_positional	only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
 construct	fn:max	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
 construct	fn:max	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	fn:max.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	allowance=text_collation	postgres
@@ -59,6 +61,7 @@ construct	offset	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=
 construct	order_by	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	premise=text_collation, read from config; see the known-bad row	postgres
 construct	order_by	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_order_by_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	order_by.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	allowance=text_collation	postgres
+construct	ordered_comparison	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::any_with_scalar_reorder		postgres
 construct	recursive_cte	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::with_recursive		postgres
 construct	returning	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::delete_returning		postgres
 construct	returning.update	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_update_returning	MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE	postgres

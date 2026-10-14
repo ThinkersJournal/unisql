@@ -841,6 +841,14 @@ fn cases() -> Vec<Case> {
         ),
         exp(
             c(
+                "refuse_interval_positional",
+                "SELECT make_interval(0, 0, 0, 1)",
+                &[],
+            ),
+            Expect::Refused("fn:make_interval.standalone"),
+        ),
+        exp(
+            c(
                 "refuse_interval_standalone",
                 "SELECT make_interval(secs => 5)",
                 &[],

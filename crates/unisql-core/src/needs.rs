@@ -242,7 +242,6 @@ impl Walk {
                     if let Expr::Function(f) = &**right {
                         self.month_year(f);
                     }
-                    self.add("named_arg");
                     self.expr(left);
                     if let Expr::Function(f) = &**right {
                         for a in &f.args {
@@ -333,6 +332,10 @@ impl Walk {
             Expr::Function(f) => {
                 self.add(format!("fn:{}", f.name));
                 self.month_year(f);
+                if f.name == "make_interval" {
+                    // Outside `ts +/- make_interval(..)`: no target translates it on its own.
+                    self.add("fn:make_interval.standalone");
+                }
                 for a in &f.args {
                     match a {
                         FunctionArg::Expr(x) => self.expr(x),

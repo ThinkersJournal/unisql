@@ -419,6 +419,13 @@ fn cases(maria: bool) -> Vec<Case> {
             ),
             vec![Param::Real(1000.0)],
         ),
+        exp(
+            c(
+                "refuse_interval_positional",
+                "SELECT make_interval(0, 0, 0, 1)",
+            ),
+            Expect::Refused("fn:make_interval.standalone"),
+        ),
         // ---- INTERVAL literals: read as the same make_interval form
         c(
             "interval_literal_minute",

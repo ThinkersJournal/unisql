@@ -257,7 +257,7 @@ impl Target for Sqlite {
             }
             "make_interval" => {
                 return Err(ctx.refuse(
-                    "fn:make_interval",
+                    "fn:make_interval.standalone",
                     "SQLite has no interval type; only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated",
                     &[],
                 ));

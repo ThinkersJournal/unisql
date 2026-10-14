@@ -24,7 +24,9 @@ construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
+construct	fn:make_interval.standalone	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_positional	only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
 construct	fn:max	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	fn:max	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
 construct	fn:max.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
@@ -59,6 +61,7 @@ construct	offset	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=pos
 construct	order_by	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_order_by_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	order_by	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	premise=text_collation, read from config; see the known-bad row	postgres
 construct	order_by.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=text_collation	postgres
+construct	ordered_comparison	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder		postgres
 construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_recursive		postgres
 construct	returning	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_returning	MySQL has no RETURNING clause	postgres
 construct	row_lock	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_for_update_plain		postgres

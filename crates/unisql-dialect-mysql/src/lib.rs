@@ -231,7 +231,7 @@ impl Target for Mysql {
                 &["use the || operator, which is translated"],
             )),
             "make_interval" => Err(ctx.refuse(
-                "fn:make_interval",
+                "fn:make_interval.standalone",
                 "only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated",
                 &[],
             )),

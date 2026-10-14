@@ -186,11 +186,9 @@ fn partial_forms_have_their_own_leaves() {
     );
 }
 
-/// The invariant that makes the analyser trustworthy: whatever any target's report says it used, the
-/// target-free analysis already named. (The walker may name more; it must never name fewer.)
-#[test]
-fn analysis_covers_every_construct_a_report_records() {
-    let catalogue: &[(&str, &str)] = &[
+/// Statements (source dialect, text) covering every construct family the translator handles.
+fn catalogue() -> &'static [(&'static str, &'static str)] {
+    &[
         ("postgres", "SELECT id, name FROM users WHERE id = $1"),
         (
             "postgres",
@@ -300,7 +298,14 @@ fn analysis_covers_every_construct_a_report_records() {
             "SELECT id FROM users WHERE id = 1 FOR UPDATE NOWAIT",
         ),
         ("postgres", "SELECT md5(name), current_schema() FROM users"),
-    ];
+    ]
+}
+
+/// The invariant that makes the analyser trustworthy: whatever any target's report says it used, the
+/// target-free analysis already named. (The walker may name more; it must never name fewer.)
+#[test]
+fn analysis_covers_every_construct_a_report_records() {
+    let catalogue = catalogue();
     let mut checked = 0;
     for (source, sql) in catalogue {
         let a = analyse(sql, source).unwrap_or_else(|e| panic!("analyse failed for `{sql}`: {e}"));
@@ -337,5 +342,57 @@ fn analysis_covers_every_construct_a_report_records() {
     assert!(
         checked > 100,
         "the invariant looked at only {checked} report entries"
+    );
+}
+
+/// The directions that ship a matrix file: a gate for these reads the file.
+const MATRIX_PAIRS: &[(&str, &str)] = &[
+    ("postgres", "sqlite"),
+    ("sqlite", "postgres"),
+    ("postgres", "mysql"),
+    ("postgres", "mariadb"),
+    ("mysql", "postgres"),
+    ("mysql", "sqlite"),
+    ("mariadb", "postgres"),
+];
+
+/// A gate that requires every leaf `analyse` names for a statement must find each one recorded when
+/// the target translates it: a statement that translates is accepted leaf by leaf, so a need with no
+/// recorded leaf would make the gate refuse what the translator gives (too strict). The other
+/// direction is `analysis_covers_every_construct_a_report_records`.
+#[test]
+fn every_need_of_a_translated_statement_is_recorded_for_that_target() {
+    let mut checked = 0;
+    let mut gaps = Vec::new();
+    for (source, sql) in catalogue() {
+        let needs = analyse(sql, source).unwrap().constructs;
+        for (s, target) in MATRIX_PAIRS {
+            // A MariaDB/MySQL text is read by the one MySQL reader; pair on the dialect it names.
+            let same_reader = s == source || (*s == "mariadb" && *source == "mysql");
+            if !same_reader {
+                continue;
+            }
+            if let Ok(t) = translate(sql, s, target, &all()) {
+                let have: std::collections::BTreeSet<&str> = t.report.constructs();
+                let missing: Vec<&String> = needs
+                    .iter()
+                    .filter(|n| !have.contains(n.as_str()))
+                    .collect();
+                checked += 1;
+                if !missing.is_empty() {
+                    gaps.push(format!("{s}->{target} `{sql}`: {missing:?}"));
+                }
+            }
+        }
+    }
+    assert!(checked > 20, "looked at only {checked} translations");
+    assert!(
+        gaps.is_empty(),
+        "needs with no recorded leaf:
+{}",
+        gaps.join(
+            "
+"
+        )
     );
 }

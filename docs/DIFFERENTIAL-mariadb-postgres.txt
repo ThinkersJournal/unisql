@@ -84,8 +84,10 @@ MATRIX (construct, tier) from 36 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
+  concat                       exact
   division                     conditional
   division_integer             conditional
+  division_integer             exact
   fn:char_length               exact
   fn:coalesce                  exact
   fn:count                     exact
@@ -99,16 +101,17 @@ MATRIX (construct, tier) from 36 passing translated cases:
   fn:string_agg                exact
   fn:string_agg.order_by       exact
   fn:sum                       exact
+  interval_arithmetic          exact
   join:inner_join              exact
   join:left_join               exact
   like                         conditional
   like                         exact
   limit                        exact
-  named_arg                    exact
   null_ordering                exact
   offset                       exact
   order_by                     conditional
   ordered_comparison           conditional
+  ordered_comparison           exact
   recursive_cte                exact
   text_comparison              conditional
   window_function              exact

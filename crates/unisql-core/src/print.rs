@@ -17,6 +17,27 @@ pub fn write(
 ) -> Result<Translation, Untranslatable> {
     let mut ctx = Ctx::new(opts, source, target.name());
     let sql = Printer { t: target }.statement(stmt, &mut ctx)?;
+    // Every leaf the statement needs and the target accepted without noting a divergence is exact:
+    // a hook that diverges says so (Conditional/Emulated) where it prints. Recording the rest keeps
+    // the report equal to what `needs::constructs` names, so a gate that requires every leaf of a
+    // statement that translates finds each of them (it was too strict before: SQLite compares text
+    // bytewise, which no hook had cause to mention).
+    let have: std::collections::BTreeSet<String> = ctx
+        .report
+        .entries
+        .iter()
+        .map(|e| e.construct.clone())
+        .collect();
+    for need in crate::needs::constructs(stmt) {
+        if !have.contains(&need) {
+            ctx.report.push(crate::report::Entry {
+                construct: need,
+                tier: crate::report::Tier::Exact,
+                note: String::new(),
+                allowance: None,
+            });
+        }
+    }
     if let Some(n) = ctx
         .array_params
         .keys()
@@ -520,7 +541,10 @@ impl Printer<'_> {
                 match self.t.interval_arith(minus, &l, &parts, c)? {
                     Some(text) => text,
                     None => {
-                        let r = self.expr(right, c)?;
+                        c.interval_notation = true;
+                        let r = self.expr(right, c);
+                        c.interval_notation = false;
+                        let r = r?;
                         format!("{l} {} {r}", if minus { "-" } else { "+" })
                     }
                 }
@@ -654,7 +678,9 @@ impl Printer<'_> {
                     args.push(match a {
                         FunctionArg::Expr(e) => self.expr(e, c)?,
                         FunctionArg::Named { name, value } => {
-                            self.t.feature("named_arg", c)?;
+                            if !c.interval_notation {
+                                self.t.feature("named_arg", c)?;
+                            }
                             format!("{} => {}", self.id(name), self.expr(value, c)?)
                         }
                     });

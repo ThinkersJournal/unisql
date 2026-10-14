@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=127
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=128
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -221,6 +221,7 @@ PASS refuse_interval_literal_month refused `fn:make_interval.month_year`: make_i
 PASS ir_interval_compound         not in IR `interval`: only a single `<number> <unit>` interval is in the IR
 PASS gate_interval                refused without allowance: conditional: needs allowance `timestamp_arithmetic_as_text`: timestamp +/- make_interval(..) becomes datetime(ts, modifiers): text, whole seconds, UTC
 PASS refuse_interval_months       refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
+PASS refuse_interval_positional   refused `fn:make_interval.standalone`: SQLite has no interval type; only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated
 PASS refuse_interval_standalone   refused `named_arg`: SQLite functions have no named-argument notation
 PASS refuse_current_schema        refused `fn:current_schema`: PostgreSQL catalog/session introspection has no SQLite equivalent
 PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/session introspection has no SQLite equivalent
@@ -233,8 +234,10 @@ MATRIX (construct, tier) from 100 passing translated cases:
   cast.to_double               conditional
   cast.to_integer              conditional
   cast.to_text                 conditional
+  concat                       exact
   distinct_on                  emulated
   division                     conditional
+  division_integer             exact
   filter_clause                exact
   fn:avg                       exact
   fn:btrim                     emulated
@@ -246,6 +249,7 @@ MATRIX (construct, tier) from 100 passing translated cases:
   fn:length                    exact
   fn:lower                     conditional
   fn:ltrim                     exact
+  fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
   fn:now                       conditional
@@ -275,6 +279,8 @@ MATRIX (construct, tier) from 100 passing translated cases:
   ordered_comparison           exact
   recursive_cte                exact
   returning                    exact
+  returning.update             exact
+  text_comparison              exact
   trim                         exact
   update_from                  exact
   upsert                       exact
