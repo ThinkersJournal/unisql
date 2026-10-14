@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.17.1 - 2026-10-14
+
+- Docs only: ROADMAP item 1 no longer points at a list that does not exist; no code change.
+
 ## 0.17.0 - 2026-10-14
 
 - **Table-valued functions in FROM** (`FROM generate_series(1, 3) AS g`, `FROM t, jsonb_object_keys(doc)

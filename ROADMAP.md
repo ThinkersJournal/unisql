@@ -18,9 +18,11 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    without parentheses 7 (**done**) and `current_user` 1 (**done** as a refusal leaf), `Insert` as a set expression (`WITH .. INSERT`) 6 (**done**),
    `AtTimeZone` 2, `EscapedStringLiteral` 2, a function over a subquery 2 (these three **done**), `Extract` 1, `Array` 1.
    (`data_type` 25 are PostgreSQL catalog types, refused correctly; `statement` 65 and
-   `multiple_statements` 34 are DDL and scripts, out of scope.) Next: the MySQL reader gaps below (no corpus statement left in DML that the IR cannot read
-   except none: `current_user`, `Extract` and `Array` are read and refused by leaf).
-   allowance names that MySQL `UUID()` is a v1 UUID.
+   `multiple_statements` 34 are DDL and scripts, out of scope.) The PostgreSQL-source DML corpus has no residual the IR cannot read (`current_user`,
+   `Extract` and `Array` are read and refused by leaf). The MySQL reader gaps found earlier
+   (`<=>`, `INSERT IGNORE`, `||` as OR, `SUBSTRING`) were **done at 0.10.0**. The corpus is
+   PostgreSQL-source only, so MySQL-source gaps are not yet measurable: a MySQL-source corpus and
+   harness is the next step (below the list of known gaps once measured).
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
 2. **Schema, what is left.** `Schema`, `schema_from_ddl` and collation interpretation are in. The live
    catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6. Possible extensions: view
