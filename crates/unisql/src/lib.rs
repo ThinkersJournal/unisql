@@ -124,3 +124,56 @@ pub fn translate_str(
 ) -> Result<String, Error> {
     translate(sql, source, target_dialect, opts).map(|t| t.sql)
 }
+
+/// What a statement needs, independent of any target.
+///
+/// `constructs` are the construct ids the statement uses (the same strings a [`Report`] and the
+/// matrix files use), read from the IR alone: no target contributes to this set, so a test can
+/// check it against any target's report. `refused` holds `<construct>.refused` for every form that **some** registered
+/// target refuses (with every allowance granted): "refused anywhere". A target stops at its *first*
+/// refusal, so a statement with two refused forms contributes one per target. `unreadable` names the
+/// construct the IR does not represent, in which case `constructs` is empty.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Analysis {
+    pub constructs: std::collections::BTreeSet<String>,
+    pub refused: std::collections::BTreeSet<String>,
+    pub unreadable: Option<String>,
+    pub param_count: u32,
+}
+
+/// Extract a statement's needs. `Err` only for text the source dialect cannot parse, or an unknown
+/// source dialect; a construct outside the IR is reported in [`Analysis::unreadable`].
+pub fn analyse(sql: &str, source: &str) -> Result<Analysis, Error> {
+    let read = match read(sql, source) {
+        Ok(r) => r,
+        Err(Error::Read(ReadError::NotInIr { construct, .. })) => {
+            return Ok(Analysis {
+                unreadable: Some(construct),
+                ..Analysis::default()
+            });
+        }
+        Err(e) => return Err(e),
+    };
+    let mut a = Analysis {
+        constructs: unisql_core::needs::constructs(&read.stmt),
+        ..Analysis::default()
+    };
+    for n in &read.notes {
+        a.constructs.insert(n.construct.clone());
+    }
+    let all = Allowance::ALL
+        .iter()
+        .fold(Options::default(), |o, al| o.with(*al));
+    for name in dialects() {
+        let Ok(tgt) = target(name) else { continue };
+        match unisql_core::write(&read.stmt, source, tgt.as_ref(), &all) {
+            Ok(t) => {
+                a.param_count = a.param_count.max(t.param_count);
+            }
+            Err(u) => {
+                a.refused.insert(u.subject());
+            }
+        }
+    }
+    Ok(a)
+}

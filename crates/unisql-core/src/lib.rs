@@ -5,6 +5,7 @@
 //! produces [`ast::Statement`]. See `docs/DESIGN.md` of the workspace.
 
 pub mod ast;
+pub mod needs;
 pub mod print;
 pub mod report;
 pub mod rewrite;

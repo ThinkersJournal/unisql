@@ -70,6 +70,25 @@ pub enum Allowance {
 }
 
 impl Allowance {
+    /// Every named allowance (what a caller who accepts all assumptions would grant).
+    pub const ALL: &[Allowance] = &[
+        Allowance::NowAsText,
+        Allowance::LikeCaseSensitivityIsConnectionSetting,
+        Allowance::AsciiOnlyCaseFolding,
+        Allowance::LenientCast,
+        Allowance::DivisionByZeroIsNull,
+        Allowance::TextCollation,
+        Allowance::BooleanAsInteger,
+        Allowance::TimestampArithmeticAsText,
+        Allowance::JsonScalarAffinity,
+        Allowance::JsonRepresentationAsText,
+        Allowance::IntegerDivisionAssumed,
+        Allowance::UpsertAnyUniqueKey,
+        Allowance::AggregateStringTruncation,
+        Allowance::ArrayNullSemantics,
+        Allowance::DecimalDivisionAsFloat,
+    ];
+
     pub fn name(self) -> &'static str {
         match self {
             Allowance::NowAsText => "now_as_text",

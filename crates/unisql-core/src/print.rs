@@ -680,7 +680,7 @@ impl Printer<'_> {
 
 /// True when the expression is *syntactically* numeric, so comparing it involves no text collation.
 /// Conservative: a bare column or parameter is unknown and returns false.
-fn is_numeric(e: &Expr) -> bool {
+pub(crate) fn is_numeric(e: &Expr) -> bool {
     match e {
         Expr::Literal(Literal::Number(_)) => true,
         Expr::Nested(x) => is_numeric(x),
