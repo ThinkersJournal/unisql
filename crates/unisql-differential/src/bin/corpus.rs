@@ -11,6 +11,8 @@ use unisql::{Allowance, Error, Options, Tier};
 
 const ALL: &[Allowance] = &[
     Allowance::NowAsText,
+    Allowance::TimestampAsText,
+    Allowance::EpochWholeSeconds,
     Allowance::PipesAsLogicalOr,
     Allowance::IgnoreCoversOnlyUniqueConflicts,
     Allowance::SubstringStartAssumedPositive,

@@ -444,7 +444,10 @@ impl Walk<'_> {
                 self.expr(expr);
             }
             Expr::Extract { field, expr } => {
-                self.add(format!("extract.{field}"));
+                self.add(crate::target::extract_leaf(
+                    field,
+                    crate::print::is_difference(expr),
+                ));
                 self.expr(expr);
             }
             Expr::ArrayLiteral(items) => {

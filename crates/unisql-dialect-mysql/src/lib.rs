@@ -211,6 +211,22 @@ impl Target for Mysql {
                     args[1]
                 ))
             }
+            // PostgreSQL's random (version 4) UUID, built from the CSPRNG: version nibble 4, variant
+            // nibble 8/9/a/b chosen uniformly. Verified: 2000 values per engine all match the v4 shape
+            // and are distinct (the differential suite repeats the check on every run).
+            "gen_random_uuid" => {
+                ctx.note(
+                    "fn:gen_random_uuid",
+                    Tier::Emulated,
+                    "assembled from RANDOM_BYTES: version 4, variant 10xx",
+                    None,
+                )?;
+                Ok("LOWER(CONCAT(HEX(RANDOM_BYTES(4)), '-', HEX(RANDOM_BYTES(2)), '-4', \
+                    SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', \
+                    ELT(1 + (ORD(RANDOM_BYTES(1)) & 3), '8', '9', 'a', 'b'), \
+                    SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', HEX(RANDOM_BYTES(6))))"
+                    .to_string())
+            }
             "current_date" => {
                 ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
                 Ok("CURRENT_DATE".to_string())
@@ -433,12 +449,32 @@ impl Target for Mysql {
         Ok(format!("{lhs} <=> {rhs}"))
     }
 
-    fn extract(&self, field: &str, _expr: &str, ctx: &mut Ctx) -> R<String> {
-        Err(ctx.refuse(
-            &format!("extract.{field}"),
-            &format!("MySQL/MariaDB: no verified mapping for EXTRACT({field} ..) yet"),
-            &["compute the field in the application"],
-        ))
+    /// Verified on MySQL 8.4 and MariaDB 11.4 against PostgreSQL's results: year, month, day, hour
+    /// and minute are the same fields of the same value; the epoch of a timestamp is
+    /// `UNIX_TIMESTAMP` in whole seconds. Other fields (dow, week, second with its fraction ...) and
+    /// the epoch of an interval have no verified mapping.
+    fn extract(&self, field: &str, expr: &str, interval: bool, ctx: &mut Ctx) -> R<String> {
+        let leaf = unisql_core::target::extract_leaf(field, interval);
+        match field {
+            "year" | "month" | "day" | "hour" | "minute" => {
+                ctx.note(leaf, Tier::Exact, "", None)?;
+                Ok(format!("EXTRACT({} FROM {expr})", field.to_uppercase()))
+            }
+            "epoch" if !interval => {
+                ctx.note(
+                    leaf,
+                    Tier::Conditional,
+                    "UNIX_TIMESTAMP gives whole seconds; PostgreSQL's epoch has the fraction",
+                    Some(Allowance::EpochWholeSeconds),
+                )?;
+                Ok(format!("UNIX_TIMESTAMP({expr})"))
+            }
+            _ => Err(ctx.refuse(
+                &leaf,
+                &format!("MySQL/MariaDB: no verified mapping for EXTRACT({field} ..) yet"),
+                &["compute the field in the application"],
+            )),
+        }
     }
 
     fn array_literal(&self, _items: &[String], ctx: &mut Ctx) -> R<String> {

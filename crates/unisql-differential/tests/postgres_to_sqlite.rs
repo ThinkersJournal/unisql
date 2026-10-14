@@ -19,6 +19,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE docs (id integer PRIMARY KEY, data jsonb);
 CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
+CREATE TABLE fixed_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
+INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30+00'), (2, '1999-12-31 23:59:59+00'), (3, '2024-02-29 00:00:00+00');
 INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"}}'),(2,'{"a":null,"n":7}');
 INSERT INTO events VALUES (1, now() - interval '10 seconds'),(2, now() - interval '120 seconds'),(3, now() - interval '3600 seconds');
 INSERT INTO users VALUES
@@ -40,6 +42,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE docs (id integer PRIMARY KEY, data text);
 CREATE TABLE events (id integer PRIMARY KEY, at text NOT NULL);
+CREATE TABLE fixed_ts (id integer PRIMARY KEY, at text NOT NULL);
+INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30'), (2, '1999-12-31 23:59:59'), (3, '2024-02-29 00:00:00');
 INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"}}'),(2,'{"a":null,"n":7}');
 INSERT INTO events VALUES (1, datetime('now','-10 seconds')),(2, datetime('now','-120 seconds')),(3, datetime('now','-3600 seconds'));
 INSERT INTO users VALUES
@@ -655,11 +659,30 @@ fn cases() -> Vec<Case> {
         // ---- forms only PostgreSQL has: each refused by leaf elsewhere, round-tripped on PostgreSQL
         exp(
             c(
-                "refuse_extract_year",
-                "SELECT EXTRACT(YEAR FROM now())",
+                "refuse_extract_dow",
+                "SELECT EXTRACT(DOW FROM now())",
                 &[A::NowAsText],
             ),
-            Expect::Refused("extract.year"),
+            Expect::Refused("extract.dow"),
+        ),
+        // ---- verified mappings (fixed timestamps; fields compared with PostgreSQL's on the engine)
+        ord(c(
+            "extract_fields",
+            "SELECT id, CAST(EXTRACT(YEAR FROM at) AS INTEGER), CAST(EXTRACT(MONTH FROM at) AS INTEGER), CAST(EXTRACT(DAY FROM at) AS INTEGER), CAST(EXTRACT(HOUR FROM at) AS INTEGER), CAST(EXTRACT(MINUTE FROM at) AS INTEGER) FROM fixed_ts ORDER BY id",
+            &[A::LenientCast, A::TimestampAsText, A::TextCollation],
+        )),
+        ord(c(
+            "extract_epoch",
+            "SELECT id, CAST(EXTRACT(EPOCH FROM at) AS BIGINT) FROM fixed_ts ORDER BY id",
+            &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
+        )),
+        exp(
+            c(
+                "gen_random_uuid_v4",
+                "SELECT CAST(gen_random_uuid() AS TEXT) FROM users",
+                &[A::LenientCast],
+            ),
+            Expect::RandomUuidV4,
         ),
         exp(
             c(
@@ -667,7 +690,7 @@ fn cases() -> Vec<Case> {
                 "SELECT EXTRACT(EPOCH FROM (at - now())) FROM events",
                 &[A::NowAsText, A::TimestampArithmeticAsText],
             ),
-            Expect::Refused("extract.epoch"),
+            Expect::Refused("extract.epoch.interval"),
         ),
         exp(
             c(

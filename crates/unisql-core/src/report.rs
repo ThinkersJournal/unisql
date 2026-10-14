@@ -40,6 +40,11 @@ impl Tier {
 pub enum Allowance {
     /// `now()` yields text (`YYYY-MM-DD HH:MM:SS`, UTC) rather than a timestamptz.
     NowAsText,
+    /// A timestamp is text (`YYYY-MM-DD HH:MM:SS`) on the target and a field extracted from it is
+    /// read from that text: it is the field of the stored text, in UTC.
+    TimestampAsText,
+    /// `EXTRACT(EPOCH FROM ts)` has no fractional seconds on the target: it is whole seconds.
+    EpochWholeSeconds,
     /// The column's collation (from the caller's `Schema`) orders and compares text by locale rules
     /// (case- or accent-insensitive, language order); the target compares bytes, so the result may
     /// differ for the same data.
@@ -96,6 +101,8 @@ impl Allowance {
     /// Every named allowance (what a caller who accepts all assumptions would grant).
     pub const ALL: &[Allowance] = &[
         Allowance::NowAsText,
+        Allowance::TimestampAsText,
+        Allowance::EpochWholeSeconds,
         Allowance::SourceCollationNotBytewise,
         Allowance::PipesAsLogicalOr,
         Allowance::IgnoreCoversOnlyUniqueConflicts,
@@ -120,6 +127,8 @@ impl Allowance {
     pub fn name(self) -> &'static str {
         match self {
             Allowance::NowAsText => "now_as_text",
+            Allowance::TimestampAsText => "timestamp_as_text",
+            Allowance::EpochWholeSeconds => "epoch_whole_seconds",
             Allowance::SourceCollationNotBytewise => "source_collation_not_bytewise",
             Allowance::PipesAsLogicalOr => "pipes_as_logical_or",
             Allowance::IgnoreCoversOnlyUniqueConflicts => "ignore_covers_only_unique_conflicts",

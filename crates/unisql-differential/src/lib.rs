@@ -563,6 +563,11 @@ pub enum Expect {
     /// dialect, and give the same rows and state as the original on the source engine. For forms
     /// the target refuses (so no matrix row is recorded).
     Identity,
+    /// The statement yields random version-4 UUID text: the translated statement is run on the
+    /// target many times and every value must have the v4 shape (version nibble 4, variant
+    /// 8/9/a/b) and be distinct from all others. A control on the same engine, a UUID that is not
+    /// v4, must fail the same check, so the check is shown to be able to fail.
+    RandomUuidV4,
     /// Translates, and **both** engines raise an error (for example `NOWAIT` on a locked row).
     BothError,
     /// The reader refuses it: the construct is not in the IR (named).
@@ -797,6 +802,69 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         ) => {
             out.passed = got == *construct;
             out.detail = format!("not in IR `{got}`: {detail}");
+        }
+        (Expect::RandomUuidV4, Ok(t)) => {
+            out.translated = Some(t.sql.clone());
+            out.constructs = t
+                .report
+                .entries
+                .iter()
+                .map(|x| (x.construct.clone(), x.tier))
+                .collect();
+            out.allowances = t
+                .report
+                .entries
+                .iter()
+                .filter_map(|x| x.allowance.map(|a| (x.construct.clone(), a)))
+                .collect();
+            let tparams = target_params(tgt, &c.params, &t.param_order, &t.param_bindings);
+            let mut seen = std::collections::BTreeSet::new();
+            let mut total = 0usize;
+            let mut problem: Option<String> = None;
+            for _ in 0..60 {
+                match e.run_on(tgt, &t.sql, &tparams, c.after) {
+                    Ok((rows, _)) => {
+                        for row in rows {
+                            for cell in row {
+                                total += 1;
+                                match cell {
+                                    Cell::Text(s) if is_uuid_v4(&s) => {
+                                        if !seen.insert(s.clone()) {
+                                            problem = Some(format!("duplicate {s}"));
+                                        }
+                                    }
+                                    other => problem = Some(format!("not a v4 uuid: {other:?}")),
+                                }
+                            }
+                        }
+                    }
+                    Err(err) => problem = Some(format!("{tgt} failed: {err}")),
+                }
+            }
+            // The control: the engine's own non-v4 identifier must be rejected by the same check.
+            let control = match tgt {
+                "mysql" | "mariadb" => Some("SELECT UUID()"),
+                "sqlite" => Some("SELECT lower(hex(randomblob(16)))"),
+                _ => None,
+            };
+            let control_rejected = control.is_none_or(|q| {
+                matches!(e.run_on(tgt, q, &[], None), Ok((rows, _))
+                    if rows.iter().flatten().all(|c| !matches!(c, Cell::Text(s) if is_uuid_v4(s))))
+            });
+            if total < 100 {
+                problem.get_or_insert(format!("only {total} values checked"));
+            }
+            if !control_rejected {
+                problem.get_or_insert("the v4 check accepted a non-v4 control".to_string());
+            }
+            match problem {
+                None => {
+                    out.passed = true;
+                    out.detail =
+                        format!("{total} values: all v4-shaped and distinct; control rejected");
+                }
+                Some(p) => out.detail = p,
+            }
         }
         (Expect::BothError, Ok(t)) => {
             out.translated = Some(t.sql.clone());
@@ -1129,4 +1197,30 @@ pub fn matrix_tsv(
         out.push_str(line);
     }
     out
+}
+
+/// `xxxxxxxx-xxxx-4xxx-[89ab]xxx-xxxxxxxxxxxx`, lower-case hexadecimal.
+pub fn is_uuid_v4(s: &str) -> bool {
+    let b = s.as_bytes();
+    b.len() == 36
+        && b.iter().enumerate().all(|(i, &c)| match i {
+            8 | 13 | 18 | 23 => c == b'-',
+            14 => c == b'4',
+            19 => matches!(c, b'8' | b'9' | b'a' | b'b'),
+            _ => c.is_ascii_digit() || (b'a'..=b'f').contains(&c),
+        })
+}
+
+#[cfg(test)]
+mod uuid_tests {
+    use super::is_uuid_v4;
+
+    #[test]
+    fn the_check_accepts_v4_and_rejects_the_rest() {
+        assert!(is_uuid_v4("7a9fb66e-962e-4813-9694-2d59ee5b724c"));
+        assert!(!is_uuid_v4("6ba7b810-9dad-11d1-80b4-00c04fd430c8")); // v1
+        assert!(!is_uuid_v4("7a9fb66e-962e-4813-7694-2d59ee5b724c")); // variant
+        assert!(!is_uuid_v4("7A9FB66E-962E-4813-9694-2D59EE5B724C")); // case
+        assert!(!is_uuid_v4("7a9fb66e962e481396942d59ee5b724c")); // no hyphens
+    }
 }

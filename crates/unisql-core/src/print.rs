@@ -834,7 +834,7 @@ impl Printer<'_> {
             }
             Expr::Extract { field, expr } => {
                 let e = self.expr(expr, c)?;
-                self.t.extract(field, &e, c)?
+                self.t.extract(field, &e, is_difference(expr), c)?
             }
             Expr::ArrayLiteral(items) => {
                 let parts = items
@@ -897,6 +897,18 @@ pub(crate) fn is_numeric(e: &Expr) -> bool {
                 | SqlType::Double
                 | SqlType::Numeric { .. }
         ),
+        _ => false,
+    }
+}
+
+/// A (possibly parenthesised) subtraction: for a timestamp operand this is an interval.
+pub(crate) fn is_difference(e: &Expr) -> bool {
+    match e {
+        Expr::Nested(x) => is_difference(x),
+        Expr::Binary {
+            op: BinaryOp::Minus,
+            ..
+        } => true,
         _ => false,
     }
 }

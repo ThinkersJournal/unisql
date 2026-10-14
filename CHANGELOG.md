@@ -2,6 +2,32 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.15.0 - 2026-10-14
+
+PM task: verify and enable one mapping per refused leaf, largest first. Each mapping below was run
+against the real engines in the differential suites; one that could not be verified stays refused.
+
+- **`gen_random_uuid()` on MySQL, MariaDB and SQLite** (the largest refused leaf of the corpus, 12
+  statements): assembled from `RANDOM_BYTES` / `randomblob` as a real **version 4** UUID (version nibble
+  4, variant nibble 8/9/a/b, uniform), tier **Emulated**, no allowance needed (it is not a v1 `UUID()`).
+  The suite checks the property on every run (`Expect::RandomUuidV4`): 360 values per target, all v4
+  shaped and all distinct, and a control (`UUID()` / un-hyphenated hex) must be rejected by the same check.
+  Also checked outside the suite: 2000 values per engine.
+- **`EXTRACT(year|month|day|hour|minute FROM ts)`** on MySQL/MariaDB (native `EXTRACT`, exact) and SQLite
+  (`strftime`, conditional on the new allowance `timestamp_as_text`); **`EXTRACT(EPOCH FROM ts)`**
+  (`UNIX_TIMESTAMP` / `strftime('%s')`, whole seconds: new allowance `epoch_whole_seconds`). Compared with
+  PostgreSQL's values on fixed timestamps on the engines.
+- **Breaking:** the epoch of a *difference* (an interval) is its own leaf `extract.epoch.interval` and stays
+  refused; `extract.epoch` is now only the epoch of a timestamp. `Target::extract` gained an `interval`
+  argument. Leaves that were refused are now enabled (`fn:gen_random_uuid`, `extract.year|month|day|hour|
+  minute|epoch`): a gate verdict flips refused -> accepted for statements using them. Two new
+  allowances (the enum is `#[non_exhaustive]`).
+- **Not mapped, with the reason** (corpus refused list after this change, Humboldt src + tests):
+  `row_lock` and `cte.data_modifying` on SQLite (the engine has neither), `fn:md5` on SQLite (no builtin),
+  `cast.to_uuid` (no UUID type to validate against), `fn:to_regclass` / `fn:hashtext` / `fn:convert_to`
+  (PostgreSQL internals), `fn:current_database` (MySQL's `DATABASE()` is a schema, not a PostgreSQL
+  database: the meaning differs, so not claimed), `fn:people_backfill` (a project function).
+
 ## 0.14.0 - 2026-10-14
 
 - **The last three DML forms the Humboldt/auth corpus could not read** (one statement each):

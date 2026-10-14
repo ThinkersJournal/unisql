@@ -28,8 +28,14 @@ cast.to_integer	CAST to a 32-bit integer returns the source's value; a malformed
 cast.to_text	CAST to text yields the source's text form of the operand.
 cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
 array_literal	ARRAY[a, b, ...] is an array of the elements in order. Refused where there is no array type.
-extract.epoch	EXTRACT(EPOCH FROM x) is the number of seconds since 1970-01-01 00:00:00 UTC (for an interval, its length in seconds). Refused where no mapping is verified.
-extract.year	EXTRACT(YEAR FROM x) is the calendar year of x. Refused where no mapping is verified.
+extract.day	EXTRACT(DAY FROM x) is the day of the month of x.
+extract.dow	EXTRACT(DOW FROM x) is the day of the week of x, 0 = Sunday. Refused where no mapping is verified.
+extract.epoch.interval	EXTRACT(EPOCH FROM a - b) is the length of the interval in seconds, with its fraction. Refused where no mapping is verified.
+extract.hour	EXTRACT(HOUR FROM x) is the hour (0-23) of x.
+extract.minute	EXTRACT(MINUTE FROM x) is the minute (0-59) of x.
+extract.month	EXTRACT(MONTH FROM x) is the month (1-12) of x.
+extract.epoch	EXTRACT(EPOCH FROM ts) is the number of seconds since 1970-01-01 00:00:00 UTC of the timestamp ts.
+extract.year	EXTRACT(YEAR FROM x) is the calendar year of x.
 fn:current_user	current_user is the name of the role the statement runs as. Refused where it has another form (MySQL user@host) or no equivalent.
 array_subquery	ARRAY(SELECT ...) is an array of the single column of the query, in the query order. Refused where there is no array type.
 at_time_zone	ts AT TIME ZONE zone converts between timestamptz and a timestamp in the named zone. Refused where zone conversion differs or is unavailable.
@@ -46,6 +52,7 @@ filter_clause	`agg(...) FILTER (WHERE p)` aggregates only the rows for which p i
 fn:avg	avg() over non-NULL inputs gives the source's mean and NULL over no rows.
 fn:btrim	btrim(s) removes leading and trailing spaces.
 fn:char_length	char_length(s) is the number of characters of s.
+fn:gen_random_uuid	gen_random_uuid() is a random version-4 UUID in lower-case text form (8-4-4-4-12, version nibble 4, variant 8/9/a/b); two calls give different values.
 fn:coalesce	coalesce(a, b, ...) returns the first non-NULL argument.
 fn:concat	concat(a, b, ...) treats NULL arguments as empty strings. Refused where the target's CONCAT returns NULL if any argument is NULL.
 fn:convert_to	convert_to(s, enc) returns the bytes of s in encoding enc. Refused where no such function is built in.
