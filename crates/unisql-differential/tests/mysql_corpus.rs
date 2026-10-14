@@ -130,7 +130,9 @@ fn mysql_source_corpus() {
     // Validity on the two source engines.
     let mut valid: Vec<[&'static str; 2]> = vec![["?", "?"]; stmts.len()];
     for (k, maria) in [false, true].into_iter().enumerate() {
-        let mut e = Engines::open_mysql_with("", "", SCHEMA, maria, true)
+        // a checkout with CRLF line endings must still split on a semicolon and newline
+        let schema = SCHEMA.replace("\r\n", "\n");
+        let mut e = Engines::open_mysql_with("", "", &schema, maria, true)
             .unwrap_or_else(|m| panic!("ENGINE UNAVAILABLE (test must not be skipped): {m}"));
         let conn = e.mysql.as_mut().unwrap();
         for (i, s) in stmts.iter().enumerate() {
