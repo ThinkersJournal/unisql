@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate; bump in this PR)
+
+- `docs/PUBLISHING.md`: the clean-archive `cargo publish --workspace --dry-run --locked` result, and a
+  correction: `publish = false` in `[workspace.package]` must be set to `true`, not deleted. Docs only.
+
 ## 0.16.1 - 2026-10-14
 
 Packaging only; no code or behaviour change.

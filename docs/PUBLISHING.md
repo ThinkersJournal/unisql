@@ -20,12 +20,32 @@ Nothing to claim. A real release publishes `0.x.y` over the placeholder from the
 
 ## 2. What a release changes in the repository
 
-1. Remove `publish = false` from `[workspace.package]` and put it on `unisql-differential` only.
+1. In `[workspace.package]` set `publish = true` (do **not** just delete the key: the six crates say
+   `publish.workspace = true`, and an undefined key fails manifest loading) and keep `publish = false`
+   written out in `unisql-differential`.
 2. Set the release version (one number for all crates; the PM allocates) in `[workspace.package]`, the
    `[workspace.dependencies]` pins, the two member pins in `unisql-dialect-postgres` and
    `unisql-dialect-sqlite`, `Cargo.lock` and the `CHANGELOG.md` heading.
 3. Update the status paragraph of `README.md` (it must say what is true at that tag).
 4. Tag, then publish in dependency order (section 4).
+
+## 2b. Dry run from a clean archive (2026-10-14, main d44db7a = 0.16.1, cargo 1.98.1)
+
+`git archive HEAD` into an empty directory; `publish = true` set in `[workspace.package]` and
+`publish = false` kept on `unisql-differential` (the edit of section 2, point 1); then
+
+```
+cargo publish --workspace --dry-run --locked      # exit 0
+```
+
+All six were packaged, **verified** (compiled from their packaged files) and stopped at "aborting
+upload due to dry run", in this order: `unisql-core` (15 files, 134.9 KiB, 35.2 KiB compressed),
+`unisql-sqlparser-adapter` (7, 93.2/24.4), `unisql-dialect-mysql` (9, 94.5/18.0),
+`unisql-dialect-postgres` (10, 54.2/11.2), `unisql-dialect-sqlite` (9, 83.3/17.0), `unisql` (9,
+55.7/16.7). A per-crate `cargo publish --dry-run -p <crate>` passes only for `unisql-core`: the others
+cannot select `unisql-core ^0.16.1` (the registry has 0.0.0) until it is published, so `--workspace`
+(which overlays the local packages) is the pre-check to use. One cosmetic warning: the facade excludes
+`tests/leaf_contracts.rs` and cargo says it is ignoring that test.
 
 ## 3. Package contents (checked with `cargo package --list --offline -p <crate>` at 0.16.1)
 
