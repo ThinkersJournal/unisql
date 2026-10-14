@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.6.0 - 2026-10-14
 
 - **Gate too strict (fixed):** a statement that translates now has every leaf `analyse` names for it
   recorded in the report. Writers note only divergences, so leaves a target accepts without one
@@ -10,7 +10,24 @@ One version number for every crate in the workspace. Pre-1.0, the second number 
   `ordered_comparison`, `fn:make_interval` in interval arithmetic, ...) had no matrix row and a gate
   requiring them refused what the translator gives. They are `enabled=yes` rows now (new rows; no
   existing row changes value). Test first: `every_need_of_a_translated_statement_is_recorded_for_that_target`
-  failed on 20 statements before the change.
+  failed on the 19 statement/direction pairs below before the change.
+- **Breaking: a gate verdict flips from refused to accepted** for these (statement, direction) pairs,
+  all of which the translator already translated. Leaves that had no row and now have `enabled=yes`:
+  - postgres -> sqlite, `text_comparison`: `SELECT id, name FROM users WHERE id = $1`;
+    `... WHERE age > $1 AND city = 'Oslo' ORDER BY age DESC NULLS LAST LIMIT 5 OFFSET 2`;
+    `SELECT u.id, o.id FROM users u LEFT JOIN orders o ON o.user_id = u.id`;
+    `UPDATE users SET age = age + 1 WHERE city = 'Oslo'`;
+    `SELECT count(*) FILTER (WHERE status = 'paid') FROM orders`;
+    `... WHERE active = TRUE AND age BETWEEN 20 AND 30`.
+  - postgres -> sqlite, `concat`, `division_integer`: `SELECT CAST(id AS TEXT), now(), 7 / 2, 'a' || name FROM users`.
+  - postgres -> sqlite, `fn:make_interval`: `... WHERE at > now() - make_interval(secs => $1)`.
+  - postgres -> mysql and mariadb, `ordered_comparison`: `... WHERE age > $1 AND city = 'Oslo' ORDER BY ...`;
+    `DELETE FROM orders WHERE amount < 100`; `WITH RECURSIVE t(n) AS (...) SELECT n FROM t`;
+    `... WHERE active = TRUE AND age BETWEEN 20 AND 30`; and, with `fn:make_interval`, the
+    `make_interval(secs => $1)` statement.
+  - mysql -> postgres, `concat`: `SELECT concat(name, '-', ifnull(city, '?')), 7 / 2, 7 DIV 2, ...`.
+  The remaining rows added (`returning.update`, `trim.multi_char`, ...) are leaves the catalogue statements
+  use on the same pairs. No row that existed changed its value.
 - `make_interval(..)` outside `ts +/- ..` is its own leaf `fn:make_interval.standalone` (refused by
   every target without an interval type); `named_arg` is no longer a need of the interval arithmetic form
   (its notation is not an output on SQLite/MySQL).
