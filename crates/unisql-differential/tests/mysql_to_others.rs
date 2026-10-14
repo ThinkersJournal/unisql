@@ -260,7 +260,7 @@ fn cases(dir: Dir) -> Vec<Case> {
                 "refuse_odku",
                 "INSERT INTO kv (k, v) VALUES ('a', 'b') ON DUPLICATE KEY UPDATE v = VALUES(v)",
             ),
-            Expect::Refused("upsert"),
+            Expect::Refused("upsert.no_conflict_key"),
         ),
         exp(
             c(
@@ -364,7 +364,13 @@ fn run(dir: Dir, maria: bool) {
             dir.target(),
             dir.source()
         )),
-        unisql_differential::matrix_tsv(&outcomes, dir.target(), &backend_version, dir.source()),
+        unisql_differential::matrix_tsv(
+            &outcomes,
+            dir.target(),
+            &backend_version,
+            dir.source(),
+            &[],
+        ),
     );
     println!("{log}");
     let failed: Vec<_> = outcomes.iter().filter(|o| !o.passed).collect();

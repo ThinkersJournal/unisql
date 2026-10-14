@@ -246,14 +246,14 @@ impl Target for Mysql {
             SqlType::Timestamp { with_tz: false } => "DATETIME".to_string(),
             other => {
                 return Err(ctx.refuse(
-                    "cast",
+                    &format!("cast.to_{}", other.leaf()),
                     &format!("CAST to {other:?} has no MySQL equivalent that preserves meaning"),
                     &["store the value in a column of the right type and convert in the application"],
                 ));
             }
         };
         ctx.note(
-            "cast",
+            format!("cast.to_{}", ty.leaf()),
             Tier::Conditional,
             "MySQL casts leniently: a malformed value becomes 0 or a prefix (with a warning) instead of an error",
             Some(Allowance::LenientCast),
@@ -275,7 +275,7 @@ impl Target for Mysql {
                     )?;
                     Ok(Some(q2))
                 }
-                Err(why) => Err(ctx.refuse("distinct_on", &why, &["list the columns explicitly"])),
+                Err(c) => Err(ctx.refuse(c.leaf, &c.why, &["list the columns explicitly"])),
             };
         }
         Ok(None)
@@ -316,7 +316,7 @@ impl Target for Mysql {
             let single = c.len() == 3 && c.starts_with('\'') && c.ends_with('\'');
             if !single {
                 return Err(ctx.refuse(
-                    "trim",
+                    "trim.multi_char",
                     "PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character",
                     &["use a single-character literal"],
                 ));
@@ -391,7 +391,7 @@ impl Target for Mysql {
     fn returning(&self, kind: StmtKind, ctx: &mut Ctx) -> R<()> {
         match (self.flavor, kind) {
             (Flavor::MariaDb, StmtKind::Update) => Err(ctx.refuse(
-                "returning",
+                "returning.update",
                 "MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE",
                 &["run the UPDATE, then SELECT the rows back in the same transaction"],
             )),

@@ -444,7 +444,7 @@ fn sqlite_to_postgres_differential() {
     let _ = std::fs::write(
         std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
             .join("../unisql-dialect-postgres/matrix-postgres-from-sqlite.tsv"),
-        unisql_differential::matrix_tsv(&outcomes, "postgres", &v, "sqlite"),
+        unisql_differential::matrix_tsv(&outcomes, "postgres", &v, "sqlite", &[]),
     );
     println!("{log}");
     let failed: Vec<_> = outcomes.iter().filter(|o| !o.passed).collect();

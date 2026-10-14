@@ -109,7 +109,7 @@ PASS agg_order_default_nulls      same
        -> SELECT GROUP_CONCAT(`name` ORDER BY (`age` IS NULL), `age`, (`id` IS NULL), `id` SEPARATOR '|') FROM `users`
 PASS agg_order_nulls_first        same
        -> SELECT GROUP_CONCAT(`name` ORDER BY `age`, (`id` IS NULL), `id` SEPARATOR '|') FROM `users`
-PASS refuse_agg_order_sum         refused `fn:sum`: this target cannot honour an ORDER BY inside this aggregate
+PASS refuse_agg_order_sum         refused `fn:sum.order_by`: this target cannot honour an ORDER BY inside this aggregate
 PASS now_not_null                 same
        -> SELECT `id` FROM `users` WHERE (NOW() IS NOT NULL) AND (`id` = 1)
 PASS int_division                 same
@@ -147,15 +147,17 @@ PASS refuse_filter                refused `filter_clause`: MySQL has no FILTER (
 PASS refuse_json                  refused `json_get_text`: MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented
 PASS refuse_substr                refused `fn:substr`: start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')
 PASS refuse_concat_fn             refused `fn:concat`: PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL
-PASS refuse_trim_set              refused `trim`: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character
+PASS refuse_trim_set              refused `trim.multi_char`: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character
 PASS refuse_update_from           refused `update_from`: 
-PASS refuse_cast_uuid             refused `cast`: CAST to Uuid has no MySQL equivalent that preserves meaning
+PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
 
 MATRIX (construct, tier) from 69 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
-  cast                         conditional
+  cast.to_double               conditional
+  cast.to_integer              conditional
+  cast.to_text                 conditional
   concat                       exact
   distinct_on                  emulated
   division                     conditional
@@ -173,6 +175,7 @@ MATRIX (construct, tier) from 69 passing translated cases:
   fn:replace                   exact
   fn:row_number                exact
   fn:string_agg                conditional
+  fn:string_agg.order_by       exact
   fn:sum                       exact
   ilike                        conditional
   interval_arithmetic          conditional

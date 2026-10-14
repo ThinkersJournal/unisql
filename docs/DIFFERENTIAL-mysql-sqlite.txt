@@ -66,7 +66,7 @@ PASS delete_where               same
 PASS update_where               same
        -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo'
 PASS gate_div_decimal           refused without allowance: conditional: needs allowance `decimal_division_as_float`: the source `/` is exact (DECIMAL) division; the target divides as double precision
-PASS refuse_odku                refused `upsert`: the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns
+PASS refuse_odku                refused `upsert.no_conflict_key`: the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns
 PASS ir_insert_ignore           not in IR `insert_option`: an INSERT form other than INSERT INTO t [(cols)] VALUES|query
 PASS ir_pipes_operator          not in IR `pipes_operator`: MySQL `||` is logical OR (default sql_mode) but the parser gives it concatenation precedence; write OR, or CONCAT()
 PASS ir_null_safe_eq            not in IR `binary_operator`: Spaceship (JSON/array/regex/bitwise operators are not in the IR)
@@ -74,7 +74,9 @@ PASS ir_substring               not in IR `substring`: MySQL SUBSTRING treats a 
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on SQLite yet
 
 MATRIX (construct, tier) from 33 passing translated cases:
-  cast                         conditional
+  cast.to_bigint               conditional
+  cast.to_double               conditional
+  cast.to_text                 conditional
   division                     conditional
   division_integer             conditional
   fn:char_length               emulated
@@ -86,6 +88,7 @@ MATRIX (construct, tier) from 33 passing translated cases:
   fn:rank                      exact
   fn:string_agg                conditional
   fn:string_agg                emulated
+  fn:string_agg.order_by       exact
   fn:sum                       exact
   join:inner_join              exact
   join:left_join               exact

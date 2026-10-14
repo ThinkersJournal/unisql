@@ -113,7 +113,7 @@ PASS agg_order_desc_nulls_last    same
        -> SELECT GROUP_CONCAT("name", '|' ORDER BY "age" DESC, "id" NULLS LAST) FROM "users"
 PASS agg_order_default_nulls      same
        -> SELECT GROUP_CONCAT("name", '|' ORDER BY "age" NULLS LAST, "id" NULLS LAST) FROM "users"
-PASS refuse_agg_order_sum         refused `fn:sum`: this target cannot honour an ORDER BY inside this aggregate
+PASS refuse_agg_order_sum         refused `fn:sum.order_by`: this target cannot honour an ORDER BY inside this aggregate
 PASS btrim_forms                  same
        -> SELECT TRIM('  hi  '), TRIM('xxhixx', 'x')
 PASS octet_length_utf8            same
@@ -138,7 +138,7 @@ PASS distinct_on_emulated         same
        -> SELECT "__u0" AS "city", "__u1" AS "id" FROM (SELECT "city" AS "__u0", "id" AS "__u1", "city" AS "__o0", "id" AS "__o1", ROW_NUMBER() OVER (PARTITION BY "city" ORDER BY "city" NULLS LAST, "id" NULLS LAST) AS "__rn" FROM "users" WHERE "city" IS NOT NULL) AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" NULLS LAST
 PASS refuse_for_update            refused `row_lock`: SQLite has no row-level locks (it locks the whole database)
 PASS refuse_unmapped_fn           refused `fn:md5`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
-PASS refuse_cast_uuid             refused `cast`: CAST to Uuid has no SQLite equivalent that preserves meaning
+PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no SQLite equivalent that preserves meaning
 PASS ir_skip_locked               not in IR `row_lock_option`: FOR UPDATE OF / NOWAIT / SKIP LOCKED is not in the IR yet
 PASS ir_json_path_op              not in IR `binary_operator`: HashArrow (JSON/array/regex/bitwise operators are not in the IR)
 PASS ir_named_window              not in IR `select_clause`: a SELECT clause the IR does not represent (TOP/INTO/WINDOW/QUALIFY/hints/...)
@@ -168,7 +168,7 @@ PASS distinct_on_orders           same
        -> SELECT "__u0" AS "user_id", "__u1" AS "amount", "__u2" AS "id" FROM (SELECT "user_id" AS "__u0", "amount" AS "__u1", "id" AS "__u2", "user_id" AS "__o0", "amount" AS "__o1", "id" AS "__o2", ROW_NUMBER() OVER (PARTITION BY "user_id" ORDER BY "user_id" NULLS LAST, "amount" DESC NULLS FIRST, "id" NULLS LAST) AS "__rn" FROM "orders") AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" DESC NULLS FIRST, "__o2" NULLS LAST
 PASS distinct_on_limit            same
        -> SELECT "__u0" AS "user_id", "__u1" AS "id" FROM (SELECT "user_id" AS "__u0", "id" AS "__u1", "user_id" AS "__o0", "id" AS "__o1", ROW_NUMBER() OVER (PARTITION BY "user_id" ORDER BY "user_id" NULLS LAST, "id" NULLS LAST) AS "__rn" FROM "orders") AS "__d" WHERE "__rn" = 1 ORDER BY "__o0" NULLS LAST, "__o1" NULLS LAST LIMIT 2
-PASS distinct_on_star_refused     refused `distinct_on`: DISTINCT ON with a * projection cannot be emulated; list the columns explicitly
+PASS distinct_on_star_refused     refused `distinct_on.star_projection`: DISTINCT ON with a * projection cannot be emulated; list the columns explicitly
 PASS win_row_number               same
        -> SELECT "id", ROW_NUMBER() OVER (ORDER BY "id" NULLS LAST) FROM "users"
 PASS win_rank_partition           same
@@ -219,7 +219,9 @@ PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regul
 MATRIX (construct, tier) from 96 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
-  cast                         conditional
+  cast.to_double               conditional
+  cast.to_integer              conditional
+  cast.to_text                 conditional
   distinct_on                  emulated
   division                     conditional
   filter_clause                exact
@@ -242,6 +244,7 @@ MATRIX (construct, tier) from 96 passing translated cases:
   fn:replace                   exact
   fn:row_number                exact
   fn:string_agg                emulated
+  fn:string_agg.order_by       exact
   fn:sum                       exact
   fn:upper                     conditional
   ilike                        conditional

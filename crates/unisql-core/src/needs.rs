@@ -31,6 +31,10 @@ pub fn constructs(stmt: &Statement) -> BTreeSet<String> {
                         } else {
                             "upsert"
                         });
+                        // A target that needs the conflict key refuses this form.
+                        if oc.target.is_empty() {
+                            w.add("upsert.no_conflict_key");
+                        }
                         set.iter().for_each(|a| w.expr(&a.value));
                         if let Some(e) = where_ {
                             w.expr(e);
@@ -42,6 +46,9 @@ pub fn constructs(stmt: &Statement) -> BTreeSet<String> {
         }
         Statement::Update(u) => {
             u.set.iter().for_each(|a| w.expr(&a.value));
+            if !u.returning.is_empty() {
+                w.add("returning.update");
+            }
             if !u.from.is_empty() {
                 w.add("update_from");
                 u.from.iter().for_each(|t| w.table(t));
@@ -125,6 +132,15 @@ impl Walk {
     fn select(&mut self, s: &Select) {
         if let Distinct::On(keys) = &s.distinct {
             self.add("distinct_on");
+            if s.projection
+                .iter()
+                .any(|i| !matches!(i, SelectItem::Expr { .. }))
+            {
+                self.add("distinct_on.star_projection");
+            }
+            if s.lock.is_some() {
+                self.add("distinct_on.row_lock");
+            }
             // Targets without it emulate it with `row_number() OVER (PARTITION BY ..)`; that is a
             // dependency of the statement there, so it is named here (an over-approximation on
             // targets that have DISTINCT ON natively, where window functions exist anyway).
@@ -284,8 +300,8 @@ impl Walk {
                     self.expr(x);
                 }
             }
-            Expr::Cast { expr, .. } => {
-                self.add("cast");
+            Expr::Cast { expr, ty, .. } => {
+                self.add(format!("cast.to_{}", ty.leaf()));
                 self.expr(expr);
             }
             Expr::Function(f) => {
@@ -315,6 +331,7 @@ impl Walk {
                 if !f.order_by.is_empty() {
                     self.add("order_by");
                     self.add("null_ordering");
+                    self.add(format!("fn:{}.order_by", f.name));
                 }
                 f.order_by.iter().for_each(|o| self.expr(&o.expr));
             }
@@ -326,6 +343,18 @@ impl Walk {
             }
             Expr::Trim { expr, chars, .. } => {
                 self.add("trim");
+                // MySQL removes a repeated string where PostgreSQL removes a set: they agree only
+                // for one plain character, so anything else is its own leaf.
+                let single = match chars.as_deref() {
+                    None => true,
+                    Some(Expr::Literal(Literal::String(s))) => {
+                        s.chars().count() == 1 && s != "'" && s != "\\"
+                    }
+                    Some(_) => false,
+                };
+                if !single {
+                    self.add("trim.multi_char");
+                }
                 self.expr(expr);
                 if let Some(c) = chars {
                     self.expr(c);

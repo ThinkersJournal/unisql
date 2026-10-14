@@ -16,15 +16,37 @@ use crate::ast::*;
 /// Differences from PostgreSQL, stated: without an `ORDER BY`, which row survives per key is
 /// arbitrary on both engines (not the same row); a `*` projection cannot be emulated because the
 /// helper columns would appear in the result.
-pub fn distinct_on_via_window(q: &Query) -> Result<Query, String> {
+/// Why a rewrite cannot be applied correctly: the leaf id of the form that is refused, and why.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Cannot {
+    pub leaf: &'static str,
+    pub why: String,
+}
+
+impl Cannot {
+    fn new(leaf: &'static str, why: &str) -> Self {
+        Cannot {
+            leaf,
+            why: why.to_string(),
+        }
+    }
+}
+
+pub fn distinct_on_via_window(q: &Query) -> Result<Query, Cannot> {
     let SetExpr::Select(sel) = &q.body else {
-        return Err("DISTINCT ON on a set operation".into());
+        return Err(Cannot::new(
+            "distinct_on.set_operation",
+            "DISTINCT ON on a set operation",
+        ));
     };
     let Distinct::On(keys) = &sel.distinct else {
-        return Err("not a DISTINCT ON select".into());
+        return Err(Cannot::new("distinct_on", "not a DISTINCT ON select"));
     };
     if sel.lock.is_some() {
-        return Err("DISTINCT ON with a locking clause".into());
+        return Err(Cannot::new(
+            "distinct_on.row_lock",
+            "DISTINCT ON with a locking clause",
+        ));
     }
 
     let mut inner_proj = Vec::new();
@@ -32,9 +54,10 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, String> {
     for (i, item) in sel.projection.iter().enumerate() {
         match item {
             SelectItem::Wildcard | SelectItem::QualifiedWildcard(_) => {
-                return Err(
-                    "DISTINCT ON with a * projection cannot be emulated; list the columns explicitly".into(),
-                );
+                return Err(Cannot::new(
+                    "distinct_on.star_projection",
+                    "DISTINCT ON with a * projection cannot be emulated; list the columns explicitly",
+                ));
             }
             SelectItem::Expr { expr, alias } => {
                 let hidden = format!("__u{i}");

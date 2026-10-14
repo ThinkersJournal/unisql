@@ -129,8 +129,9 @@ pub fn translate_str(
 ///
 /// `constructs` are the construct ids the statement uses (the same strings a [`Report`] and the
 /// matrix files use), read from the IR alone: no target contributes to this set, so a test can
-/// check it against any target's report. `refused` holds `<construct>.refused` for every form that **some** registered
-/// target refuses (with every allowance granted): "refused anywhere". A target stops at its *first*
+/// check it against any target's report. `refused` holds the leaf id (`cast.to_uuid`, `fn:md5`) of every form that **some** registered
+/// target refuses; every id in it is also in `constructs`, so a gate that reads only `constructs`
+/// cannot let a refused form through. It is "refused anywhere", with every allowance granted. A target stops at its *first*
 /// refusal, so a statement with two refused forms contributes one per target. `unreadable` names the
 /// construct the IR does not represent, in which case `constructs` is empty.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

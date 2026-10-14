@@ -193,6 +193,22 @@ impl Engines {
         Ok(e)
     }
 
+    /// The server's default collation for `utf8mb4` (what a table gets when nobody says otherwise).
+    pub fn mysql_default_collation(&mut self) -> String {
+        use mysql::prelude::Queryable;
+        self.mysql
+            .as_mut()
+            .and_then(|c| {
+                c.query_first::<(String, String, String, u32), _>(
+                    "SHOW CHARACTER SET LIKE 'utf8mb4'",
+                )
+                .ok()
+                .flatten()
+            })
+            .map(|r| r.2)
+            .unwrap_or_default()
+    }
+
     pub fn mysql_version(&mut self) -> String {
         use mysql::prelude::Queryable;
         self.mysql
@@ -636,7 +652,7 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
     let tr = unisql::translate(c.sql, src, tgt, &opts);
     match (&c.expect, tr) {
         (Expect::Refused(construct), Err(unisql::Error::Untranslatable(u))) => {
-            out.passed = u.construct == *construct || u.construct.starts_with(construct);
+            out.passed = u.construct == *construct;
             out.refusal = Some((u.construct.clone(), u.reason.clone()));
             out.detail = format!("refused `{}`: {}", u.construct, u.reason);
             if !out.passed {
@@ -790,21 +806,51 @@ pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
     m
 }
 
+/// A known-bad control: a statement using `leaf`, run under a configuration where the leaf's
+/// premise is false (`config`), whose result **diverged** from the source engine's. It shows that
+/// the passing runs under the fixture configuration could have failed.
+#[derive(Clone, Debug)]
+pub struct KnownBad {
+    pub leaf: &'static str,
+    pub config: String,
+    pub case: &'static str,
+}
+
 /// Matrix rows in PersistAnt's row schema (DESIGN-KINDS.md section 2.4 at PersistAnt 4fed258e):
 /// `subject_kind, subject, backend, version, config, enabled, reason, metadata, note, from`.
 ///
-/// - `enabled` is boolean: `yes` only for a construct that translated and whose result matched on the
-///   real engines. A refusal is `no` with `reason=missing` (the translator refuses; nothing else was
-///   measured). No row means untested, which is off.
-/// - `config` is `k=v;k=v` facts a gate can read at open: the collation the fixture engines ran under
-///   (PostgreSQL `lc_collate=C`, MySQL/MariaDB `collation=utf8mb4_bin`). A row holds for that config.
-/// - `metadata` is `k=v;k=v`: `tier` (`native` = Exact, `emulated` = Emulated, `conditional` =
-///   Conditional, weakest proven form wins per subject) and `suite` (source-to-target). No date: the
-///   file is regenerated in CI and must not drift.
-/// - `note` starts with `allowance=a,b` for a conditional construct, so a gate can read the names.
-/// - A refusal is always its own subject `<construct>.refused` (matching
-///   `Untranslatable::subject()`), never a note on a proven cell. Leaf ids are not minted yet.
-pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str) -> String {
+/// One row per **leaf id** and config; every row is a fact a test established, never a status.
+///
+/// - A construct whose every proven use was Exact or Emulated is one leaf, `enabled=yes`
+///   (`tier=native` or `tier=emulated`: equally correct, so one contract).
+/// - A construct with a Conditional use diverges from its strict contract. The strict leaf `<c>` is
+///   `enabled=no, reason=wrong`, and each divergence a caller may accept is its **own leaf**
+///   `<c>.<allowance>` (`enabled=yes`, `tier=conditional`, `allowance=<name>` first in `note`).
+///   A leaf's contract is written in `docs/LEAF-CONTRACTS.tsv`; stronger implies weaker, so `<c>`
+///   on a backend where it is enabled also gives every `<c>.<allowance>`.
+/// - The one divergence a gate can *read* is the text collation (`config`). Where a construct's only
+///   allowance is `text_collation` **and** a known-bad control shows another collation really
+///   diverges, the strict leaf `<c>` is `enabled=yes` under the fixture config, and a row
+///   `enabled=no, reason=wrong` under the control's config records the divergence.
+/// - A refused form is its leaf (`cast.to_uuid`, `fn:md5`), `enabled=no, reason=missing`: the
+///   translator refuses it, nothing else was measured.
+/// - `config` is `k=v;k=v` facts a gate can read at open: the collation the fixture engines ran
+///   under (PostgreSQL `lc_collate=C`, MySQL/MariaDB `collation=utf8mb4_bin`). A row holds for that
+///   config only.
+/// - `metadata` is `k=v;k=v`: `tier`, `suite` (`<source>-to-<backend>`) and `test`
+///   (`<suite>::<first passing case>`). No date: the file is regenerated in CI and compared with
+///   `git diff --exit-code`, so a wall-clock field would fail every run; the file's commit date is
+///   the date.
+///
+/// A leaf produced twice under one config would be two facts about one id, so that panics instead
+/// of choosing.
+pub fn matrix_tsv(
+    outcomes: &[Outcome],
+    backend: &str,
+    version: &str,
+    from: &str,
+    known_bad: &[KnownBad],
+) -> String {
     use std::collections::{BTreeMap, BTreeSet};
     let config = match backend {
         "postgres" => "lc_collate=C",
@@ -812,80 +858,137 @@ pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str
         _ => "",
     };
     let suite = format!("{from}-to-{backend}");
-    let rank = |h: &str| match h {
-        "native" => 0,
-        "emulated" => 1,
-        "conditional" => 2,
-        _ => 3,
-    };
-    let mut proven: BTreeMap<String, (String, BTreeSet<&'static str>)> = BTreeMap::new();
+
+    // construct -> (tiers seen, allowances seen, first passing case that used it)
+    #[derive(Default)]
+    struct Seen {
+        emulated: bool,
+        conditional: bool,
+        allowances: BTreeSet<&'static str>,
+        case: Option<&'static str>,
+    }
+    let mut proven: BTreeMap<String, Seen> = BTreeMap::new();
     for o in outcomes.iter().filter(|o| o.passed) {
         for (c, t) in &o.constructs {
-            let how = match t {
-                Tier::Exact => "native",
-                Tier::Emulated => "emulated",
-                _ => "conditional",
-            };
-            let e = proven
-                .entry(c.clone())
-                .or_insert((how.to_string(), BTreeSet::new()));
-            if rank(how) > rank(&e.0) {
-                e.0 = how.to_string();
+            let e = proven.entry(c.clone()).or_default();
+            match t {
+                Tier::Exact => {}
+                Tier::Emulated => e.emulated = true,
+                _ => e.conditional = true,
             }
+            e.case = Some(e.case.map_or(o.name, |k| k.min(o.name)));
         }
         for (c, a) in &o.allowances {
             if let Some(e) = proven.get_mut(c) {
-                e.1.insert(a.name());
+                e.allowances.insert(a.name());
             }
         }
     }
-    let mut refused: BTreeMap<String, String> = BTreeMap::new();
+    let mut refused: BTreeMap<String, (String, &'static str)> = BTreeMap::new();
     for o in outcomes.iter().filter(|o| o.passed) {
         if let Some((c, why)) = &o.refusal {
-            refused
+            let e = refused
                 .entry(c.clone())
-                .or_insert_with(|| why.replace(['\t', '\n'], " "));
+                .or_insert_with(|| (why.replace(['\t', '\n'], " "), o.name));
+            if o.name < e.1 {
+                e.1 = o.name;
+            }
         }
+    }
+
+    // (leaf, config) -> line
+    let mut rows: BTreeMap<(String, String), String> = BTreeMap::new();
+    let mut put = |leaf: &str, cfg: &str, enabled: &str, reason: &str, meta: String, note: &str| {
+        let line = format!(
+            "construct\t{leaf}\t{backend}\t{version}\t{cfg}\t{enabled}\t{reason}\t{meta}\t{note}\t{from}\n"
+        );
+        assert!(
+            rows.insert((leaf.to_string(), cfg.to_string()), line)
+                .is_none(),
+            "leaf `{leaf}` under `{cfg}` is produced twice in {suite}"
+        );
+    };
+    let kb_leaves: BTreeSet<&str> = known_bad.iter().map(|k| k.leaf).collect();
+
+    for (c, s) in &proven {
+        let case = s.case.unwrap_or("-");
+        if s.conditional {
+            let names: Vec<&str> = s.allowances.iter().copied().collect();
+            if names == ["text_collation"] && kb_leaves.contains(c.as_str()) {
+                put(
+                    c,
+                    config,
+                    "yes",
+                    "",
+                    format!("tier=native;suite={suite};test={suite}::{case}"),
+                    "premise=text_collation, read from config; see the known-bad row",
+                );
+            } else {
+                put(
+                    c,
+                    config,
+                    "no",
+                    "wrong",
+                    format!("suite={suite};test={suite}::{case}"),
+                    &format!(
+                        "diverges from the strict contract unless accepted: allowance={}",
+                        names.join(",")
+                    ),
+                );
+            }
+            for a in &names {
+                put(
+                    &format!("{c}.{a}"),
+                    config,
+                    "yes",
+                    "",
+                    format!("tier=conditional;suite={suite};test={suite}::{case}"),
+                    &format!("allowance={a}"),
+                );
+            }
+        } else {
+            let tier = if s.emulated { "emulated" } else { "native" };
+            put(
+                c,
+                config,
+                "yes",
+                "",
+                format!("tier={tier};suite={suite};test={suite}::{case}"),
+                "",
+            );
+        }
+    }
+    for (leaf, (why, case)) in &refused {
+        put(
+            leaf,
+            config,
+            "no",
+            "missing",
+            format!("suite={suite};test={suite}::{case}"),
+            why,
+        );
+    }
+    for k in known_bad {
+        // A control only means something next to the strict row it is a control for.
+        assert!(
+            proven.contains_key(k.leaf),
+            "known-bad control for `{}` has no passing run to be a control for",
+            k.leaf
+        );
+        put(
+            k.leaf,
+            &k.config,
+            "no",
+            "wrong",
+            format!("suite={suite};test={suite}::known_bad::{}", k.case),
+            "known-bad control: the result diverged from the source engine under this config",
+        );
     }
     let mut out = String::from(
         "subject_kind\tsubject\tbackend\tversion\tconfig\tenabled\treason\tmetadata\tnote\tfrom\n",
     );
-    let mut row = |subject: &str, how: &str, ev: &str, note: &str| {
-        let (enabled, reason) = if ev == "proven" {
-            ("yes", "")
-        } else {
-            ("no", "missing")
-        };
-        let metadata = if enabled == "yes" {
-            format!("tier={how};suite={suite}")
-        } else {
-            format!("suite={suite}")
-        };
-        out.push_str(&format!(
-            "construct\t{subject}\t{backend}\t{version}\t{config}\t{enabled}\t{reason}\t{metadata}\t{note}\t{from}\n"
-        ));
-    };
-    let mut subjects: BTreeSet<String> = proven.keys().cloned().collect();
-    subjects.extend(refused.keys().cloned());
-    for s in subjects {
-        match (proven.get(&s), refused.get(&s)) {
-            (Some((how, al)), r) => {
-                let note = if al.is_empty() {
-                    String::new()
-                } else {
-                    format!(
-                        "allowance={}",
-                        al.iter().copied().collect::<Vec<_>>().join(",")
-                    )
-                };
-                row(&s, how, "proven", &note);
-                if let Some(why) = r {
-                    row(&format!("{s}.refused"), "absent", "declared", why);
-                }
-            }
-            (None, Some(why)) => row(&format!("{s}.refused"), "absent", "declared", why),
-            (None, None) => {}
-        }
+    for line in rows.values() {
+        out.push_str(line);
     }
     out
 }

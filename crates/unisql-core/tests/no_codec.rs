@@ -50,7 +50,7 @@ fn array_param_without_a_codec_is_refused() {
         )
         .unwrap_err();
         assert_eq!(err.construct, "array_param");
-        assert_eq!(err.subject(), "array_param.refused");
+        assert_eq!(err.subject(), "array_param");
         assert!(err.reason.contains("no codec"), "{}", err.reason);
         assert!(!err.alternatives.is_empty());
     }

@@ -392,3 +392,27 @@ pub enum SqlType {
     Json,
     Jsonb,
 }
+
+impl SqlType {
+    /// The stable leaf name of this type, used in leaf ids such as `cast.to_uuid`. Precision and
+    /// scale do not change the leaf: `varchar(10)` and `text` are one `cast.to_text`.
+    pub fn leaf(&self) -> &'static str {
+        match self {
+            SqlType::SmallInt => "smallint",
+            SqlType::Integer => "integer",
+            SqlType::BigInt => "bigint",
+            SqlType::Real => "real",
+            SqlType::Double => "double",
+            SqlType::Numeric { .. } => "numeric",
+            SqlType::Text | SqlType::Varchar(_) => "text",
+            SqlType::Boolean => "boolean",
+            SqlType::Date => "date",
+            SqlType::Timestamp { with_tz: false } => "timestamp",
+            SqlType::Timestamp { with_tz: true } => "timestamptz",
+            SqlType::Uuid => "uuid",
+            SqlType::Bytes => "bytes",
+            SqlType::Json => "json",
+            SqlType::Jsonb => "jsonb",
+        }
+    }
+}
