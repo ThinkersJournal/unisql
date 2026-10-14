@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.8.0 - 2026-10-14
 
 - **`WITH` before a modifying statement and data-modifying CTEs** (the 6 `not_in_ir set_expr Insert` rows
   of the corpus): `WITH .. INSERT | UPDATE | DELETE ..` and `WITH x AS (INSERT/UPDATE/DELETE ..
