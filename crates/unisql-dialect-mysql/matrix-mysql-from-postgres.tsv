@@ -24,14 +24,15 @@ construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:make_interval.month_year	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
 construct	fn:max	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	fn:max	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
 construct	fn:max.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
 construct	fn:min	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_min_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	fn:min	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
 construct	fn:min.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
-construct	fn:now	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_secs	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
-construct	fn:now.now_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_secs	allowance=now_as_text	postgres
+construct	fn:now	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
+construct	fn:now.now_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=now_as_text	postgres
 construct	fn:nullif	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
 construct	fn:replace	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:row_number	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
@@ -44,8 +45,8 @@ construct	fn:sum.order_by	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=po
 construct	ilike	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=text_collation	postgres
-construct	interval_arithmetic	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_secs	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
-construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_secs	allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=timestamp_arithmetic_as_text	postgres
 construct	join:inner_join	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::cte		postgres
 construct	join:left_join	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join		postgres
 construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres

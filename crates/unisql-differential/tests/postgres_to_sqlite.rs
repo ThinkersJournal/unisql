@@ -786,6 +786,43 @@ fn cases() -> Vec<Case> {
             ),
             vec![Param::Int(5)],
         ),
+        // ---- INTERVAL literals: read as the same make_interval form
+        c(
+            "interval_literal_minute",
+            "SELECT id FROM events WHERE at > now() - interval '1 minute'",
+            &[A::NowAsText, A::TimestampArithmeticAsText],
+        ),
+        c(
+            "interval_literal_minutes",
+            "SELECT id FROM events WHERE at > now() - INTERVAL '5 minutes'",
+            &[A::NowAsText, A::TimestampArithmeticAsText],
+        ),
+        c(
+            "interval_literal_hours",
+            "SELECT id FROM events WHERE at > now() - interval '2 hours'",
+            &[A::NowAsText, A::TimestampArithmeticAsText],
+        ),
+        c(
+            "interval_literal_plus_days",
+            "SELECT id FROM events WHERE at < now() + interval '7 days'",
+            &[A::NowAsText, A::TimestampArithmeticAsText],
+        ),
+        exp(
+            c(
+                "refuse_interval_literal_month",
+                "SELECT now() - interval '1 month'",
+                &[A::NowAsText, A::TimestampArithmeticAsText],
+            ),
+            Expect::Refused("fn:make_interval.month_year"),
+        ),
+        exp(
+            c(
+                "ir_interval_compound",
+                "SELECT now() - interval '1 day 2 hours'",
+                &[A::NowAsText, A::TimestampArithmeticAsText],
+            ),
+            Expect::NotInIr("interval"),
+        ),
         exp(
             c(
                 "gate_interval",
@@ -800,7 +837,7 @@ fn cases() -> Vec<Case> {
                 "SELECT now() - make_interval(months => 1)",
                 &[A::NowAsText, A::TimestampArithmeticAsText],
             ),
-            Expect::Refused("fn:make_interval"),
+            Expect::Refused("fn:make_interval.month_year"),
         ),
         exp(
             c(

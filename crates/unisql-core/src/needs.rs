@@ -79,6 +79,18 @@ impl Walk {
         self.out.insert(c.into());
     }
 
+    /// `make_interval(months|years => ..)`: month arithmetic differs between engines, so it is its
+    /// own leaf and a target may refuse it while giving the fixed-length units.
+    fn month_year(&mut self, f: &Function) {
+        if f.name == "make_interval"
+            && f.args.iter().any(|a| {
+                matches!(a, FunctionArg::Named { name, .. } if name == "months" || name == "years")
+            })
+        {
+            self.add("fn:make_interval.month_year");
+        }
+    }
+
     fn returning(&mut self, items: &[SelectItem]) {
         if !items.is_empty() {
             self.add("returning");
@@ -227,6 +239,9 @@ impl Walk {
                     self.add("interval_arithmetic");
                     // PostgreSQL itself spells it as the named-argument call, so both are needs.
                     self.add("fn:make_interval");
+                    if let Expr::Function(f) = &**right {
+                        self.month_year(f);
+                    }
                     self.add("named_arg");
                     self.expr(left);
                     if let Expr::Function(f) = &**right {
@@ -317,6 +332,7 @@ impl Walk {
             }
             Expr::Function(f) => {
                 self.add(format!("fn:{}", f.name));
+                self.month_year(f);
                 for a in &f.args {
                     match a {
                         FunctionArg::Expr(x) => self.expr(x),

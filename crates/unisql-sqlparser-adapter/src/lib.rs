@@ -1090,10 +1090,25 @@ fn expr(e: sp::Expr) -> R<Expr> {
                     right: boxed(*right)?,
                 });
             }
-            Expr::Binary {
-                op,
-                left: boxed(*left)?,
-                right: boxed(*right)?,
+            // `ts +/- INTERVAL 'n unit'` is the same statement as `ts +/- make_interval(unit => n)`:
+            // one IR form, so every target's interval arithmetic (and its refusal of months/years)
+            // applies unchanged. `INTERVAL 'n unit' + ts` commutes for `+` only.
+            match (op, *left, *right) {
+                (BinaryOp::Plus | BinaryOp::Minus, l, E::Interval(iv)) => Expr::Binary {
+                    op,
+                    left: boxed(l)?,
+                    right: Box::new(interval_call(iv)?),
+                },
+                (BinaryOp::Plus, E::Interval(iv), r) => Expr::Binary {
+                    op,
+                    left: boxed(r)?,
+                    right: Box::new(interval_call(iv)?),
+                },
+                (op, l, r) => Expr::Binary {
+                    op,
+                    left: boxed(l)?,
+                    right: boxed(r)?,
+                },
             }
         }
         E::Case {
@@ -1555,6 +1570,88 @@ fn function(f: sp::Function) -> R<Expr> {
         filter,
         over,
         order_by: agg_order,
+    }))
+}
+
+/// `INTERVAL '3 days'` / `INTERVAL 3 DAY` as `make_interval(days => 3)`. Only a single `<number> <unit>`
+/// is represented; compound intervals (`'1 day 2 hours'`), ranges (`DAY TO SECOND`) and unit-less
+/// strings are not in the IR. Months and years are read (and then refused by the targets, whose
+/// month arithmetic differs), not guessed.
+fn interval_call(iv: sp::Interval) -> R<Expr> {
+    let sp::Interval {
+        value,
+        leading_field,
+        leading_precision,
+        last_field,
+        fractional_seconds_precision,
+    } = iv;
+    if leading_precision.is_some() || last_field.is_some() || fractional_seconds_precision.is_some()
+    {
+        return no(
+            "interval",
+            "interval ranges and precisions are not in the IR",
+        );
+    }
+    let (amount, unit) = match (*value, leading_field) {
+        // MySQL `INTERVAL 3 DAY`
+        (sp::Expr::Value(v), Some(field)) => (
+            match v.value {
+                sp::Value::Number(n, _) => n,
+                other => return no("interval", &head(&other)),
+            },
+            field.to_string(),
+        ),
+        // PostgreSQL / standard `INTERVAL '3 days'`
+        (sp::Expr::Value(v), None) => match v.value {
+            sp::Value::SingleQuotedString(s) => {
+                let mut it = s.split_whitespace();
+                match (it.next(), it.next(), it.next()) {
+                    (Some(a), Some(u), None) => (a.to_string(), u.to_string()),
+                    _ => {
+                        return no(
+                            "interval",
+                            "only a single `<number> <unit>` interval is in the IR",
+                        );
+                    }
+                }
+            }
+            other => return no("interval", &head(&other)),
+        },
+        (other, _) => return no("interval", &head(&other)),
+    };
+    let numeric = !amount.is_empty()
+        && amount
+            .trim_start_matches('-')
+            .chars()
+            .all(|c| c.is_ascii_digit() || c == '.')
+        && amount
+            .trim_start_matches('-')
+            .chars()
+            .any(|c| c.is_ascii_digit());
+    if !numeric {
+        return no("interval", "the interval amount is not a plain number");
+    }
+    let unit = match unit.to_ascii_lowercase().trim_end_matches('s') {
+        "second" | "sec" => "secs",
+        "minute" | "min" => "mins",
+        "hour" => "hours",
+        "day" => "days",
+        "week" => "weeks",
+        "month" | "mon" => "months",
+        "year" => "years",
+        other => return no("interval", &format!("unit `{other}` is not in the IR")),
+    };
+    Ok(Expr::Function(Function {
+        name: "make_interval".to_string(),
+        args: vec![FunctionArg::Named {
+            name: unit.to_string(),
+            value: Expr::Literal(Literal::Number(amount)),
+        }],
+        distinct: false,
+        star: false,
+        filter: None,
+        over: None,
+        order_by: vec![],
     }))
 }
 

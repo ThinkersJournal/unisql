@@ -12,17 +12,15 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 
 ## Next
 
-1. **Corpus-driven reader gaps.** The residual in the corpus runs (`docs/CORPUS-postgres-to-*-D.txt`,
-   statements from Humboldt `b7cd95e7`, auth-framework `4582a64f`, lightbulb `34e5432b`, all
-   allowances granted) is, by count over src + tests, for the SQLite target: `not_in_ir expression` 25,
-   `not_in_ir data_type` 25 (PostgreSQL catalog types such as `regclass`: refused correctly),
-   `refused fn:gen_random_uuid` 12 (a v4 UUID has no equivalent in MySQL's `UUID()`, which is v1, nor in
-   SQLite: refuse unless an allowance names the difference), `not_in_ir bare_function` 8, `set_expr` 6,
-   `literal` 4. `date_trunc` appears **once** in that corpus: the earlier claim that date/time functions
-   are the largest residual was wrong and is withdrawn. MySQL additionally refuses 338 `RETURNING`
-   statements, which is inherent to MySQL. The runner now keeps the reader's detail for every
-   `not_in_ir` (the `note` field), so the next step is to re-run it at the then-current refs and read
-   what the 25 `expression` and 8 `bare_function` rows are, then take them in descending count.
+1. **Corpus-driven reader gaps.** Re-run at the refs the D files were made at (humboldt `b7cd95e7`,
+   auth `4582a64f`, lightbulb `34e5432b`) with the `note` field, the `not_in_ir` residual of DML is:
+   `Interval` 21 (**done at 0.4.2**: `ts +/- INTERVAL 'n unit'` reads as `make_interval`), `current_date`
+   without parentheses 7 and `current_user` 1, `Insert` as a set expression (`WITH .. INSERT`) 6,
+   `AtTimeZone` 2, `EscapedStringLiteral` 2, a function over a subquery 2, `Extract` 1, `Array` 1.
+   (`data_type` 25 are PostgreSQL catalog types, refused correctly; `statement` 65 and
+   `multiple_statements` 34 are DDL and scripts, out of scope.) Next by count: bare `current_date`
+   (7), then data-modifying CTEs (6). Also: `refused fn:gen_random_uuid` 12 stays refused unless an
+   allowance names that MySQL `UUID()` is a v1 UUID.
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
 2. **MySQL reader gaps:** `||` (MySQL means OR; the parser gives it concatenation precedence),
    `SUBSTRING(s FROM n)` (start-position semantics), `INSERT IGNORE`, `<=>`. Each is a reader rule in

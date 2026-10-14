@@ -17,6 +17,8 @@ CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age 
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES users(id),
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (k text PRIMARY KEY, v text, n integer);
+CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
+INSERT INTO events VALUES (1, now() - interval '10 seconds'),(2, now() - interval '120 seconds'),(3, now() - interval '3600 seconds');
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,1,9.5,'Oslo'),
  (2,'Bob','bob@example.com',25,0,7.25,'Bergen'),
@@ -35,6 +37,8 @@ CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age 
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES users(id),
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (k text PRIMARY KEY, v text, n integer);
+CREATE TABLE events (id integer PRIMARY KEY, at text NOT NULL);
+INSERT INTO events VALUES (1, datetime('now','-10 seconds')),(2, datetime('now','-120 seconds')),(3, datetime('now','-3600 seconds'));
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,1,9.5,'Oslo'),
  (2,'Bob','bob@example.com',25,0,7.25,'Bergen'),
@@ -53,6 +57,8 @@ CREATE TABLE users (id integer PRIMARY KEY, name varchar(64) NOT NULL, email var
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL, amount integer NOT NULL, status varchar(16) NOT NULL,
                      FOREIGN KEY (user_id) REFERENCES users(id));
 CREATE TABLE kv (k varchar(64) PRIMARY KEY, v varchar(64), n integer);
+CREATE TABLE events (id integer PRIMARY KEY, at datetime NOT NULL);
+INSERT INTO events VALUES (1, now() - interval 10 second),(2, now() - interval 120 second),(3, now() - interval 3600 second);
 INSERT INTO users VALUES
  (1,'alice','alice@example.com',30,1,9.5,'Oslo'),
  (2,'Bob','bob@example.com',25,0,7.25,'Bergen'),
@@ -77,6 +83,7 @@ const ALL: &[A] = &[
     A::AggregateStringTruncation,
     A::BooleanAsInteger,
     A::NowAsText,
+    A::TimestampArithmeticAsText,
 ];
 
 fn c(name: &'static str, sql: &'static str) -> Case {
@@ -284,6 +291,19 @@ fn cases(dir: Dir) -> Vec<Case> {
         exp(
             c("ir_substring", "SELECT substring(name, 0, 3) FROM users"),
             Expect::NotInIr("substring"),
+        ),
+        // INTERVAL n UNIT is the make_interval form on every target.
+        c(
+            "interval_minutes",
+            "SELECT id FROM events WHERE at > NOW() - INTERVAL 5 MINUTE",
+        ),
+        c(
+            "interval_hours_plus",
+            "SELECT id FROM events WHERE at < NOW() + INTERVAL 2 HOUR",
+        ),
+        exp(
+            c("refuse_interval_month", "SELECT NOW() - INTERVAL 1 MONTH"),
+            Expect::Refused("fn:make_interval.month_year"),
         ),
         exp(
             c("refuse_date_format", "SELECT date_format(now(), '%Y')"),

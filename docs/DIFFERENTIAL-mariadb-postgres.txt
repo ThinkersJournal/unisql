@@ -1,4 +1,4 @@
-mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=41
+mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=44
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_two                     same
@@ -71,11 +71,16 @@ PASS ir_insert_ignore           not in IR `insert_option`: an INSERT form other 
 PASS ir_pipes_operator          not in IR `pipes_operator`: MySQL `||` is logical OR (default sql_mode) but the parser gives it concatenation precedence; write OR, or CONCAT()
 PASS ir_null_safe_eq            not in IR `binary_operator`: Spaceship (JSON/array/regex/bitwise operators are not in the IR)
 PASS ir_substring               not in IR `substring`: MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite
+PASS interval_minutes           same
+       -> SELECT "id" FROM "events" WHERE "at" > (NOW() - MAKE_INTERVAL("mins" => 5))
+PASS interval_hours_plus        same
+       -> SELECT "id" FROM "events" WHERE "at" < (NOW() + MAKE_INTERVAL("hours" => 2))
+PASS refuse_interval_month      refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on PostgreSQL yet
 PASS diverge_div_zero           diverges: mariadb returns [[Null]]; postgres errors (query: db error)
        -> SELECT CAST(1 AS DOUBLE PRECISION) / 0
 
-MATRIX (construct, tier) from 34 passing translated cases:
+MATRIX (construct, tier) from 36 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
@@ -84,8 +89,10 @@ MATRIX (construct, tier) from 34 passing translated cases:
   fn:char_length               exact
   fn:coalesce                  exact
   fn:count                     exact
+  fn:make_interval             exact
   fn:max                       exact
   fn:min                       exact
+  fn:now                       exact
   fn:octet_length              exact
   fn:rank                      exact
   fn:string_agg                conditional
@@ -97,6 +104,7 @@ MATRIX (construct, tier) from 34 passing translated cases:
   like                         conditional
   like                         exact
   limit                        exact
+  named_arg                    exact
   null_ordering                exact
   offset                       exact
   order_by                     conditional

@@ -24,14 +24,15 @@ construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postg
 construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
 construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:make_interval.month_year	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
 construct	fn:max	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
 construct	fn:max	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	fn:max.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	allowance=text_collation	postgres
 construct	fn:min	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
 construct	fn:min	mariadb	11.4.13	collation=utf8mb4_uca1400_ai_ci	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::known_bad::known_bad_min_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	fn:min.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates	allowance=text_collation	postgres
-construct	fn:now	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
-construct	fn:now.now_as_text	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	allowance=now_as_text	postgres
+construct	fn:now	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
+construct	fn:now.now_as_text	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours	allowance=now_as_text	postgres
 construct	fn:nullif	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
 construct	fn:replace	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:row_number	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
@@ -44,8 +45,8 @@ construct	fn:sum.order_by	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite
 construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.text_collation	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=text_collation	postgres
-construct	interval_arithmetic	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
-construct	interval_arithmetic.timestamp_arithmetic_as_text	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_secs	allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic	mariadb	11.4.13	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic.timestamp_arithmetic_as_text	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours	allowance=timestamp_arithmetic_as_text	postgres
 construct	join:inner_join	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::cte		postgres
 construct	join:left_join	mariadb	11.4.13	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::left_join		postgres
 construct	json_get_text	mariadb	11.4.13	collation=utf8mb4_bin	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres

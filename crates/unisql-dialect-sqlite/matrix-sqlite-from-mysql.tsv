@@ -14,16 +14,21 @@ construct	fn:char_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite
 construct	fn:coalesce	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
 construct	fn:count	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
 construct	fn:date_format	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_format	no verified mapping for this function on SQLite yet	mysql
+construct	fn:make_interval.month_year	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
 construct	fn:max	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	fn:max.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
 construct	fn:min	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	fn:min.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
+construct	fn:now	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=now_as_text	mysql
+construct	fn:now.now_as_text	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=now_as_text	mysql
 construct	fn:octet_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
 construct	fn:rank	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql
 construct	fn:string_agg	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.aggregate_string_truncation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.order_by	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
 construct	fn:sum	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
+construct	interval_arithmetic	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql
+construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=timestamp_arithmetic_as_text	mysql
 construct	join:inner_join	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte		mysql
 construct	join:left_join	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_join		mysql
 construct	like	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql

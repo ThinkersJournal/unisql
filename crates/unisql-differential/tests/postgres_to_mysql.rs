@@ -419,6 +419,37 @@ fn cases(maria: bool) -> Vec<Case> {
             ),
             vec![Param::Real(1000.0)],
         ),
+        // ---- INTERVAL literals: read as the same make_interval form
+        c(
+            "interval_literal_minute",
+            "SELECT id FROM events WHERE at > now() - interval '1 minute'",
+        ),
+        c(
+            "interval_literal_minutes",
+            "SELECT id FROM events WHERE at > now() - INTERVAL '5 minutes'",
+        ),
+        c(
+            "interval_literal_hours",
+            "SELECT id FROM events WHERE at > now() - interval '2 hours'",
+        ),
+        c(
+            "interval_literal_plus_days",
+            "SELECT id FROM events WHERE at < now() + interval '7 days'",
+        ),
+        exp(
+            c(
+                "refuse_interval_literal_month",
+                "SELECT now() - interval '1 month'",
+            ),
+            Expect::Refused("fn:make_interval.month_year"),
+        ),
+        exp(
+            c(
+                "ir_interval_compound",
+                "SELECT now() - interval '1 day 2 hours'",
+            ),
+            Expect::NotInIr("interval"),
+        ),
         // ---- array parameters bind as JSON text (ParamBinding::JsonArrayText) via JSON_CONTAINS
         p(
             c("any_int_array", "SELECT id FROM users WHERE id = ANY($1)"),

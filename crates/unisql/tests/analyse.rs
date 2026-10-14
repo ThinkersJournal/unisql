@@ -85,6 +85,58 @@ fn source_dialect_constructs_are_normalised() {
 }
 
 #[test]
+fn interval_literals_are_the_make_interval_form() {
+    // PostgreSQL spelling, MySQL spelling and the explicit call are one statement to every target.
+    let pg = analyse(
+        "SELECT 1 FROM e WHERE at > now() - interval '5 minutes'",
+        "postgres",
+    )
+    .unwrap();
+    let my = analyse(
+        "SELECT 1 FROM e WHERE at > NOW() - INTERVAL 5 MINUTE",
+        "mysql",
+    )
+    .unwrap();
+    let call = analyse(
+        "SELECT 1 FROM e WHERE at > now() - make_interval(mins => 5)",
+        "postgres",
+    )
+    .unwrap();
+    for a in [&pg, &my, &call] {
+        assert!(a.unreadable.is_none(), "{:?}", a.unreadable);
+        assert!(
+            a.constructs.contains("interval_arithmetic"),
+            "{:?}",
+            a.constructs
+        );
+        assert!(
+            a.constructs.contains("fn:make_interval"),
+            "{:?}",
+            a.constructs
+        );
+    }
+    let t = translate(
+        "SELECT 1 FROM e WHERE at > NOW() - INTERVAL 5 MINUTE",
+        "mysql",
+        "postgres",
+        &all(),
+    )
+    .unwrap();
+    let flat = t.sql.to_lowercase().replace('"', "");
+    assert!(flat.contains("make_interval(mins => 5)"), "{}", t.sql);
+    // months are read and then refused by the targets, not guessed
+    let month = analyse("SELECT now() - interval '1 month'", "postgres").unwrap();
+    assert!(
+        month.refused.contains("fn:make_interval.month_year"),
+        "{:?}",
+        month.refused
+    );
+    // compound intervals are not in the IR
+    let compound = analyse("SELECT now() - interval '1 day 2 hours'", "postgres").unwrap();
+    assert!(compound.unreadable.is_some());
+}
+
+#[test]
 fn partial_forms_have_their_own_leaves() {
     let n = |sql: &str, src: &str| analyse(sql, src).unwrap().constructs;
     assert!(
