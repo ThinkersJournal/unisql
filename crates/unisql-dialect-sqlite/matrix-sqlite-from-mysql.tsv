@@ -1,26 +1,26 @@
-subject_kind	subject	backend	version	how	evidence	note	from
-construct	cast	sqlite	3.53.2	conditional	proven	allowance=lenient_cast	mysql
-construct	division	sqlite	3.53.2	conditional	proven	allowance=decimal_division_as_float,division_by_zero_is_null	mysql
-construct	division_integer	sqlite	3.53.2	conditional	proven	allowance=integer_division_assumed	mysql
-construct	fn:char_length	sqlite	3.53.2	emulated	proven		mysql
-construct	fn:coalesce	sqlite	3.53.2	native	proven		mysql
-construct	fn:count	sqlite	3.53.2	native	proven		mysql
-construct	fn:date_format.refused	sqlite	3.53.2	absent	declared	no verified mapping for this function on SQLite yet	mysql
-construct	fn:max	sqlite	3.53.2	conditional	proven	allowance=text_collation	mysql
-construct	fn:min	sqlite	3.53.2	conditional	proven	allowance=text_collation	mysql
-construct	fn:octet_length	sqlite	3.53.2	emulated	proven		mysql
-construct	fn:rank	sqlite	3.53.2	native	proven		mysql
-construct	fn:string_agg	sqlite	3.53.2	conditional	proven	allowance=aggregate_string_truncation	mysql
-construct	fn:sum	sqlite	3.53.2	native	proven		mysql
-construct	join:inner_join	sqlite	3.53.2	native	proven		mysql
-construct	join:left_join	sqlite	3.53.2	native	proven		mysql
-construct	like	sqlite	3.53.2	conditional	proven	allowance=like_case_sensitivity_is_connection_setting	mysql
-construct	limit	sqlite	3.53.2	native	proven		mysql
-construct	null_ordering	sqlite	3.53.2	native	proven		mysql
-construct	offset	sqlite	3.53.2	native	proven		mysql
-construct	order_by	sqlite	3.53.2	conditional	proven	allowance=text_collation	mysql
-construct	ordered_comparison	sqlite	3.53.2	conditional	proven	allowance=text_collation	mysql
-construct	recursive_cte	sqlite	3.53.2	native	proven		mysql
-construct	text_comparison	sqlite	3.53.2	conditional	proven	allowance=text_collation	mysql
-construct	upsert.refused	sqlite	3.53.2	absent	declared	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns	mysql
-construct	window_function	sqlite	3.53.2	native	proven		mysql
+subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
+construct	cast	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=lenient_cast	mysql
+construct	division	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=decimal_division_as_float,division_by_zero_is_null	mysql
+construct	division_integer	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=integer_division_assumed	mysql
+construct	fn:char_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite		mysql
+construct	fn:coalesce	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	fn:count	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	fn:date_format.refused	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite	no verified mapping for this function on SQLite yet	mysql
+construct	fn:max	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=text_collation	mysql
+construct	fn:min	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=text_collation	mysql
+construct	fn:octet_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite		mysql
+construct	fn:rank	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	fn:string_agg	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=aggregate_string_truncation	mysql
+construct	fn:sum	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	join:inner_join	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	join:left_join	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	like	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=like_case_sensitivity_is_connection_setting	mysql
+construct	limit	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	null_ordering	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	offset	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	order_by	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=text_collation	mysql
+construct	ordered_comparison	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=text_collation	mysql
+construct	recursive_cte	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql
+construct	text_comparison	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite	allowance=text_collation	mysql
+construct	upsert.refused	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns	mysql
+construct	window_function	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite		mysql

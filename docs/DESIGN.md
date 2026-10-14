@@ -311,7 +311,10 @@ own `Needs`**:
    A statement routed through UniSQL yields a separate id, `rel.source_dialect(d)`: "written in d,
    translated; the target must translate every statement in my catalogue to non-Refused". Neither
    id is added to PersistAnt's list by this note. (My earlier text redefined `rel.dialect`; withdrawn.)
-4. **Matrix: one row schema, owned by PersistAnt; each repo checks in its own file.** Row =
+4. **Matrix: one row schema, owned by PersistAnt; each repo checks in its own file.** (Superseded
+   2026-10-14: the row is now `subject_kind, subject, backend, version, config, enabled, reason,
+   metadata`, PersistAnt DESIGN-KINDS.md section 2.4 at 4fed258e; the `how`/`evidence` text below is
+   the 2026-10-12 agreement, kept for history.) Row =
    `{subject_kind: capability|construct, subject, backend, version, how: native|emulated|absent,
    evidence: proven|declared, note}`. UniSQL's file holds construct rows from its differential layer;
    PersistAnt's holds capability rows from its probes; the reader (the open-time gate in
