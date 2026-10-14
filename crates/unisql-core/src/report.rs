@@ -36,6 +36,7 @@ impl Tier {
 /// this text describes accepted". Rewording a variant's doc is therefore a change of meaning: mint a
 /// new variant (a new name) and leave the old one alone; ids are append-only.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
 pub enum Allowance {
     /// `now()` yields text (`YYYY-MM-DD HH:MM:SS`, UTC) rather than a timestamptz.
     NowAsText,
