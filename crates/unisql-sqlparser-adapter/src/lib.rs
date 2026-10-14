@@ -1147,7 +1147,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
         || or.is_some()
         || table_alias.is_some()
         || overwrite
-        || !asg.is_empty()
+        || (!asg.is_empty() && (!columns.is_empty() || source.is_some()))
         || partitioned.is_some()
         || !after_columns.is_empty()
         || output.is_some()
@@ -1170,8 +1170,19 @@ fn insert(i: sp::Insert) -> R<Statement> {
         sp::TableObject::TableName(n) => object_name(&n)?,
         other => return no("insert_target", &head(&other)),
     };
-    let columns = columns.iter().map(single_name).collect::<R<Vec<_>>>()?;
+    // MySQL `INSERT INTO t SET a = 1, b = 2` is `INSERT INTO t (a, b) VALUES (1, 2)`.
+    let (columns, set_source) = if asg.is_empty() {
+        (
+            columns.iter().map(single_name).collect::<R<Vec<_>>>()?,
+            None,
+        )
+    } else {
+        let set = assignments(asg)?;
+        let (cols, vals): (Vec<_>, Vec<_>) = set.into_iter().map(|a| (a.column, a.value)).unzip();
+        (cols, Some(InsertSource::Values(vec![vals])))
+    };
     let source = match source {
+        None if set_source.is_some() => set_source.unwrap_or(InsertSource::DefaultValues),
         None => InsertSource::DefaultValues,
         Some(q) => {
             let q = *q;

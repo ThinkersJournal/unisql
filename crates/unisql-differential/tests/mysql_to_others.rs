@@ -406,6 +406,17 @@ fn cases(dir: Dir) -> Vec<Case> {
             c("refuse_interval_month", "SELECT NOW() - INTERVAL 1 MONTH"),
             Expect::Refused("fn:make_interval.month_year"),
         ),
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c("insert_set", "INSERT INTO kv SET k = 'sx', v = 'y', n = 7")
+        },
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "insert_set_partial_columns",
+                "INSERT INTO kv SET k = 'sy', n = 1 + 1",
+            )
+        },
         c(
             "curdate_is_current_date",
             "SELECT CAST(CURDATE() AS CHAR) FROM users WHERE id = 1",

@@ -72,7 +72,8 @@ refusal for another separator).
 
 Gaps, by what closing them takes (statement ids in the corpus in parentheses):
 
-- **Reader (not in the IR), would be mappable:** `INSERT .. SET` (`insert_set`); `REPLACE INTO`
+- **Reader, done at 0.17.5:** `INSERT .. SET` (a reader desugar to `(cols) VALUES (..)`).
+- **Reader (not in the IR), would be mappable (each needs an IR field: an AST break, 0.18.0):** `REPLACE INTO`
   (`replace_into`; with `INSERT OR REPLACE`, one IR form); `JOIN .. USING` (`join_using`) and
   `NATURAL JOIN` (`natural_join`); `UPDATE/DELETE .. ORDER BY .. LIMIT` (`update_limit`,
   `delete_limit`: PostgreSQL has no direct form, needs a key subquery, SQLite needs a compile
