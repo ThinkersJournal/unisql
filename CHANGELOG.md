@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate; bump in this PR)
+## 0.14.0 - 2026-10-14
 
 - **The last three DML forms the Humboldt/auth corpus could not read** (one statement each):
   `ARRAY[a, b]` (`Expr::ArrayLiteral`, leaf `array_literal`), `EXTRACT(field FROM x)` (`Expr::Extract`,
