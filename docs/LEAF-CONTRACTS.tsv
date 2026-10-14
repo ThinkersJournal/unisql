@@ -25,12 +25,14 @@ boolean_literal	TRUE and FALSE literals evaluate and read back with the source's
 cast.to_bigint	CAST to a 64-bit integer returns the source's value; a malformed or out-of-range operand raises an error as at the source.
 cast.to_double	CAST to a double-precision float returns the source's value; a malformed operand raises an error as at the source.
 cast.to_integer	CAST to a 32-bit integer returns the source's value; a malformed or out-of-range operand raises an error as at the source.
+cast.to_timestamp	CAST to a timestamp without time zone yields the timestamp of the operand (a timestamptz is converted to the session zone); a malformed value raises an error.
 cast.to_text	CAST to text yields the source's text form of the operand.
 cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
 array_literal	ARRAY[a, b, ...] is an array of the elements in order. Refused where there is no array type.
 extract.day	EXTRACT(DAY FROM x) is the day of the month of x.
 extract.dow	EXTRACT(DOW FROM x) is the day of the week of x, 0 = Sunday. Refused where no mapping is verified.
-extract.epoch.interval	EXTRACT(EPOCH FROM a - b) is the length of the interval in seconds, with its fraction. Refused where no mapping is verified.
+extract.week	EXTRACT(WEEK FROM x) is the ISO 8601 week number of x. Refused where no mapping is verified.
+extract.epoch.interval	EXTRACT(EPOCH FROM a - b) is the number of seconds between the timestamps b and a (a - b).
 extract.hour	EXTRACT(HOUR FROM x) is the hour (0-23) of x.
 extract.minute	EXTRACT(MINUTE FROM x) is the minute (0-59) of x.
 extract.month	EXTRACT(MONTH FROM x) is the month (1-12) of x.
@@ -52,6 +54,12 @@ filter_clause	`agg(...) FILTER (WHERE p)` aggregates only the rows for which p i
 fn:avg	avg() over non-NULL inputs gives the source's mean and NULL over no rows.
 fn:btrim	btrim(s) removes leading and trailing spaces.
 fn:char_length	char_length(s) is the number of characters of s.
+fn:date_trunc.day	date_trunc('day', ts) is ts cut to the start of its day.
+fn:date_trunc.hour	date_trunc('hour', ts) is ts cut to the start of its hour.
+fn:date_trunc.minute	date_trunc('minute', ts) is ts cut to the start of its minute.
+fn:date_trunc.month	date_trunc('month', ts) is ts cut to the start of its month.
+fn:date_trunc.week	date_trunc('week', ts) is ts cut to the start of its ISO week. Refused where no mapping is verified.
+fn:date_trunc.year	date_trunc('year', ts) is ts cut to the start of its year.
 fn:gen_random_uuid	gen_random_uuid() is a random version-4 UUID in lower-case text form (8-4-4-4-12, version nibble 4, variant 8/9/a/b); two calls give different values.
 fn:coalesce	coalesce(a, b, ...) returns the first non-NULL argument.
 fn:concat	concat(a, b, ...) treats NULL arguments as empty strings. Refused where the target's CONCAT returns NULL if any argument is NULL.
@@ -88,6 +96,7 @@ fn:sum	sum(x) over non-NULL inputs gives the source's total and NULL over no row
 fn:sum.order_by	sum(x ORDER BY k): an aggregate with an ORDER BY clause. Refused by every target that cannot honour the ordering inside the aggregate.
 fn:to_regclass	to_regclass(name) resolves a relation name in the catalog. Refused where there is no such catalog.
 fn:typeof	typeof(x) names the storage class of x. Refused: no verified mapping.
+fn:to_timestamp	to_timestamp(seconds) is the timestamp that many seconds after 1970-01-01 00:00:00 UTC.
 fn:upper	upper(s) maps every character of s to upper case.
 ilike	`a ILIKE p` is a case-insensitive LIKE with `%` and `_` wildcards.
 interval_arithmetic	`ts +/- make_interval(secs => n)` shifts a timestamp by n seconds.

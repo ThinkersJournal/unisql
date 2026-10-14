@@ -355,6 +355,51 @@ impl Target for Sqlite {
                     order.as_deref(),
                 ))
             }
+            // to_timestamp(seconds): datetime(x, 'unixepoch'), text in UTC, whole seconds.
+            "to_timestamp" if args.len() == 1 => {
+                ctx.note(
+                    "fn:to_timestamp",
+                    Tier::Conditional,
+                    "datetime(x, 'unixepoch'): text YYYY-MM-DD HH:MM:SS in UTC",
+                    Some(Allowance::TimestampAsText),
+                )?;
+                ctx.note(
+                    "fn:to_timestamp",
+                    Tier::Conditional,
+                    "a fraction of a second is dropped",
+                    Some(Allowance::TimestampWholeSeconds),
+                )?;
+                Ok(format!("datetime({}, 'unixepoch')", args[0]))
+            }
+            // date_trunc('<field>', ts): the timestamp text cut at the field.
+            "date_trunc"
+                if args.len() == 2 && unisql_core::target::date_trunc_field(f).is_some() =>
+            {
+                let field = unisql_core::target::date_trunc_field(f).unwrap_or_default();
+                let fmt = match field.as_str() {
+                    "year" => "%Y-01-01 00:00:00",
+                    "month" => "%Y-%m-01 00:00:00",
+                    "day" => "%Y-%m-%d 00:00:00",
+                    "hour" => "%Y-%m-%d %H:00:00",
+                    "minute" => "%Y-%m-%d %H:%M:00",
+                    _ => {
+                        return Err(ctx.refuse(
+                            &format!("fn:date_trunc.{field}"),
+                            &format!(
+                                "no verified mapping for date_trunc('{field}', ..) on SQLite yet"
+                            ),
+                            &["truncate in the application"],
+                        ));
+                    }
+                };
+                ctx.note(
+                    format!("fn:date_trunc.{field}"),
+                    Tier::Conditional,
+                    "strftime cuts the timestamp text; the result is text",
+                    Some(Allowance::TimestampAsText),
+                )?;
+                Ok(format!("strftime('{fmt}', {})", args[1]))
+            }
             // Same construction as on MySQL, from randomblob(): verified over 2000 values.
             "gen_random_uuid" => {
                 ctx.note(
@@ -397,6 +442,24 @@ impl Target for Sqlite {
             SqlType::Real | SqlType::Double => "REAL",
             SqlType::Numeric { .. } => "NUMERIC",
             SqlType::Text | SqlType::Varchar(_) => "TEXT",
+            // A timestamp without zone is the text `YYYY-MM-DD HH:MM:SS` already (every timestamp
+            // is text here), so the cast keeps the text. Verified against PostgreSQL's value
+            // through its epoch on fixed timestamps.
+            SqlType::Timestamp { with_tz: false } => {
+                ctx.note(
+                    "cast.to_timestamp",
+                    Tier::Conditional,
+                    "a timestamp is text on SQLite: the cast keeps the text",
+                    Some(Allowance::TimestampAsText),
+                )?;
+                ctx.note(
+                    "cast.to_timestamp",
+                    Tier::Conditional,
+                    "SQLite casts leniently: a malformed value is kept instead of raising an error",
+                    Some(Allowance::LenientCast),
+                )?;
+                return Ok(format!("CAST({expr} AS TEXT)"));
+            }
             other => {
                 return Err(ctx.refuse(
                     &format!("cast.to_{}", other.leaf()),
@@ -492,6 +555,19 @@ impl Target for Sqlite {
             )?;
         }
         Ok(format!("CAST(strftime('{fmt}', {expr}) AS INTEGER)"))
+    }
+
+    /// Whole seconds between two timestamp texts.
+    fn epoch_of_difference(&self, a: &str, b: &str, ctx: &mut Ctx) -> R<Option<String>> {
+        ctx.note(
+            "extract.epoch.interval",
+            Tier::Conditional,
+            "whole seconds between the two timestamp texts (strftime('%s'))",
+            Some(Allowance::EpochWholeSeconds),
+        )?;
+        Ok(Some(format!(
+            "(CAST(strftime('%s', {a}) AS INTEGER) - CAST(strftime('%s', {b}) AS INTEGER))"
+        )))
     }
 
     fn array_literal(&self, _items: &[String], ctx: &mut Ctx) -> R<String> {

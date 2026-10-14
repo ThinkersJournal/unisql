@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=117
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=121
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -200,12 +200,19 @@ PASS extract_fields               same
        -> SELECT `id`, CAST(EXTRACT(YEAR FROM `at`) AS SIGNED), CAST(EXTRACT(MONTH FROM `at`) AS SIGNED), CAST(EXTRACT(DAY FROM `at`) AS SIGNED), CAST(EXTRACT(HOUR FROM `at`) AS SIGNED), CAST(EXTRACT(MINUTE FROM `at`) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
 PASS extract_epoch                same
        -> SELECT `id`, CAST(UNIX_TIMESTAMP(`at`) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
+PASS to_timestamp_epoch           same
+       -> SELECT CAST(EXTRACT(YEAR FROM FROM_UNIXTIME(1592228730)) AS SIGNED), CAST(EXTRACT(HOUR FROM FROM_UNIXTIME(1592228730)) AS SIGNED), CAST(UNIX_TIMESTAMP(FROM_UNIXTIME(1592228730)) AS SIGNED)
+PASS date_trunc_fields            same
+       -> SELECT `id`, CAST(EXTRACT(MINUTE FROM CAST(DATE_FORMAT(`at`, '%Y-%m-%d %H:00:00') AS DATETIME)) AS SIGNED), CAST(EXTRACT(HOUR FROM CAST(DATE_FORMAT(`at`, '%Y-%m-%d 00:00:00') AS DATETIME)) AS SIGNED), CAST(EXTRACT(DAY FROM CAST(DATE_FORMAT(`at`, '%Y-%m-01 00:00:00') AS DATETIME)) AS SIGNED), CAST(EXTRACT(MONTH FROM CAST(DATE_FORMAT(`at`, '%Y-01-01 00:00:00') AS DATETIME)) AS SIGNED), CAST(UNIX_TIMESTAMP(CAST(DATE_FORMAT(`at`, '%Y-%m-%d %H:%i:00') AS DATETIME)) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
+PASS epoch_of_difference          same
+       -> SELECT `a`.`id`, `b`.`id`, CAST((TIMESTAMPDIFF(MICROSECOND, `b`.`at`, `a`.`at`) / 1000000) AS SIGNED) FROM `fixed_ts` AS `a` INNER JOIN `fixed_ts` AS `b` ON `a`.`id` < `b`.`id` ORDER BY (`a`.`id` IS NULL), `a`.`id`, (`b`.`id` IS NULL), `b`.`id`
+PASS refuse_date_trunc_week       refused `fn:date_trunc.week`: no verified mapping for date_trunc('week', ..) on MySQL/MariaDB yet
 PASS gen_random_uuid_v4           360 values: all v4-shaped and distinct; control rejected
        -> SELECT CAST(LOWER(CONCAT(HEX(RANDOM_BYTES(4)), '-', HEX(RANDOM_BYTES(2)), '-4', SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', ELT(1 + (ORD(RANDOM_BYTES(1)) & 3), '8', '9', 'a', 'b'), SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', HEX(RANDOM_BYTES(6)))) AS CHAR) FROM `users`
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 87 passing translated cases:
+MATRIX (construct, tier) from 90 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_bigint               conditional
@@ -218,6 +225,7 @@ MATRIX (construct, tier) from 87 passing translated cases:
   division_integer             conditional
   extract.day                  exact
   extract.epoch                conditional
+  extract.epoch.interval       exact
   extract.hour                 exact
   extract.minute               exact
   extract.month                exact
@@ -228,6 +236,11 @@ MATRIX (construct, tier) from 87 passing translated cases:
   fn:coalesce                  exact
   fn:count                     exact
   fn:current_date              exact
+  fn:date_trunc.day            exact
+  fn:date_trunc.hour           exact
+  fn:date_trunc.minute         exact
+  fn:date_trunc.month          exact
+  fn:date_trunc.year           exact
   fn:gen_random_uuid           emulated
   fn:length                    emulated
   fn:ltrim                     exact
@@ -241,6 +254,7 @@ MATRIX (construct, tier) from 87 passing translated cases:
   fn:string_agg                conditional
   fn:string_agg.order_by       exact
   fn:sum                       exact
+  fn:to_timestamp              exact
   ilike                        conditional
   interval_arithmetic          conditional
   join:inner_join              exact

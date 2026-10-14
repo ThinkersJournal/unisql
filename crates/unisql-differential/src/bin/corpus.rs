@@ -13,6 +13,7 @@ const ALL: &[Allowance] = &[
     Allowance::NowAsText,
     Allowance::TimestampAsText,
     Allowance::EpochWholeSeconds,
+    Allowance::TimestampWholeSeconds,
     Allowance::PipesAsLogicalOr,
     Allowance::IgnoreCoversOnlyUniqueConflicts,
     Allowance::SubstringStartAssumedPositive,
@@ -41,6 +42,8 @@ fn main() {
         eprintln!("schema from {path}: {} statements skipped", d.skipped.len());
         all = all.with_schema(d.schema);
     }
+    // The dialect the statements are written in (default postgres); `UNISQL_SOURCE=sqlite|mysql`.
+    let source = std::env::var("UNISQL_SOURCE").unwrap_or_else(|_| "postgres".to_string());
     let target = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "sqlite".to_string());
@@ -52,7 +55,7 @@ fn main() {
         // it a `not_in_ir  expression` row cannot be told apart from its siblings.
         let mut note = String::new();
         let (status, detail, allowances): (&str, String, Vec<String>) =
-            match unisql::translate(&sql, "postgres", &target, &all) {
+            match unisql::translate(&sql, &source, &target, &all) {
                 Ok(t) => {
                     let needed: Vec<String> = t
                         .report

@@ -70,6 +70,7 @@ const ALL: &[A] = &[
     A::NowAsText,
     A::TimestampAsText,
     A::EpochWholeSeconds,
+    A::TimestampWholeSeconds,
     A::TimestampArithmeticAsText,
     A::IntegerDivisionAssumed,
     A::UpsertAnyUniqueKey,
@@ -749,6 +750,13 @@ fn cases(maria: bool) -> Vec<Case> {
         "extract_epoch",
         "SELECT id, CAST(EXTRACT(EPOCH FROM at) AS BIGINT) FROM fixed_ts ORDER BY id",
     )));
+    v.push(c("to_timestamp_epoch", "SELECT CAST(EXTRACT(YEAR FROM to_timestamp(1592228730)) AS INTEGER), CAST(EXTRACT(HOUR FROM to_timestamp(1592228730)) AS INTEGER), CAST(EXTRACT(EPOCH FROM to_timestamp(1592228730)) AS BIGINT)"));
+    v.push(ord(c("date_trunc_fields", "SELECT id, CAST(EXTRACT(MINUTE FROM date_trunc('hour', at)) AS INTEGER), CAST(EXTRACT(HOUR FROM date_trunc('day', at)) AS INTEGER), CAST(EXTRACT(DAY FROM date_trunc('month', at)) AS INTEGER), CAST(EXTRACT(MONTH FROM date_trunc('year', at)) AS INTEGER), CAST(EXTRACT(EPOCH FROM date_trunc('minute', at)) AS BIGINT) FROM fixed_ts ORDER BY id")));
+    v.push(ord(c("epoch_of_difference", "SELECT a.id, b.id, CAST(EXTRACT(EPOCH FROM (a.at - b.at)) AS BIGINT) FROM fixed_ts a JOIN fixed_ts b ON a.id < b.id ORDER BY a.id, b.id")));
+    v.push(exp(
+        c("refuse_date_trunc_week", "SELECT date_trunc('week', now())"),
+        Expect::Refused("fn:date_trunc.week"),
+    ));
     v.push(exp(
         c(
             "gen_random_uuid_v4",
