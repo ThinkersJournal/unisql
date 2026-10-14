@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate; bump in this PR)
+## 0.17.0 - 2026-10-14
 
 - **Table-valued functions in FROM** (`FROM generate_series(1, 3) AS g`, `FROM t, jsonb_object_keys(doc)
   AS k`; 4 corpus statements, until now `not_in_ir`) are in the IR (`TableRef::Function`, breaking for
