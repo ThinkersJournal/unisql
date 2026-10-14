@@ -618,6 +618,10 @@ impl Target for Mysql {
         }
     }
 
+    fn needs_conflict_key(&self) -> bool {
+        false
+    }
+
     fn upsert_clause(
         &self,
         _conflict_cols: &[String],

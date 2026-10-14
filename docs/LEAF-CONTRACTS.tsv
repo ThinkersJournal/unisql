@@ -130,5 +130,6 @@ trim.multi_char	trim with a set of several characters. Refused where the target 
 update_from	UPDATE ... FROM joins other tables into the update. Refused where unsupported.
 upsert	INSERT ... ON CONFLICT (key) DO UPDATE/NOTHING resolves a conflict on the stated key.
 upsert.no_conflict_key	An upsert that states no conflict key. Refused where the target needs the key columns.
+upsert.key_from_schema	A MySQL ON DUPLICATE KEY UPDATE that states no key is written with the only unique key the schema states for the table as the conflict target. With several keys, or none stated, it is refused (upsert.no_conflict_key). Sound only if the stated keys are all the table has.
 upsert_where	ON CONFLICT ... DO UPDATE ... WHERE applies the update only when the condition holds. Refused where there is no WHERE on the conflict action.
 window_function	`f(...) OVER (PARTITION BY ... ORDER BY ...)` evaluates over each partition in order.

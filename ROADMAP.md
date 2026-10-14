@@ -95,11 +95,13 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
   `datetime('now')`), `CURDATE()`/`DATE()`/`DATE_FORMAT`/`UNIX_TIMESTAMP`/`DATEDIFF`/`TIMESTAMPDIFF`,
   `CONCAT_WS`, `LEFT`/`RIGHT`/`LPAD`/`REPEAT`/`REVERSE`, `MD5`/`SHA1`/`SHA2`, `FIELD`, `RAND`,
   `UUID` (v1, not v4), `LAST_INSERT_ID`/`ROW_COUNT`/`VERSION`/`SLEEP`, the JSON function family.
-- **`ON DUPLICATE KEY UPDATE` to PostgreSQL/SQLite is refused** (`upsert.no_conflict_key`: 3
-  auth-framework statements): the conflict target is not in the statement. The key is in the DDL:
-  `Schema` could carry primary and unique keys, and the target then writes `ON CONFLICT (key)` for
-  the unambiguous (single unique key) case. This is the highest-value item on the list for a real
-  MySQL-backed consumer: it is all 3 of auth-framework's upserts.
+- **`ON DUPLICATE KEY UPDATE` to PostgreSQL/SQLite: done at 0.17.3.** `Schema` carries unique keys
+  (`Schema::with_unique_key`, or read by `schema_from_ddl` from `PRIMARY KEY`, `UNIQUE`, `CREATE
+  UNIQUE INDEX`); a statement with no stated key is written `ON CONFLICT (key)` when the table has
+  exactly one stated key (leaf `upsert.key_from_schema`), and still refused (`upsert.no_conflict_key`,
+  reason names the schema) for several keys, none, or an index the reader could not express. All 3
+  auth-framework upserts translate and are accepted by PostgreSQL and SQLite. Unqualified columns in
+  the SET list are written `table.col` (PostgreSQL finds them ambiguous with `EXCLUDED`).
 - **`text_collation` on almost everything:** the schema's string columns carry
   `utf8mb4_unicode_ci` (stated), so every comparison needs the allowance by design.
 

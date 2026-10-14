@@ -68,7 +68,13 @@ fn every_matrix_leaf_has_a_contract_and_every_contract_a_leaf() {
     }
     assert!(missing.is_empty(), "leaves with no contract: {missing:?}");
 
-    let orphans: Vec<_> = contracts.iter().filter(|c| !leaves.contains(*c)).collect();
+    // Leaves reached only when the caller supplies a `Schema` are exercised by schema cases, and
+    // schema cases are not filed in the matrix (its `config` is `schema=none`).
+    const SCHEMA_ONLY: &[&str] = &["upsert.key_from_schema"];
+    let orphans: Vec<_> = contracts
+        .iter()
+        .filter(|c| !leaves.contains(*c) && !SCHEMA_ONLY.contains(&c.as_str()))
+        .collect();
     assert!(
         orphans.is_empty(),
         "contract lines for no leaf: {orphans:?}"

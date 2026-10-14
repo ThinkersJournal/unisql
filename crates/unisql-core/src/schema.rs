@@ -16,7 +16,7 @@
 //! `public.users`: UniSQL does not know the search path, so an unqualified/qualified mismatch is
 //! "unknown", never a guess.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::ast::{Expr, Name, TableRef};
 
@@ -83,6 +83,11 @@ impl Column {
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
 pub struct Schema {
     tables: BTreeMap<Vec<String>, BTreeMap<String, Column>>,
+    /// Unique keys (primary or unique constraint, unique index) per table, columns in key order.
+    keys: BTreeMap<Vec<String>, Vec<Vec<String>>>,
+    /// Tables whose key list must not be trusted as complete (an index the reader could not
+    /// interpret, such as a partial or expression index).
+    keys_unreliable: BTreeSet<Vec<String>>,
 }
 
 impl Schema {
@@ -109,16 +114,64 @@ impl Schema {
         self.tables.entry(table).or_default().insert(column, c);
     }
 
-    /// Forget one column (an `ALTER TABLE .. DROP COLUMN`).
+    /// Forget one column (an `ALTER TABLE .. DROP COLUMN`); a key that used it goes with it.
     pub fn drop_column(&mut self, table: &Name, column: &str) {
         if let Some(t) = self.tables.get_mut(&table.0) {
             t.remove(column);
+        }
+        if let Some(ks) = self.keys.get_mut(&table.0) {
+            ks.retain(|k| !k.iter().any(|c| c == column));
         }
     }
 
     /// Forget a table (a `DROP TABLE`).
     pub fn drop_table(&mut self, table: &Name) {
         self.tables.remove(&table.0);
+        self.keys.remove(&table.0);
+        self.keys_unreliable.remove(&table.0);
+    }
+
+    /// State one unique key (primary key, unique constraint or unique index, **not** a partial or
+    /// expression index) of the unqualified table `table`, columns in key order. **State every unique
+    /// key the table has**: the translator treats the stated keys as the complete list. A table with
+    /// no stated key has unknown keys, not "no keys".
+    pub fn with_unique_key(mut self, table: &str, columns: &[&str]) -> Self {
+        self.add_unique_key(
+            vec![table.to_string()],
+            columns.iter().map(|c| c.to_string()).collect(),
+        );
+        self
+    }
+
+    /// The mutating form of [`Schema::with_unique_key`] (qualified table name, owned columns).
+    pub fn add_unique_key(&mut self, table: Vec<String>, columns: Vec<String>) {
+        let ks = self.keys.entry(table).or_default();
+        if !ks.contains(&columns) {
+            ks.push(columns);
+        }
+    }
+
+    /// Say that this table has a unique index the reader could not express as a column list, so
+    /// its key list is incomplete and no conflict key is derived from it.
+    pub fn mark_keys_unreliable(&mut self, table: Vec<String>) {
+        self.keys_unreliable.insert(table);
+    }
+
+    /// As [`Schema::mark_keys_unreliable`] for every table (a `DROP INDEX` names no table).
+    pub fn mark_all_keys_unreliable(&mut self) {
+        let all: Vec<Vec<String>> = self.keys.keys().cloned().collect();
+        self.keys_unreliable.extend(all);
+    }
+
+    /// The stated unique keys of `table`; `None` when none were stated or the list is unreliable.
+    pub fn unique_keys(&self, table: &Name) -> Option<&[Vec<String>]> {
+        if self.keys_unreliable.contains(&table.0) {
+            return None;
+        }
+        self.keys
+            .get(&table.0)
+            .map(Vec::as_slice)
+            .filter(|k| !k.is_empty())
     }
 
     pub fn is_empty(&self) -> bool {
@@ -177,6 +230,11 @@ impl<'a> Scopes<'a> {
             collect(t, &mut scope);
         }
         self.stack.push(scope);
+    }
+
+    /// The stated unique keys of a base table (see [`Schema::unique_keys`]).
+    pub fn unique_keys(&self, table: &Name) -> Option<&'a [Vec<String>]> {
+        self.schema?.unique_keys(table)
     }
 
     pub fn pop(&mut self) {

@@ -18,6 +18,10 @@ pub struct Ctx<'a> {
     pub param_order: Vec<u32>,
     /// True while printing the SET list of an upsert (so `excluded.c` can be spelled per target).
     pub in_upsert: bool,
+    /// The printed (last-part) name of the INSERT's table while `in_upsert`: an unqualified column in
+    /// a MySQL-written SET list names the existing row, which PostgreSQL (ambiguous with `EXCLUDED`)
+    /// needs spelled `table.col`.
+    pub(crate) upsert_table: Option<String>,
     /// Printed `ORDER BY` of the aggregate call being printed, for the function hook to consume.
     /// A hook that does not `take()` it cannot honour the order, and the printer then refuses.
     pub agg_order: Option<String>,
@@ -41,6 +45,7 @@ impl<'a> Ctx<'a> {
             max_param: 0,
             param_order: Vec::new(),
             in_upsert: false,
+            upsert_table: None,
             agg_order: None,
             interval_notation: false,
             array_params: Default::default(),
@@ -389,6 +394,13 @@ pub trait Target {
         Ok(s)
     }
 
+    /// Whether an upsert must name its conflict key columns (PostgreSQL and SQLite do; MySQL and
+    /// MariaDB fire on any unique key). When it does and the source stated none, the printer takes
+    /// the key from the schema if the table has exactly one stated unique key.
+    fn needs_conflict_key(&self) -> bool {
+        true
+    }
+
     /// How the SET list of an upsert refers to the value that was proposed for insertion.
     fn excluded_ref(&self, column_quoted: &str) -> String {
         format!("EXCLUDED.{column_quoted}")
@@ -408,8 +420,8 @@ pub trait Target {
         if !do_nothing && conflict_cols.is_empty() {
             return Err(ctx.refuse(
                 "upsert.no_conflict_key",
-                "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns",
-                &["state the conflict key columns in the statement"],
+                "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns, and the schema does not state exactly one unique key for the table",
+                &["state the conflict key columns in the statement", "or give the schema the table's unique key (Schema::with_unique_key, or schema_from_ddl)"],
             ));
         }
         ctx.note(

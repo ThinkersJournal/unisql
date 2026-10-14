@@ -202,3 +202,107 @@ fn quoted_identifiers_in_ddl_are_read() {
     // PostgreSQL keeps a quoted name's case.
     assert_eq!(p.schema.get(&t, "Key").unwrap().class, ColumnClass::Text);
 }
+
+const AUTH_MYSQL: &str = "
+CREATE TABLE IF NOT EXISTS sessions (
+    session_id VARCHAR(255) NOT NULL PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    data JSON NOT NULL,
+    expires_at DATETIME(6),
+    INDEX idx_sessions_user_id (user_id)
+);
+CREATE TABLE kv_store (`key` VARCHAR(512) NOT NULL PRIMARY KEY, value LONGBLOB NOT NULL);
+CREATE TABLE two (a INT PRIMARY KEY, b INT, c INT, UNIQUE KEY ub (b));
+CREATE TABLE composite (a INT, b INT, v INT, PRIMARY KEY (a, b));
+CREATE TABLE partial (a INT PRIMARY KEY, b INT);
+CREATE UNIQUE INDEX p_b ON partial (b) WHERE b > 0;
+CREATE TABLE ix (a INT, b INT);
+CREATE UNIQUE INDEX ix_a ON ix (a);
+CREATE TABLE nokey (a INT, b INT);
+";
+
+#[test]
+fn ddl_reads_unique_keys_and_an_upsert_without_a_target_takes_the_sole_key() {
+    use unisql::{Allowance, translate};
+    let d = schema_from_ddl(AUTH_MYSQL, "mysql").unwrap();
+    let keys = |t: &str| d.schema.unique_keys(&Name::simple(t)).map(|k| k.to_vec());
+    assert_eq!(keys("sessions"), Some(vec![vec!["session_id".to_string()]]));
+    assert_eq!(keys("kv_store"), Some(vec![vec!["key".to_string()]]));
+    assert_eq!(keys("two").map(|k| k.len()), Some(2));
+    assert_eq!(
+        keys("composite"),
+        Some(vec![vec!["a".to_string(), "b".to_string()]])
+    );
+    assert_eq!(keys("partial"), None, "a partial unique index: unreliable");
+    assert_eq!(keys("ix"), Some(vec![vec!["a".to_string()]]));
+    assert_eq!(keys("nokey"), None);
+
+    let opts = Allowance::ALL
+        .iter()
+        .fold(Options::default(), |o, a| o.with(*a))
+        .with_schema(d.schema);
+    let go = |sql: &str, target: &str| translate(sql, "mysql", target, &opts);
+    let up = "INSERT INTO kv_store (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)";
+    assert_eq!(
+        go(up, "postgres").unwrap().sql,
+        r#"INSERT INTO "kv_store" ("key", "value") VALUES ($1, $2) ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value""#
+    );
+    assert!(
+        go(up, "sqlite")
+            .unwrap()
+            .sql
+            .contains(r#"ON CONFLICT ("key") DO UPDATE"#)
+    );
+    // a composite key is written in key order
+    let c = go(
+        "INSERT INTO composite (a, b, v) VALUES (1, 2, 3) ON DUPLICATE KEY UPDATE v = VALUES(v)",
+        "postgres",
+    )
+    .unwrap();
+    assert!(c.sql.contains(r#"ON CONFLICT ("a", "b")"#), "{}", c.sql);
+    // several unique keys, an unreliable list, no stated key: refused with the same leaf
+    for t in ["two", "partial", "nokey"] {
+        let r = go(
+            &format!("INSERT INTO {t} (a, b) VALUES (1, 2) ON DUPLICATE KEY UPDATE b = VALUES(b)"),
+            "postgres",
+        );
+        assert!(
+            matches!(&r, Err(unisql::Error::Untranslatable(u)) if u.construct == "upsert.no_conflict_key"),
+            "{t}: {r:?}"
+        );
+    }
+    // MySQL as target is untouched (it fires on any key and needs none)
+    let m = go(up, "mariadb").unwrap();
+    assert!(m.sql.contains("ON DUPLICATE KEY UPDATE"), "{}", m.sql);
+    // DROP INDEX makes every table's list unreliable (it names no table)
+    let d2 = schema_from_ddl(
+        "CREATE TABLE t (a INT PRIMARY KEY); DROP INDEX some_idx ON other;",
+        "mysql",
+    )
+    .unwrap();
+    assert_eq!(d2.schema.unique_keys(&Name::simple("t")), None);
+}
+
+#[test]
+fn upsert_set_columns_are_qualified_with_the_table_but_a_subquerys_are_not() {
+    use unisql::translate;
+    let s = schema_from_ddl(
+        "CREATE TABLE kv (k VARCHAR(9) PRIMARY KEY, n INT);",
+        "mysql",
+    )
+    .unwrap();
+    let o = Options::default().with_schema(s.schema);
+    let t = translate(
+        "INSERT INTO kv (k, n) VALUES (?, 1) ON DUPLICATE KEY UPDATE n = n + (SELECT MAX(n) FROM kv)",
+        "mysql",
+        "postgres",
+        &o,
+    )
+    .unwrap();
+    assert!(
+        t.sql
+            .contains(r#"SET "n" = "kv"."n" + (SELECT MAX("n") FROM "kv")"#),
+        "{}",
+        t.sql
+    );
+}

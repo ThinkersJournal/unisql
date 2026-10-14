@@ -372,6 +372,28 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
             schema.drop_table(&name);
             for c in &ct.columns {
                 schema.set_column(name.0.clone(), ident(&c.name), column_from_def(c));
+                for o in &c.options {
+                    if matches!(
+                        o.option,
+                        sp::ColumnOption::PrimaryKey(_) | sp::ColumnOption::Unique(_)
+                    ) {
+                        schema.add_unique_key(name.0.clone(), vec![ident(&c.name)]);
+                    }
+                }
+            }
+            for con in &ct.constraints {
+                add_constraint_key(schema, &name, con);
+            }
+        }
+        sp::Statement::CreateIndex(ci) => {
+            let Ok(name) = object_name(&ci.table_name) else {
+                return;
+            };
+            if ci.unique {
+                match index_columns(&ci.columns) {
+                    Some(cols) if ci.predicate.is_none() => schema.add_unique_key(name.0, cols),
+                    _ => schema.mark_keys_unreliable(name.0),
+                }
             }
         }
         sp::Statement::AlterTable(at) => {
@@ -386,6 +408,13 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
                             ident(&column_def.name),
                             column_from_def(&column_def),
                         );
+                    }
+                    sp::AlterTableOperation::AddConstraint { constraint, .. } => {
+                        add_constraint_key(schema, &name, &constraint);
+                    }
+                    sp::AlterTableOperation::DropPrimaryKey { .. }
+                    | sp::AlterTableOperation::DropConstraint { .. } => {
+                        schema.mark_keys_unreliable(name.0.clone());
                     }
                     sp::AlterTableOperation::DropColumn { column_names, .. } => {
                         for c in &column_names {
@@ -405,6 +434,10 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
             }
         }
         sp::Statement::Drop {
+            object_type: sp::ObjectType::Index,
+            ..
+        } => schema.mark_all_keys_unreliable(),
+        sp::Statement::Drop {
             object_type: sp::ObjectType::Table,
             names,
             ..
@@ -416,6 +449,30 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
             }
         }
         _ => {}
+    }
+}
+
+/// The column names of an index definition when every part is a plain column.
+fn index_columns(cols: &[sp::IndexColumn]) -> Option<Vec<String>> {
+    cols.iter()
+        .map(|c| match &c.column.expr {
+            sp::Expr::Identifier(i) => Some(ident(i)),
+            _ => None,
+        })
+        .collect()
+}
+
+/// A PRIMARY KEY or UNIQUE table constraint: its columns are a unique key (an index over an
+/// expression makes the table's key list unreliable).
+fn add_constraint_key(schema: &mut Schema, table: &Name, con: &sp::TableConstraint) {
+    let cols = match con {
+        sp::TableConstraint::PrimaryKey(p) => &p.columns,
+        sp::TableConstraint::Unique(u) => &u.columns,
+        _ => return,
+    };
+    match index_columns(cols) {
+        Some(c) => schema.add_unique_key(table.0.clone(), c),
+        None => schema.mark_keys_unreliable(table.0.clone()),
     }
 }
 
