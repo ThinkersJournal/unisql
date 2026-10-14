@@ -136,6 +136,20 @@ impl Target for Mysql {
         }
     }
 
+    fn regexp(&self, lhs: &str, rhs: &str, negated: bool, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            "regexp",
+            Tier::Conditional,
+            "regular-expression syntax and case sensitivity differ between engines; exact only for \
+             patterns in the common subset (MySQL matching also follows the column collation)",
+            Some(Allowance::RegexpFlavor),
+        )?;
+        Ok(format!(
+            "{lhs} {}REGEXP {rhs}",
+            if negated { "NOT " } else { "" }
+        ))
+    }
+
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
         let call = |name: &str, a: &[String]| format!("{}({})", name.to_uppercase(), a.join(", "));

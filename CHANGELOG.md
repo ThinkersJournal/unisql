@@ -2,6 +2,15 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (PM allocates the number at gate; breaking, so 0.20.0)
+
+- **Breaking (AST):** new `Expr::Regexp { expr, pattern, negated }` for MySQL/MariaDB `REGEXP` and
+  `RLIKE` and PostgreSQL `~` / `!~`. Written as `~` / `!~` on PostgreSQL and `REGEXP` / `NOT REGEXP` on
+  MySQL/MariaDB, under the new `Allowance::RegexpFlavor` (the engines' regular-expression syntax and
+  case sensitivity differ beyond the common subset). SQLite is refused (`regexp`): it has no built-in
+  matcher. The case-insensitive `~*` / `!~*` are still not read. Code that matches `Expr` or
+  `Allowance` exhaustively must add the arm. `LIKE BINARY` is unchanged (sqlparser reads it as a cast).
+
 ## 0.19.0 - 2026-10-14
 
 - **Breaking (AST):** new `Expr::IsBool { expr, value, negated }` for `expr IS [NOT] TRUE` and

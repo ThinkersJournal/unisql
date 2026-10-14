@@ -76,6 +76,7 @@ const ALL: &[A] = &[
     A::UpsertAnyUniqueKey,
     A::AggregateStringTruncation,
     A::ArrayNullSemantics,
+    A::RegexpFlavor,
 ];
 
 fn c(name: &'static str, sql: &'static str) -> Case {
@@ -147,6 +148,10 @@ fn cases(maria: bool) -> Vec<Case> {
         c(
             "is_not_false",
             "SELECT id FROM users WHERE (age > 30) IS NOT FALSE",
+        ),
+        c(
+            "regexp_match",
+            "SELECT id FROM users WHERE city ~ '^O.l' OR name !~ 'a$'",
         ),
         c(
             "in_list",

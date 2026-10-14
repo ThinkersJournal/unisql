@@ -118,6 +118,7 @@ construct	order_by.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditiona
 construct	ordered_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::any_with_scalar	diverges from the strict contract unless accepted: allowance=text_collation	postgres
 construct	ordered_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::any_with_scalar	allowance=text_collation	postgres
 construct	recursive_cte	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::with_recursive		postgres
+construct	regexp	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_regexp_match	SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)	postgres
 construct	returning	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::delete_returning		postgres
 construct	returning.update	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::update_returning		postgres
 construct	row_lock	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_update	SQLite has no row-level locks (it locks the whole database)	postgres

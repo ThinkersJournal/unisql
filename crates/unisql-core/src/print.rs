@@ -606,6 +606,7 @@ impl Printer<'_> {
             | Expr::InList { .. }
             | Expr::InSubquery { .. }
             | Expr::Between { .. }
+            | Expr::Regexp { .. }
             | Expr::Like { .. } => format!("({s})"),
             Expr::Nested(inner) => self.operand(inner, c)?,
             _ => s,
@@ -897,6 +898,15 @@ impl Printer<'_> {
                     (Some(_), None) => Escape::None,
                 };
                 self.t.like(&l, &r, *negated, *case_insensitive, esc, c)?
+            }
+            Expr::Regexp {
+                expr,
+                pattern,
+                negated,
+            } => {
+                let l = self.operand(expr, c)?;
+                let r = self.operand(pattern, c)?;
+                self.t.regexp(&l, &r, *negated, c)?
             }
             Expr::Case {
                 operand,

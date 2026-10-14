@@ -89,6 +89,8 @@ construct	order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=nati
 construct	order_by.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=text_collation	postgres
 construct	ordered_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder		postgres
 construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_recursive		postgres
+construct	regexp	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::regexp_match	diverges from the strict contract unless accepted: allowance=regexp_flavor	postgres
+construct	regexp.regexp_flavor	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::regexp_match	allowance=regexp_flavor	postgres
 construct	returning	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_returning	MySQL has no RETURNING clause	postgres
 construct	row_lock	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_for_update_plain		postgres
 construct	row_lock.nowait	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_nowait_on_free_row		postgres

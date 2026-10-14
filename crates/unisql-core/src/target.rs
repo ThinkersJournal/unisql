@@ -183,6 +183,18 @@ pub trait Target {
         ))
     }
 
+    /// `lhs [NOT] REGEXP rhs`, operands already printed. The default is PostgreSQL's `~` / `!~`.
+    fn regexp(&self, lhs: &str, rhs: &str, negated: bool, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            "regexp",
+            Tier::Conditional,
+            "regular-expression syntax and case sensitivity differ between engines; exact only for \
+             patterns in the common subset",
+            Some(Allowance::RegexpFlavor),
+        )?;
+        Ok(format!("{lhs} {} {rhs}", if negated { "!~" } else { "~" }))
+    }
+
     /// A function call with arguments already printed. Return the full call text.
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         // Same dialect in and out is the identity: the reader accepted the name. Otherwise the name

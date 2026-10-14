@@ -386,6 +386,11 @@ impl Walk<'_> {
                 self.expr(low);
                 self.expr(high);
             }
+            Expr::Regexp { expr, pattern, .. } => {
+                self.add("regexp");
+                self.expr(expr);
+                self.expr(pattern);
+            }
             Expr::Like {
                 expr,
                 pattern,
