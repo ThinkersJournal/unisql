@@ -56,6 +56,16 @@ INSERT INTO kv VALUES ('a','1',1),('b',NULL,2),('c','x',NULL),('Cap','z',3);
 const COLL: &[A] = &[A::TextCollation];
 const ARR: &[A] = &[A::ArrayNullSemantics];
 
+/// The classes of the `users` fixture columns.
+fn users_schema() -> unisql::Schema {
+    use unisql::Column;
+    unisql::Schema::new()
+        .with_column("users", "id", Column::numeric())
+        .with_column("users", "name", Column::text())
+        .with_column("users", "age", Column::numeric())
+        .with_column("users", "active", Column::boolean())
+}
+
 fn c(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
     Case {
         name,
@@ -65,6 +75,7 @@ fn c(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
         ordered: false,
         after: None,
         hold: None,
+        schema: None,
         expect: Expect::Same,
     }
 }
@@ -568,6 +579,47 @@ fn cases() -> Vec<Case> {
                 &[],
             ),
             Expect::Identity,
+        ),
+        // ---- a Schema removes the text-collation assumption from comparisons on non-text columns
+        Case {
+            schema: Some(users_schema()),
+            params: vec![Param::Int(25)],
+            ..c(
+                "schema_numeric_column_needs_no_allowance",
+                "SELECT id FROM users WHERE age > $1 AND id <> 3",
+                &[],
+            )
+        },
+        Case {
+            schema: Some(users_schema()),
+            ..c(
+                "schema_numeric_between_and_alias",
+                "SELECT u.id FROM users u WHERE u.age BETWEEN 25 AND 41 AND u.active = TRUE",
+                &[A::BooleanAsInteger],
+            )
+        },
+        exp(
+            Case {
+                schema: Some(users_schema()),
+                params: vec![Param::Text("b")],
+                ..c(
+                    "schema_text_column_still_conditional",
+                    "SELECT id FROM users WHERE name > $1",
+                    &[],
+                )
+            },
+            Expect::NeedsAllowance(A::TextCollation),
+        ),
+        exp(
+            Case {
+                params: vec![Param::Int(25)],
+                ..c(
+                    "no_schema_unknown_column_is_conditional",
+                    "SELECT id FROM users WHERE age > $1",
+                    &[],
+                )
+            },
+            Expect::NeedsAllowance(A::TextCollation),
         ),
         // PostgreSQL has the form itself: it must read and write back unchanged in meaning.
         exp(

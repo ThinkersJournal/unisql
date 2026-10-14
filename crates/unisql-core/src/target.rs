@@ -10,6 +10,8 @@ use crate::report::{Allowance, Entry, Options, ParamBinding, Report, Tier, Untra
 pub struct Ctx<'a> {
     pub report: Report,
     pub opts: &'a Options,
+    /// The tables in scope while printing, for column classes from `opts.schema`.
+    pub scopes: crate::schema::Scopes<'a>,
     pub source: &'a str,
     pub target: &'a str,
     pub max_param: u32,
@@ -33,6 +35,7 @@ impl<'a> Ctx<'a> {
         Ctx {
             report: Report::default(),
             opts,
+            scopes: crate::schema::Scopes::new(opts.schema.as_ref()),
             source,
             target,
             max_param: 0,

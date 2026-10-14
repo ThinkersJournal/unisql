@@ -219,6 +219,13 @@ impl Printer<'_> {
     }
 
     fn select(&self, s: &Select, c: &mut Ctx) -> R<String> {
+        c.scopes.push_from(&s.from);
+        let r = self.select_in_scope(s, c);
+        c.scopes.pop();
+        r
+    }
+
+    fn select_in_scope(&self, s: &Select, c: &mut Ctx) -> R<String> {
         let mut out = String::from("SELECT ");
         match &s.distinct {
             Distinct::No => {}
@@ -389,6 +396,13 @@ impl Printer<'_> {
     }
 
     fn update(&self, u: &Update, c: &mut Ctx) -> R<String> {
+        c.scopes.push_target(&u.table, u.alias.as_deref(), &u.from);
+        let r = self.update_in_scope(u, c);
+        c.scopes.pop();
+        r
+    }
+
+    fn update_in_scope(&self, u: &Update, c: &mut Ctx) -> R<String> {
         let mut out = format!("UPDATE {}", self.name(&u.table));
         if let Some(a) = &u.alias {
             out.push_str(&format!(" AS {}", self.id(a)));
@@ -411,6 +425,13 @@ impl Printer<'_> {
     }
 
     fn delete(&self, d: &Delete, c: &mut Ctx) -> R<String> {
+        c.scopes.push_target(&d.table, d.alias.as_deref(), &d.using);
+        let r = self.delete_in_scope(d, c);
+        c.scopes.pop();
+        r
+    }
+
+    fn delete_in_scope(&self, d: &Delete, c: &mut Ctx) -> R<String> {
         let mut out = format!("DELETE FROM {}", self.name(&d.table));
         if let Some(a) = &d.alias {
             out.push_str(&format!(" AS {}", self.id(a)));
@@ -597,7 +618,10 @@ impl Printer<'_> {
                     BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
                     BinaryOp::NullSafeEq => unreachable!("handled above"),
                 };
-                let numeric = is_numeric(left) || is_numeric(right);
+                let numeric = is_numeric(left)
+                    || is_numeric(right)
+                    || c.scopes.is_non_text_column(left)
+                    || c.scopes.is_non_text_column(right);
                 self.t.binary_op(*op, numeric, c)?;
                 let (l, r) = (self.operand(left, c)?, self.operand(right, c)?);
                 match self.t.binary_override(*op, &l, &r, numeric, c)? {
@@ -644,8 +668,15 @@ impl Printer<'_> {
                 high,
                 negated,
             } => {
-                self.t
-                    .between(is_numeric(low) || is_numeric(high) || is_numeric(expr), c)?;
+                self.t.between(
+                    is_numeric(low)
+                        || is_numeric(high)
+                        || is_numeric(expr)
+                        || c.scopes.is_non_text_column(low)
+                        || c.scopes.is_non_text_column(high)
+                        || c.scopes.is_non_text_column(expr),
+                    c,
+                )?;
                 format!(
                     "{} {}BETWEEN {} AND {}",
                     self.operand(expr, c)?,

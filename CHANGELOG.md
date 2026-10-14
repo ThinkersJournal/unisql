@@ -2,6 +2,22 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **`Schema` (option A of the schema-input ruling):** `Options::with_schema(Schema)` tells the translator
+  the class of base-table columns (`Text | Numeric | Boolean | Other`, plus an optional collation that is
+  carried and not yet interpreted). A comparison with a column that is not text then involves no text
+  collation: it no longer needs `text_collation`, and `analyse_with(sql, source, &opts)` names no
+  `text_comparison` for it. Scope/alias resolution is inside UniSQL; the schema supplies base tables
+  only. Names match exactly as the reader produces them; an unregistered table in scope, a derived
+  table, a view or an alias makes an unqualified column unknown (conservative, never a guess).
+  Tested on the real engines: numeric-column comparisons translate with no allowance and the results
+  agree on SQLite, MySQL and MariaDB; a text column and the no-schema case still need `text_collation`.
+- **Matrix files:** `config` now ends `;schema=none` (every row is computed without a Schema, and a case
+  run with one is left out of the files): PersistAnt's request, so a `schema=none` row is never read as
+  proven for a column map. **Breaking for a reader that matches `config` exactly.**
+- `needs::constructs_with` and `unisql::analyse_with` are new; `Ctx` gains `scopes` (internal).
+
 ## 0.11.0 - 2026-10-14
 
 - **Breaking, taken once:** `Options` is `#[non_exhaustive]`, so a field added later (the planned

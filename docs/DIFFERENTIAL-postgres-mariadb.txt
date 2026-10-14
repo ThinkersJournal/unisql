@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=108
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=111
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -189,10 +189,14 @@ PASS escape_string_literal        same
 b	\\') FROM `users` WHERE `id` = 1
 PASS refuse_at_time_zone          refused `at_time_zone`: MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp
 PASS refuse_array_subquery        refused `array_subquery`: MySQL/MariaDB has no array type
+PASS schema_numeric_column_needs_no_allowance same
+       -> SELECT `id` FROM `users` WHERE (`age` > ?) AND (`age` BETWEEN 20 AND 60)
+PASS schema_text_column_still_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
+PASS no_schema_unknown_column_is_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 83 passing translated cases:
+MATRIX (construct, tier) from 84 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional

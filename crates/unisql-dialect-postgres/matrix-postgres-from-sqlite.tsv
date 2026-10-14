@@ -1,49 +1,49 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
-construct	cast.to_integer	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	diverges from the strict contract unless accepted: allowance=lenient_cast	sqlite
-construct	cast.to_integer.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	allowance=lenient_cast	sqlite
-construct	cast.to_text	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	diverges from the strict contract unless accepted: allowance=lenient_cast	sqlite
-construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	allowance=lenient_cast	sqlite
-construct	division	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	sqlite
-construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division	allowance=division_by_zero_is_null	sqlite
-construct	division_integer	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division		sqlite
-construct	filter_clause	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
-construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::ifnull_coalesce		sqlite
-construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
-construct	fn:current_date	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	sqlite
-construct	fn:current_date.date_as_text	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	allowance=date_as_text	sqlite
-construct	fn:instr	postgres	16.15	lc_collate=C	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_instr	no verified mapping for this function on PostgreSQL yet	sqlite
-construct	fn:length	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
-construct	fn:lower	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
-construct	fn:ltrim	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
-construct	fn:max	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
-construct	fn:min	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
-construct	fn:now	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::current_timestamp	diverges from the strict contract unless accepted: allowance=now_as_text	sqlite
-construct	fn:now.now_as_text	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::current_timestamp	allowance=now_as_text	sqlite
-construct	fn:random	postgres	16.15	lc_collate=C	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_random	no verified mapping for this function on PostgreSQL yet	sqlite
-construct	fn:rank	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::window_rank		sqlite
-construct	fn:replace	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
-construct	fn:strftime	postgres	16.15	lc_collate=C	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_strftime	no verified mapping for this function on PostgreSQL yet	sqlite
-construct	fn:string_agg	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_default		sqlite
-construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered		sqlite
-construct	fn:sum	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
-construct	fn:typeof	postgres	16.15	lc_collate=C	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_typeof	no verified mapping for this function on PostgreSQL yet	sqlite
-construct	fn:upper	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
-construct	ilike	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default		sqlite
-construct	join:inner_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::cte		sqlite
-construct	join:left_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::left_join		sqlite
-construct	like	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	sqlite
-construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default	allowance=like_case_sensitivity_is_connection_setting	sqlite
-construct	limit	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::limit_offset		sqlite
-construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered		sqlite
-construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::limit_minus_one_offset		sqlite
-construct	order_by	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
-construct	order_by.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered	allowance=text_collation	sqlite
-construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
-construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	allowance=text_collation	sqlite
-construct	recursive_cte	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::with_recursive		sqlite
-construct	returning	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::insert_returning		sqlite
-construct	returning.update	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::update_returning		sqlite
-construct	text_comparison	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
-construct	trim	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
-construct	upsert	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::upsert		sqlite
-construct	window_function	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::window_rank		sqlite
+construct	cast.to_integer	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	diverges from the strict contract unless accepted: allowance=lenient_cast	sqlite
+construct	cast.to_integer.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	allowance=lenient_cast	sqlite
+construct	cast.to_text	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	diverges from the strict contract unless accepted: allowance=lenient_cast	sqlite
+construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	allowance=lenient_cast	sqlite
+construct	division	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	sqlite
+construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division	allowance=division_by_zero_is_null	sqlite
+construct	division_integer	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division		sqlite
+construct	filter_clause	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
+construct	fn:coalesce	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::ifnull_coalesce		sqlite
+construct	fn:count	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
+construct	fn:current_date	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	sqlite
+construct	fn:current_date.date_as_text	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	allowance=date_as_text	sqlite
+construct	fn:instr	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_instr	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:length	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
+construct	fn:lower	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
+construct	fn:ltrim	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
+construct	fn:max	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
+construct	fn:min	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
+construct	fn:now	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::current_timestamp	diverges from the strict contract unless accepted: allowance=now_as_text	sqlite
+construct	fn:now.now_as_text	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::current_timestamp	allowance=now_as_text	sqlite
+construct	fn:random	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_random	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:rank	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::window_rank		sqlite
+construct	fn:replace	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
+construct	fn:strftime	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_strftime	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:string_agg	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_default		sqlite
+construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered		sqlite
+construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
+construct	fn:typeof	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_typeof	no verified mapping for this function on PostgreSQL yet	sqlite
+construct	fn:upper	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
+construct	ilike	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default		sqlite
+construct	join:inner_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::cte		sqlite
+construct	join:left_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::left_join		sqlite
+construct	like	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	sqlite
+construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default	allowance=like_case_sensitivity_is_connection_setting	sqlite
+construct	limit	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::limit_offset		sqlite
+construct	null_ordering	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered		sqlite
+construct	offset	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::limit_minus_one_offset		sqlite
+construct	order_by	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
+construct	order_by.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered	allowance=text_collation	sqlite
+construct	ordered_comparison	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
+construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	allowance=text_collation	sqlite
+construct	recursive_cte	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::with_recursive		sqlite
+construct	returning	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::insert_returning		sqlite
+construct	returning.update	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::update_returning		sqlite
+construct	text_comparison	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
+construct	trim	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
+construct	upsert	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::upsert		sqlite
+construct	window_function	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::window_rank		sqlite

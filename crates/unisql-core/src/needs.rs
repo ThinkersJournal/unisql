@@ -10,20 +10,30 @@ use std::collections::BTreeSet;
 
 use crate::ast::*;
 use crate::print::is_numeric;
+use crate::schema::{Schema, Scopes};
 
 /// Every construct id the statement uses.
 pub fn constructs(stmt: &Statement) -> BTreeSet<String> {
-    let mut w = Walk::default();
+    constructs_with(stmt, None)
+}
+
+/// As [`constructs`], knowing the column classes of the caller's base tables: a comparison with a
+/// column that is not text names no `text_comparison`, exactly as the writers do not record one.
+pub fn constructs_with(stmt: &Statement, schema: Option<&Schema>) -> BTreeSet<String> {
+    let mut w = Walk {
+        out: BTreeSet::new(),
+        scopes: Scopes::new(schema),
+    };
     w.statement(stmt);
     w.out
 }
 
-#[derive(Default)]
-struct Walk {
+struct Walk<'a> {
     out: BTreeSet<String>,
+    scopes: Scopes<'a>,
 }
 
-impl Walk {
+impl Walk<'_> {
     fn statement(&mut self, stmt: &Statement) {
         match stmt {
             Statement::With(w) => {
@@ -76,6 +86,8 @@ impl Walk {
                 self.returning(&i.returning);
             }
             Statement::Update(u) => {
+                self.scopes
+                    .push_target(&u.table, u.alias.as_deref(), &u.from);
                 u.set.iter().for_each(|a| self.expr(&a.value));
                 if !u.returning.is_empty() {
                     self.add("returning.update");
@@ -88,13 +100,17 @@ impl Walk {
                     self.expr(e);
                 }
                 self.returning(&u.returning);
+                self.scopes.pop();
             }
             Statement::Delete(d) => {
+                self.scopes
+                    .push_target(&d.table, d.alias.as_deref(), &d.using);
                 d.using.iter().for_each(|t| self.table(t));
                 if let Some(e) = &d.where_ {
                     self.expr(e);
                 }
                 self.returning(&d.returning);
+                self.scopes.pop();
             }
         }
     }
@@ -172,6 +188,12 @@ impl Walk {
     }
 
     fn select(&mut self, s: &Select) {
+        self.scopes.push_from(&s.from);
+        self.select_in_scope(s);
+        self.scopes.pop();
+    }
+
+    fn select_in_scope(&mut self, s: &Select) {
         if let Distinct::On(keys) = &s.distinct {
             self.add("distinct_on");
             if s.projection
@@ -282,7 +304,10 @@ impl Walk {
                     }
                     return;
                 }
-                let numeric = is_numeric(left) || is_numeric(right);
+                let numeric = is_numeric(left)
+                    || is_numeric(right)
+                    || self.scopes.is_non_text_column(left)
+                    || self.scopes.is_non_text_column(right);
                 match op {
                     BinaryOp::Concat => self.add("concat"),
                     BinaryOp::Modulo => self.add("division"),
@@ -320,7 +345,12 @@ impl Walk {
             Expr::Between {
                 expr, low, high, ..
             } => {
-                let numeric = is_numeric(low) || is_numeric(high) || is_numeric(expr);
+                let numeric = is_numeric(low)
+                    || is_numeric(high)
+                    || is_numeric(expr)
+                    || self.scopes.is_non_text_column(low)
+                    || self.scopes.is_non_text_column(high)
+                    || self.scopes.is_non_text_column(expr);
                 self.compare(numeric, true);
                 self.expr(expr);
                 self.expr(low);
