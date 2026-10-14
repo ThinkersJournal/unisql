@@ -20,6 +20,19 @@ assert_eq!(t.sql, r#"SELECT "id" FROM "users" WHERE "id" = ?1"#);
 // (for example an array parameter becomes JSON text on SQLite and MySQL).
 ```
 
+To learn what a statement needs *without choosing a target* (for a gate that derives a program's needs
+from its statement catalogue):
+
+```rust
+let a = unisql::analyse("SELECT CAST(name AS UUID) FROM users", "postgres")?;
+assert!(a.constructs.contains("cast"));             // the construct ids the matrix files use
+assert!(a.refused.contains("cast.refused"));        // this form is refused by some target
+```
+
+`constructs` come from the IR alone; `refused` is the set of `<construct>.refused` subjects across every
+registered target with every allowance granted. A target stops at its first refusal, so a statement with
+two refused forms reports one per target. `unreadable` names a construct outside the IR.
+
 What it does and does not promise, in one paragraph: a statement is translated only when the target
 can give it the source's meaning. Where it is the same only under an assumption (text collation,
 `now()` as text, lenient casts), you must name that assumption in `Options`, or you get an error and
