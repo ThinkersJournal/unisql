@@ -832,6 +832,17 @@ impl Printer<'_> {
                 let ch = chars.as_ref().map(|x| self.expr(x, c)).transpose()?;
                 self.t.trim(*side, &e, ch.as_deref(), c)?
             }
+            Expr::Extract { field, expr } => {
+                let e = self.expr(expr, c)?;
+                self.t.extract(field, &e, c)?
+            }
+            Expr::ArrayLiteral(items) => {
+                let parts = items
+                    .iter()
+                    .map(|x| self.expr(x, c))
+                    .collect::<R<Vec<_>>>()?;
+                self.t.array_literal(&parts, c)?
+            }
             Expr::AtTimeZone { expr, zone } => {
                 self.t.at_time_zone(c)?;
                 format!(

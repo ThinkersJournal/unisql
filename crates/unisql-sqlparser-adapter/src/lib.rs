@@ -1569,6 +1569,15 @@ fn expr(e: sp::Expr) -> R<Expr> {
             negated,
         },
         E::Subquery(q) => Expr::Subquery(Box::new(query(*q)?)),
+        E::Extract {
+            field,
+            syntax: _,
+            expr: x,
+        } => Expr::Extract {
+            field: field.to_string().to_ascii_lowercase(),
+            expr: boxed(*x)?,
+        },
+        E::Array(arr) => Expr::ArrayLiteral(arr.elem.into_iter().map(expr).collect::<R<Vec<_>>>()?),
         E::AtTimeZone {
             timestamp,
             time_zone,
@@ -1776,6 +1785,21 @@ fn function(f: sp::Function) -> R<Expr> {
                 }
                 return Ok(Expr::Function(Function {
                     name: "now".to_string(),
+                    args: vec![],
+                    distinct: false,
+                    star: false,
+                    filter: None,
+                    over: None,
+                    order_by: vec![],
+                }));
+            }
+            // The session identity keywords are zero-argument functions.
+            if matches!(
+                base.as_str(),
+                "current_user" | "session_user" | "current_role"
+            ) {
+                return Ok(Expr::Function(Function {
+                    name: base,
                     args: vec![],
                     distinct: false,
                     star: false,

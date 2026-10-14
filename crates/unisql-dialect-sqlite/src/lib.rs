@@ -440,6 +440,22 @@ impl Target for Sqlite {
         Ok(format!("{lhs} IS {rhs}"))
     }
 
+    fn extract(&self, field: &str, _expr: &str, ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            &format!("extract.{field}"),
+            &format!("SQLite: no verified mapping for EXTRACT({field} ..) yet"),
+            &["compute the field in the application"],
+        ))
+    }
+
+    fn array_literal(&self, _items: &[String], ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            "array_literal",
+            "SQLite has no array type",
+            &["use an IN (..) list, or a JSON array"],
+        ))
+    }
+
     fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "cte.data_modifying",

@@ -68,6 +68,9 @@ impl Target for Postgres {
             // A keyword form in PostgreSQL: `current_date()` is a syntax error.
             return Ok("CURRENT_DATE".to_string());
         }
+        if matches!(n, "current_user" | "session_user" | "current_role") {
+            return Ok(n.to_uppercase());
+        }
         let order = ctx.agg_order.take();
         Ok(generic_call_ordered(
             n,

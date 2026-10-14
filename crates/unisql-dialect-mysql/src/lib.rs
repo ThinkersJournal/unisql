@@ -433,6 +433,22 @@ impl Target for Mysql {
         Ok(format!("{lhs} <=> {rhs}"))
     }
 
+    fn extract(&self, field: &str, _expr: &str, ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            &format!("extract.{field}"),
+            &format!("MySQL/MariaDB: no verified mapping for EXTRACT({field} ..) yet"),
+            &["compute the field in the application"],
+        ))
+    }
+
+    fn array_literal(&self, _items: &[String], ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            "array_literal",
+            "MySQL/MariaDB has no array type",
+            &["use an IN (..) list, or a JSON array"],
+        ))
+    }
+
     fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "cte.data_modifying",

@@ -296,6 +296,13 @@ pub enum Expr {
         param: u32,
         negated: bool,
     },
+    /// `EXTRACT(field FROM expr)`; `field` is lower-case (`year`, `epoch`, ...).
+    Extract {
+        field: String,
+        expr: Box<Expr>,
+    },
+    /// `ARRAY[a, b, ..]`.
+    ArrayLiteral(Vec<Expr>),
     /// `expr AT TIME ZONE zone` (PostgreSQL).
     AtTimeZone {
         expr: Box<Expr>,
