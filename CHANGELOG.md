@@ -2,6 +2,17 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.18.2 - 2026-10-14
+
+- **MySQL/MariaDB string functions with verified mappings** (differential cases against the real
+  engines): `CONCAT_WS` (PostgreSQL; SQLite >= 3.44), `LEFT`/`RIGHT` for a literal count >= 0
+  (PostgreSQL native; SQLite `substr`), `REPEAT` for a literal count >= 0 (PostgreSQL native; SQLite
+  `replace(hex(zeroblob(n)), '00', s)`), and on PostgreSQL `LPAD`/`RPAD` (literal length >= 0 and
+  literal non-empty pad) and `REVERSE`. A negative or non-literal count is refused by leaf
+  (`fn:left.length`, `fn:lpad.args`, ...) because the engines differ there. A MySQL/MariaDB source
+  passes these through to MySQL/MariaDB unchanged. Statements that were refused now translate; no
+  AST change.
+
 ## 0.18.1 - 2026-10-14
 
 - Repository hygiene, no code change: `.github/CODEOWNERS` (`* @ciresnave`), portfolio rule WSP-001.

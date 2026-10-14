@@ -13,6 +13,7 @@ construct	division_integer	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sql
 construct	division_integer.integer_division_assumed	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=integer_division_assumed	mysql
 construct	fn:char_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
 construct	fn:coalesce	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
+construct	fn:concat_ws	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::concat_ws_skips_null		mysql
 construct	fn:count	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
 construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::curdate_is_current_date	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
 construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::curdate_is_current_date	allowance=date_as_text	mysql
@@ -21,6 +22,8 @@ construct	fn:date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;s
 construct	fn:date_format	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_format	no verified mapping for this function on SQLite yet	mysql
 construct	fn:datediff	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::datediff_literals	diverges from the strict contract unless accepted: allowance=timestamp_as_text	mysql
 construct	fn:datediff.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::datediff_literals	allowance=timestamp_as_text	mysql
+construct	fn:left	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_right_literal		mysql
+construct	fn:left.length	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_left_column	LEFT(s, n) is mapped only for a literal n >= 0	mysql
 construct	fn:make_interval	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus		mysql
 construct	fn:make_interval.month_year	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
 construct	fn:max	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
@@ -31,6 +34,8 @@ construct	fn:now	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=m
 construct	fn:now.now_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=now_as_text	mysql
 construct	fn:octet_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
 construct	fn:rank	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql
+construct	fn:repeat	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::repeat_literal		mysql
+construct	fn:right	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_right_literal		mysql
 construct	fn:string_agg	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.aggregate_string_truncation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.order_by	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
@@ -55,11 +60,11 @@ construct	join:left_join	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-
 construct	like	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	like.like_case_sensitivity_is_connection_setting	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	limit	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::limit_comma		mysql
-construct	null_ordering	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
+construct	null_ordering	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::concat_ws_skips_null		mysql
 construct	null_safe_eq	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::null_safe_eq_null		mysql
 construct	offset	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::limit_comma		mysql
-construct	order_by	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	order_by.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep	allowance=text_collation	mysql
+construct	order_by	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::concat_ws_skips_null	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	order_by.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::concat_ws_skips_null	allowance=text_collation	mysql
 construct	ordered_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	ordered_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::backticks	allowance=text_collation	mysql
 construct	pipes_as_or	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mysql

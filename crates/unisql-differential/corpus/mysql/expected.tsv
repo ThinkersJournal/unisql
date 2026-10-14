@@ -22,7 +22,7 @@ truncate	delete	curated	ok	ok	not_in_ir:statement	not_in_ir:statement	not_in_ir:
 ifnull	function	curated	ok	ok	translated	translated	translated
 if_function	function	curated	ok	ok	translated	translated	translated
 concat	function	curated	ok	ok	translated	translated	translated
-concat_ws	function	curated	ok	ok	refused:fn:concat_ws	refused:fn:concat_ws	refused:fn:concat_ws
+concat_ws	function	curated	ok	ok	translated	translated	translated
 group_concat	function	curated	ok	ok	conditional:aggregate_string_truncation+text_collation	conditional:aggregate_string_truncation+text_collation	conditional:aggregate_string_truncation+text_collation
 group_concat_distinct	function	curated	ok	ok	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation
 now	function	curated	ok	ok	translated	conditional:date_as_text+now_as_text	conditional:now_as_text
@@ -90,7 +90,7 @@ order_by_null	ordering	curated	ok	ok	conditional:text_collation	conditional:text
 rand	ordering	curated	ok	ok	refused:fn:rand	refused:fn:rand	refused:fn:rand
 locate	string	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
 substring_forms	string	curated	ok	ok	translated	translated	translated
-string_misc	string	curated	ok	ok	refused:fn:left	refused:fn:left	refused:fn:left
+string_misc	string	curated	ok	ok	translated	refused:fn:lpad	translated
 trim_forms	string	curated	ok	ok	translated	translated	translated
 upper_lower	string	curated	ok	ok	translated	conditional:ascii_only_case_folding	conditional:ascii_only_case_folding
 replace_func	string	curated	ok	ok	translated	translated	translated

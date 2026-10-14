@@ -595,6 +595,22 @@ pub fn pg_type_name(ty: &SqlType) -> String {
     }
 }
 
+/// The argument at `i` when it is a non-negative integer literal.
+pub fn literal_count(f: &Function, i: usize) -> Option<u64> {
+    match f.args.get(i) {
+        Some(FunctionArg::Expr(Expr::Literal(Literal::Number(n)))) => n.parse().ok(),
+        _ => None,
+    }
+}
+
+/// The argument at `i` when it is a non-empty string literal.
+pub fn literal_nonempty_string(f: &Function, i: usize) -> bool {
+    matches!(
+        f.args.get(i),
+        Some(FunctionArg::Expr(Expr::Literal(Literal::String(s)))) if !s.is_empty()
+    )
+}
+
 /// The fractional-second precision written in `UTC_TIMESTAMP(p)`: `Some(0)` when absent, `None`
 /// when it is not an integer literal.
 pub fn utc_timestamp_precision(f: &Function) -> Option<u32> {

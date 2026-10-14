@@ -97,11 +97,11 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
   `fn:utc_timestamp.precision`; on SQLite text with millisecond resolution, allowance
   `timestamp_millisecond_resolution`), `UTC_DATE()`, `CURDATE()` (read as `CURRENT_DATE`),
   `DATEDIFF(a, b)`, `DATE(x)`; a MySQL/MariaDB source passes these through to MySQL/MariaDB unchanged.
-  Auth-framework's two `UTC_TIMESTAMP(6)` statements now translate. **Still refused by leaf** (a
+  Auth-framework's two `UTC_TIMESTAMP(6)` statements now translate. **String group done at the next version** (`CONCAT_WS`, `LEFT`, `RIGHT`, `REPEAT`, and on
+  PostgreSQL `LPAD`/`RPAD`/`REVERSE`; SQLite has no `LPAD`/`RPAD`/`REVERSE`). **Still refused by leaf** (a
   verified mapping would close each): `DATE_FORMAT` (format-string translation),
   `UNIX_TIMESTAMP`/`FROM_UNIXTIME` (session time zone), `TIMESTAMPDIFF`, `YEAR`/`MONTH`/`DAY`/`HOUR`
-  (map to `EXTRACT`, whose result type differs: numeric on PostgreSQL), `CONCAT_WS`,
-  `LEFT`/`RIGHT`/`LPAD`/`REPEAT`/`REVERSE`, `MD5`/`SHA1`/`SHA2`, `FIELD`, `RAND`, `UUID` (v1, not v4),
+  (map to `EXTRACT`, whose result type differs: numeric on PostgreSQL), `MD5`/`SHA1`/`SHA2`, `FIELD`, `RAND`, `UUID` (v1, not v4),
   `LAST_INSERT_ID`/`ROW_COUNT`/`VERSION`/`SLEEP`, the JSON function family.
 - **`ON DUPLICATE KEY UPDATE` to PostgreSQL/SQLite: done at 0.17.3.** `Schema` carries unique keys
   (`Schema::with_unique_key`, or read by `schema_from_ddl` from `PRIMARY KEY`, `UNIQUE`, `CREATE
