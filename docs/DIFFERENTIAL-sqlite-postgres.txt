@@ -1,4 +1,4 @@
-sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=59
+sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=60
 PASS ph_question                  same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_numbered_reorder          same
@@ -19,6 +19,8 @@ PASS is_false                     same
        -> SELECT "id" FROM "users" WHERE ("age" > 30) IS FALSE
 PASS is_not_false                 same
        -> SELECT "id" FROM "users" WHERE ("age" > 30) IS NOT FALSE
+PASS bitwise_ops                  same
+       -> SELECT "id", "id" & 3, "id" | 4 FROM "users"
 PASS in_between                   same
        -> SELECT "id" FROM "users" WHERE ("id" IN (1, 3, 5)) AND ("age" BETWEEN 25 AND 41)
 PASS arith_case                   same
@@ -108,7 +110,8 @@ PASS refuse_instr                 refused `fn:instr`: no verified mapping for th
 PASS ir_insert_or_replace         not in IR `insert_option`: an INSERT form other than INSERT INTO t [(cols)] VALUES|query
 PASS ir_glob                      not in IR `binary_operator`: Glob (JSON/array/regex/bitwise operators are not in the IR)
 
-MATRIX (construct, tier) from 49 passing translated cases:
+MATRIX (construct, tier) from 50 passing translated cases:
+  bitwise                      conditional
   cast.to_integer              conditional
   cast.to_text                 conditional
   division                     conditional

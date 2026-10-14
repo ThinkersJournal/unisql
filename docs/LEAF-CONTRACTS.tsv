@@ -120,6 +120,9 @@ join:left_join	LEFT JOIN returns every left row, with NULLs where no right row m
 json_get	`doc -> key` yields the JSON value at key.
 json_get_text	`doc ->> key` yields the value at key as text, NULL when absent.
 regexp	`a REGEXP p` / `a ~ p` is true when the regular expression p matches anywhere in a (unanchored), false when it does not, NULL when either side is NULL. Sound only for patterns in the syntax the engines share (literals, `.`, `^`, `$`, `*`, `+`, `?`, `[...]`, `|`, `()`); classes, lookaround and flags differ.
+bitwise	`a & b`, `a | b`, `a ^ b` (PostgreSQL `#`), `a << b`, `a >> b` act on the integer operands bit by bit. Sound for non-negative operands and shift counts below the integer width; negative values and wider shifts differ between MySQL (unsigned 64-bit) and the others (signed).
+bitwise.xor	The bitwise exclusive or of two integers; refused where the target has no operator for it (SQLite).
+xor	`a XOR b` is true when exactly one operand is true, false when both or neither are, NULL when either is NULL. Written `<>`, so sound for boolean operands (comparison results).
 like	`a LIKE p` is a case-sensitive pattern match with `%` and `_` wildcards.
 limit	LIMIT n returns at most n rows of the ordered result.
 named_arg	`f(name => value)` calls a function with a named argument. Refused where function arguments are positional only.

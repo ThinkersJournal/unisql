@@ -767,6 +767,8 @@ impl Target for Mysql {
                 ctx.note("division_integer", Tier::Exact, "DIV", None)?;
                 Ok(Some(format!("{l} DIV {r}")))
             }
+            BinaryOp::BitXor => Ok(Some(format!("{l} ^ {r}"))),
+            BinaryOp::Xor => Ok(Some(format!("{l} XOR {r}"))),
             // A MySQL/MariaDB source's `/` is already MySQL division (exact decimal).
             BinaryOp::Divide if matches!(ctx.source, "mysql" | "mariadb") => Ok(None),
             BinaryOp::Divide => {
@@ -784,6 +786,28 @@ impl Target for Mysql {
     }
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {
+        if matches!(
+            op,
+            BinaryOp::BitAnd
+                | BinaryOp::BitOr
+                | BinaryOp::BitXor
+                | BinaryOp::ShiftLeft
+                | BinaryOp::ShiftRight
+        ) {
+            if matches!(ctx.source, "mysql" | "mariadb") {
+                return ctx.note("bitwise", Tier::Exact, "", None);
+            }
+
+            return ctx.note(
+                "bitwise",
+                Tier::Conditional,
+                "MySQL bitwise operators work on unsigned 64-bit integers, PostgreSQL and SQLite on signed ones: exact only for non-negative operands and shift counts below the integer width",
+                Some(Allowance::BitwiseNonNegativeIntegers),
+            );
+        }
+        if op == BinaryOp::Xor {
+            return ctx.note("xor", Tier::Exact, "", None);
+        }
         match op {
             BinaryOp::Divide | BinaryOp::Modulo => ctx.note(
                 "division",

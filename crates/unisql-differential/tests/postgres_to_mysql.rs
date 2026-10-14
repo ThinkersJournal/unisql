@@ -77,6 +77,8 @@ const ALL: &[A] = &[
     A::AggregateStringTruncation,
     A::ArrayNullSemantics,
     A::RegexpFlavor,
+    A::BitwiseNonNegativeIntegers,
+    A::XorOperandsBoolean,
 ];
 
 fn c(name: &'static str, sql: &'static str) -> Case {
@@ -152,6 +154,10 @@ fn cases(maria: bool) -> Vec<Case> {
         c(
             "regexp_match",
             "SELECT id FROM users WHERE city ~ '^O.l' OR name !~ 'a$'",
+        ),
+        c(
+            "bitwise_ops",
+            "SELECT id, id & 3, id | 4, id # 1, id << 1, id >> 1 FROM users ORDER BY id",
         ),
         c(
             "in_list",

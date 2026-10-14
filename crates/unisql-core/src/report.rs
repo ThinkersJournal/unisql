@@ -106,6 +106,12 @@ pub enum Allowance {
     /// A regular expression is matched by the target's own engine: syntax beyond the common subset
     /// (classes, lookaround, `\\d`) and case sensitivity may differ from the source's.
     RegexpFlavor,
+    /// A bitwise operator is applied to non-negative integers and a shift count is below the integer
+    /// width: MySQL computes on unsigned 64-bit integers, PostgreSQL and SQLite on signed ones.
+    BitwiseNonNegativeIntegers,
+    /// A logical `XOR` is written as `<>`: exact only when both operands are booleans (or 0/1
+    /// comparison results), not arbitrary numbers read by truthiness.
+    XorOperandsBoolean,
 }
 
 impl Allowance {
@@ -135,6 +141,8 @@ impl Allowance {
         Allowance::UpsertAnyUniqueKey,
         Allowance::AggregateStringTruncation,
         Allowance::RegexpFlavor,
+        Allowance::BitwiseNonNegativeIntegers,
+        Allowance::XorOperandsBoolean,
         Allowance::ArrayNullSemantics,
         Allowance::DecimalDivisionAsFloat,
     ];
@@ -169,6 +177,8 @@ impl Allowance {
             Allowance::UpsertAnyUniqueKey => "upsert_any_unique_key",
             Allowance::AggregateStringTruncation => "aggregate_string_truncation",
             Allowance::RegexpFlavor => "regexp_flavor",
+            Allowance::BitwiseNonNegativeIntegers => "bitwise_non_negative_integers",
+            Allowance::XorOperandsBoolean => "xor_operands_boolean",
         }
     }
 }

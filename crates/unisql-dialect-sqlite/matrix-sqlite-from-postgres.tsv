@@ -4,6 +4,9 @@ construct	array_param	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlit
 construct	array_param.array_null_semantics	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::all_ne_empty_array	allowance=array_null_semantics	postgres
 construct	array_subquery	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_array_subquery	SQLite has no array type	postgres
 construct	at_time_zone	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_at_time_zone	SQLite has no time zones: its datetimes are text in UTC	postgres
+construct	bitwise	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::bitwise_ops	diverges from the strict contract unless accepted: allowance=bitwise_non_negative_integers	postgres
+construct	bitwise.bitwise_non_negative_integers	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::bitwise_ops	allowance=bitwise_non_negative_integers	postgres
+construct	bitwise.xor	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_bitxor	SQLite has no bitwise XOR operator (it would need the operands written twice)	postgres
 construct	boolean_literal	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
 construct	boolean_literal.boolean_as_integer	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::insert_values	allowance=boolean_as_integer	postgres
 construct	cast.to_bigint	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_to_timestamp	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres

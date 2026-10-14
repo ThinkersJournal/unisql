@@ -830,6 +830,39 @@ impl Target for Sqlite {
     }
 
     fn binary_op(&self, op: BinaryOp, numeric: bool, ctx: &mut Ctx) -> R<()> {
+        if matches!(
+            op,
+            BinaryOp::BitAnd
+                | BinaryOp::BitOr
+                | BinaryOp::BitXor
+                | BinaryOp::ShiftLeft
+                | BinaryOp::ShiftRight
+        ) {
+            if ctx.source == "sqlite" {
+                return ctx.note("bitwise", Tier::Exact, "", None);
+            }
+            if op == BinaryOp::BitXor {
+                return Err(ctx.refuse(
+                    "bitwise.xor",
+                    "SQLite has no bitwise XOR operator (it would need the operands written twice)",
+                    &["(a | b) - (a & b) with simple operands"],
+                ));
+            }
+            return ctx.note(
+                "bitwise",
+                Tier::Conditional,
+                "MySQL bitwise operators work on unsigned 64-bit integers, PostgreSQL and SQLite on signed ones: exact only for non-negative operands and shift counts below the integer width",
+                Some(Allowance::BitwiseNonNegativeIntegers),
+            );
+        }
+        if op == BinaryOp::Xor {
+            return ctx.note(
+                "xor",
+                Tier::Conditional,
+                "XOR is written as <>, which compares truth values only when both operands are booleans or 0/1 comparison results",
+                Some(Allowance::XorOperandsBoolean),
+            );
+        }
         match op {
             BinaryOp::IntDivide => ctx.note(
                 "division_integer",

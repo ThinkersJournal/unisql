@@ -774,6 +774,12 @@ impl Printer<'_> {
                     BinaryOp::Modulo => "%",
                     BinaryOp::Concat => "||",
                     BinaryOp::IntDivide => "/",
+                    BinaryOp::BitAnd => "&",
+                    BinaryOp::BitOr => "|",
+                    BinaryOp::BitXor => "#",
+                    BinaryOp::ShiftLeft => "<<",
+                    BinaryOp::ShiftRight => ">>",
+                    BinaryOp::Xor => "<>",
                     BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
                     BinaryOp::NullSafeEq => unreachable!("handled above"),
                 };

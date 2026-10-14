@@ -93,6 +93,8 @@ const ALL: &[A] = &[
     A::IgnoreCoversOnlyUniqueConflicts,
     A::SubstringStartAssumedPositive,
     A::RegexpFlavor,
+    A::BitwiseNonNegativeIntegers,
+    A::XorOperandsBoolean,
 ];
 
 /// `kv` as the fixtures define it: columns k, v, n; one unique key (k).
@@ -512,6 +514,14 @@ fn cases(dir: Dir) -> Vec<Case> {
             "repeat_literal",
             "SELECT id, REPEAT(name, 2), REPEAT(name, 0) FROM users ORDER BY id",
         ),
+        c(
+            "bitwise_ops",
+            "SELECT id, id & 3, id | 4, id << 1, id >> 1 FROM users ORDER BY id",
+        ),
+        c(
+            "xor",
+            "SELECT id FROM users WHERE (active = 1) XOR (age > 30)",
+        ),
         exp(
             c("refuse_left_negative", "SELECT LEFT(name, -1) FROM users"),
             Expect::Refused("fn:left.length"),
@@ -531,6 +541,10 @@ fn cases(dir: Dir) -> Vec<Case> {
     ];
     if matches!(dir, Dir::MysqlToSqlite) {
         v.push(exp(
+            c("refuse_bitxor", "SELECT id ^ 1 FROM users"),
+            Expect::Refused("bitwise.xor"),
+        ));
+        v.push(exp(
             c(
                 "refuse_regexp",
                 "SELECT id FROM users WHERE city REGEXP '^O'",
@@ -549,6 +563,7 @@ fn cases(dir: Dir) -> Vec<Case> {
             "reverse_text",
             "SELECT id, REVERSE(name) FROM users ORDER BY id",
         ));
+        v.push(c("bitxor", "SELECT id, id ^ 1 FROM users ORDER BY id"));
         v.push(c(
             "regexp",
             "SELECT id FROM users WHERE city REGEXP '^O.l' OR name RLIKE 'a$'",
