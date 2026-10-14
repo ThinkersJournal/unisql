@@ -289,6 +289,21 @@ fn column_from_def(c: &sp::ColumnDef) -> Column {
 /// (a migration file) in the dialect described by `rules`. Statements are split on `;` tokens, so a
 /// dollar-quoted body does not split; a statement that does not parse is listed in `skipped`.
 pub fn read_schema(ddl: &str, rules: &'static Rules) -> R<SchemaRead> {
+    // `ident` consults the reader context for quoted-name folding, so one must be installed.
+    CX.with(|c| {
+        *c.borrow_mut() = Some(Cx {
+            rules,
+            max_param: 0,
+            names: vec![],
+            notes: vec![],
+        })
+    });
+    let out = read_schema_inner(ddl, rules);
+    CX.with(|c| c.borrow_mut().take());
+    out
+}
+
+fn read_schema_inner(ddl: &str, rules: &'static Rules) -> R<SchemaRead> {
     use sqlparser::tokenizer::{Token, Tokenizer};
     let d = (rules.dialect)();
     let tokens = Tokenizer::new(d.as_ref(), ddl)
@@ -1233,6 +1248,14 @@ fn update(u: sp::Update) -> R<Statement> {
         );
     }
     let (table, alias) = simple_table(table)?;
+    // The parser does not know MySQL's `UPDATE LOW_PRIORITY|IGNORE t ...` and reads the modifier as
+    // the table name and `t` as its alias: refuse rather than write another table's name.
+    if alias.is_some()
+        && table.0.len() == 1
+        && matches!(table.0[0].as_str(), "low_priority" | "ignore")
+    {
+        return no("update_option", "UPDATE LOW_PRIORITY / IGNORE");
+    }
     let from = match from {
         None => Vec::new(),
         Some(sp::UpdateTableFromKind::AfterSet(ts)) => ts
@@ -1303,6 +1326,11 @@ fn boxed(e: sp::Expr) -> R<Box<Expr>> {
 fn expr(e: sp::Expr) -> R<Expr> {
     use sp::Expr as E;
     Ok(match e {
+        // `DEFAULT` in VALUES / SET is parsed as an identifier; as a column it would be written
+        // quoted and mean something else (PostgreSQL rejects it, MySQL would read a column).
+        E::Identifier(i) if i.quote_style.is_none() && i.value.eq_ignore_ascii_case("default") => {
+            return no("default_value", "DEFAULT as a value is not in the IR");
+        }
         E::Identifier(i) => Expr::Column(Name::simple(ident(&i))),
         E::CompoundIdentifier(parts) => Expr::Column(Name(parts.iter().map(ident).collect())),
         E::Value(v) => value(v.value)?,

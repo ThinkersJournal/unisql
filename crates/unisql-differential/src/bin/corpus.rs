@@ -9,32 +9,12 @@ use std::io::BufRead;
 
 use unisql::{Allowance, Error, Options, Tier};
 
-const ALL: &[Allowance] = &[
-    Allowance::NowAsText,
-    Allowance::TimestampAsText,
-    Allowance::EpochWholeSeconds,
-    Allowance::TimestampWholeSeconds,
-    Allowance::PipesAsLogicalOr,
-    Allowance::IgnoreCoversOnlyUniqueConflicts,
-    Allowance::SubstringStartAssumedPositive,
-    Allowance::DateAsText,
-    Allowance::LikeCaseSensitivityIsConnectionSetting,
-    Allowance::AsciiOnlyCaseFolding,
-    Allowance::LenientCast,
-    Allowance::DivisionByZeroIsNull,
-    Allowance::TextCollation,
-    Allowance::BooleanAsInteger,
-    Allowance::TimestampArithmeticAsText,
-    Allowance::JsonScalarAffinity,
-    Allowance::JsonRepresentationAsText,
-    Allowance::IntegerDivisionAssumed,
-    Allowance::UpsertAnyUniqueKey,
-    Allowance::AggregateStringTruncation,
-    Allowance::ArrayNullSemantics,
-];
-
 fn main() {
-    let mut all = ALL.iter().fold(Options::default(), |o, a| o.with(*a));
+    let mut all = Allowance::ALL
+        .iter()
+        .fold(Options::default(), |o, a| o.with(*a));
+    // `UNISQL_SHOW_SQL=1` adds the translated text as `translated_sql`.
+    let show_sql = std::env::var("UNISQL_SHOW_SQL").is_ok();
     // Optional second argument: a DDL script (migrations) whose column types become a `Schema`.
     if let Some(path) = std::env::args().nth(2) {
         let ddl = std::fs::read_to_string(&path).expect("DDL file");
@@ -54,9 +34,11 @@ fn main() {
         // What the reader said about a construct it does not represent (empty otherwise): without
         // it a `not_in_ir  expression` row cannot be told apart from its siblings.
         let mut note = String::new();
+        let mut out_sql = String::new();
         let (status, detail, allowances): (&str, String, Vec<String>) =
             match unisql::translate(&sql, &source, &target, &all) {
                 Ok(t) => {
+                    out_sql = t.sql.clone();
                     let needed: Vec<String> = t
                         .report
                         .entries
@@ -88,6 +70,9 @@ fn main() {
         obj.insert("detail".into(), detail.into());
         obj.insert("note".into(), note.into());
         obj.insert("allowances".into(), allowances.into());
+        if show_sql {
+            obj.insert("translated_sql".into(), out_sql.into());
+        }
         println!("{rec}");
     }
 }
