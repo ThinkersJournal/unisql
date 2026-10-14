@@ -7,7 +7,7 @@ limit_param	paging	curated	ok	ok	conditional:text_collation	conditional:text_col
 upsert_values	upsert	curated	ok	ok	translated	translated	conditional:upsert_any_unique_key
 upsert_alias	upsert	curated	ok	rejected	not_in_ir:insert_option	not_in_ir:insert_option	not_in_ir:insert_option
 insert_ignore	upsert	curated	ok	ok	conditional:ignore_covers_only_unique_conflicts	conditional:ignore_covers_only_unique_conflicts	conditional:ignore_covers_only_unique_conflicts+upsert_any_unique_key
-insert_set	insert	curated	ok	ok	not_in_ir:insert_option	not_in_ir:insert_option	not_in_ir:insert_option
+insert_set	insert	curated	ok	ok	translated	translated	translated
 replace_into	upsert	curated	ok	ok	not_in_ir:insert_option	not_in_ir:insert_option	not_in_ir:insert_option
 insert_select	insert	curated	ok	ok	translated	translated	translated
 insert_multi	insert	curated	ok	ok	translated	translated	translated

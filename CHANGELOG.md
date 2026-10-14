@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.17.5 - 2026-10-14
+
+- **`INSERT INTO t SET a = 1, b = 2` (MySQL/MariaDB) is read** as `INSERT INTO t (a, b) VALUES (1, 2)`,
+  a pure reader desugar (no IR change), tested against real MySQL, MariaDB, PostgreSQL and SQLite.
+  `INSERT .. SET` combined with a column list, or with a query, is still refused (`insert_option`).
+
 ## 0.17.4 - 2026-10-14
 
 - **MySQL/MariaDB date and time functions with verified mappings** (differential cases against real

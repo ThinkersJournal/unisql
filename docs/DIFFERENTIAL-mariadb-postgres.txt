@@ -1,4 +1,4 @@
-mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=65
+mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=67
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_two                     same
@@ -102,6 +102,10 @@ PASS interval_minutes           same
 PASS interval_hours_plus        same
        -> SELECT "id" FROM "events" WHERE "at" < (NOW() + MAKE_INTERVAL("hours" => 2))
 PASS refuse_interval_month      refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
+PASS insert_set                 same
+       -> INSERT INTO "kv" ("k", "v", "n") VALUES ('sx', 'y', 7)
+PASS insert_set_partial_columns same
+       -> INSERT INTO "kv" ("k", "n") VALUES ('sy', 1 + 1)
 PASS curdate_is_current_date    same
        -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
 PASS utc_timestamp_window       same
@@ -121,7 +125,7 @@ PASS refuse_date_format         refused `fn:date_format`: no verified mapping fo
 PASS diverge_div_zero           diverges: mariadb returns [[Null]]; postgres errors (query: db error)
        -> SELECT CAST(1 AS DOUBLE PRECISION) / 0
 
-MATRIX (construct, tier) from 56 passing translated cases:
+MATRIX (construct, tier) from 58 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
