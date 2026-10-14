@@ -14,6 +14,7 @@ construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C	
 construct	fn:char_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::length_is_bytes		mysql
 construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::ifnull_concat_if		mysql
 construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
+construct	fn:current_date	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::current_date_bare		mysql
 construct	fn:date_format	postgres	16.15	lc_collate=C	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mysql
 construct	fn:make_interval	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
 construct	fn:make_interval.month_year	postgres	16.15	lc_collate=C	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql

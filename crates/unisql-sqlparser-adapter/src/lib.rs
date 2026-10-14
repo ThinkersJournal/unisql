@@ -1435,6 +1435,26 @@ fn function(f: sp::Function) -> R<Expr> {
                     order_by: vec![],
                 }));
             }
+            // `CURRENT_DATE`: a date in the session time zone (PostgreSQL, MySQL), text of the UTC
+            // date on SQLite.
+            if base == "current_date" {
+                if rules().name == "sqlite" {
+                    add_note(
+                        "fn:current_date",
+                        "the source CURRENT_DATE is text 'YYYY-MM-DD' (the UTC date), not a date",
+                        Allowance::DateAsText,
+                    );
+                }
+                return Ok(Expr::Function(Function {
+                    name: "current_date".to_string(),
+                    args: vec![],
+                    distinct: false,
+                    star: false,
+                    filter: None,
+                    over: None,
+                    order_by: vec![],
+                }));
+            }
             return no("bare_function", &format!("`{base}` without parentheses"));
         }
         sp::FunctionArguments::Subquery(_) => {

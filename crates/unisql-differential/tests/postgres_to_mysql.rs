@@ -426,6 +426,10 @@ fn cases(maria: bool) -> Vec<Case> {
             ),
             Expect::Refused("fn:make_interval.standalone"),
         ),
+        c(
+            "current_date_text",
+            "SELECT CAST(CURRENT_DATE AS TEXT) FROM users WHERE id = 1",
+        ),
         // ---- INTERVAL literals: read as the same make_interval form
         c(
             "interval_literal_minute",

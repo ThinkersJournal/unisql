@@ -23,6 +23,8 @@ construct	fn:char_length	sqlite	3.53.2		yes		tier=emulated;suite=postgres-to-sql
 construct	fn:coalesce	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::coalesce_nullif		postgres
 construct	fn:convert_to	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_sha256	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
 construct	fn:count	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
+construct	fn:current_date	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::current_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	postgres
+construct	fn:current_date.date_as_text	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::current_date_text	allowance=date_as_text	postgres
 construct	fn:current_schema	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_schema	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:lag	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres
 construct	fn:lead	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres

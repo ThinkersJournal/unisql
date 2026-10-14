@@ -1,4 +1,4 @@
-mysql 8.4.11 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=44
+mysql 8.4.11 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=46
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_two                     same
@@ -71,6 +71,10 @@ PASS ir_insert_ignore           not in IR `insert_option`: an INSERT form other 
 PASS ir_pipes_operator          not in IR `pipes_operator`: MySQL `||` is logical OR (default sql_mode) but the parser gives it concatenation precedence; write OR, or CONCAT()
 PASS ir_null_safe_eq            not in IR `binary_operator`: Spaceship (JSON/array/regex/bitwise operators are not in the IR)
 PASS ir_substring               not in IR `substring`: MySQL SUBSTRING treats a start before 1 differently from PostgreSQL/SQLite
+PASS current_date_bare          same
+       -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
+PASS current_date_call          same
+       -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
 PASS interval_minutes           same
        -> SELECT "id" FROM "events" WHERE "at" > (NOW() - MAKE_INTERVAL("mins" => 5))
 PASS interval_hours_plus        same
@@ -80,7 +84,7 @@ PASS refuse_date_format         refused `fn:date_format`: no verified mapping fo
 PASS diverge_div_zero           diverges: mysql returns [[Null]]; postgres errors (query: db error)
        -> SELECT CAST(1 AS DOUBLE PRECISION) / 0
 
-MATRIX (construct, tier) from 36 passing translated cases:
+MATRIX (construct, tier) from 38 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
@@ -91,6 +95,7 @@ MATRIX (construct, tier) from 36 passing translated cases:
   fn:char_length               exact
   fn:coalesce                  exact
   fn:count                     exact
+  fn:current_date              exact
   fn:make_interval             exact
   fn:max                       exact
   fn:min                       exact

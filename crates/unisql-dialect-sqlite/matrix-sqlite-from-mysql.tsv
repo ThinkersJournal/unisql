@@ -14,6 +14,8 @@ construct	division_integer.integer_division_assumed	sqlite	3.53.2		yes		tier=con
 construct	fn:char_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
 construct	fn:coalesce	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
 construct	fn:count	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
+construct	fn:current_date	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
+construct	fn:current_date.date_as_text	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	allowance=date_as_text	mysql
 construct	fn:date_format	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_format	no verified mapping for this function on SQLite yet	mysql
 construct	fn:make_interval	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus		mysql
 construct	fn:make_interval.month_year	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=128
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=130
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -118,6 +118,8 @@ PASS btrim_forms                  same
        -> SELECT TRIM('  hi  '), TRIM('xxhixx', 'x')
 PASS octet_length_utf8            same
        -> SELECT LENGTH(CAST('abc' AS BLOB)), LENGTH(CAST('héllo' AS BLOB))
+PASS current_date_text            same
+       -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
 PASS now_as_text                  same
        -> SELECT "id" FROM "users" WHERE (CURRENT_TIMESTAMP IS NOT NULL) AND ("id" = 1)
 PASS cast_int_text                same
@@ -126,6 +128,7 @@ PASS lower_upper_ascii            same
        -> SELECT LOWER("name"), UPPER("name") FROM "users"
 PASS int_division                 same
        -> SELECT 7 / 2, (-7) / 2, 7 % 3, (-7) % 3 FROM "users" WHERE "id" = 1
+PASS gate_current_date            refused without allowance: conditional: needs allowance `date_as_text`: -> CURRENT_DATE; text 'YYYY-MM-DD' of the UTC date, not a date in the session time zone
 PASS gate_now                     refused without allowance: conditional: needs allowance `now_as_text`: -> CURRENT_TIMESTAMP; text 'YYYY-MM-DD HH:MM:SS' in UTC, not a timestamptz
 PASS gate_like                    refused without allowance: conditional: needs allowance `like_case_sensitivity_is_connection_setting`: SQLite LIKE is ASCII case-insensitive unless PRAGMA case_sensitive_like=ON; an ESCAPE clause is added to match PostgreSQL's default escape character
 PASS gate_division                refused without allowance: conditional: needs allowance `division_by_zero_is_null`: division/modulo by zero is NULL on SQLite (an error on PostgreSQL)
@@ -228,7 +231,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 100 passing translated cases:
+MATRIX (construct, tier) from 101 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -244,6 +247,7 @@ MATRIX (construct, tier) from 100 passing translated cases:
   fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
+  fn:current_date              conditional
   fn:lag                       exact
   fn:lead                      exact
   fn:length                    exact

@@ -11,6 +11,7 @@ use unisql::{Allowance, Error, Options, Tier};
 
 const ALL: &[Allowance] = &[
     Allowance::NowAsText,
+    Allowance::DateAsText,
     Allowance::LikeCaseSensitivityIsConnectionSetting,
     Allowance::AsciiOnlyCaseFolding,
     Allowance::LenientCast,

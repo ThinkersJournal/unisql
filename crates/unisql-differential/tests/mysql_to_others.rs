@@ -83,6 +83,7 @@ const ALL: &[A] = &[
     A::AggregateStringTruncation,
     A::BooleanAsInteger,
     A::NowAsText,
+    A::DateAsText,
     A::TimestampArithmeticAsText,
 ];
 
@@ -291,6 +292,14 @@ fn cases(dir: Dir) -> Vec<Case> {
         exp(
             c("ir_substring", "SELECT substring(name, 0, 3) FROM users"),
             Expect::NotInIr("substring"),
+        ),
+        c(
+            "current_date_bare",
+            "SELECT CAST(CURRENT_DATE AS CHAR) FROM users WHERE id = 1",
+        ),
+        c(
+            "current_date_call",
+            "SELECT CAST(CURRENT_DATE() AS CHAR) FROM users WHERE id = 1",
         ),
         // INTERVAL n UNIT is the make_interval form on every target.
         c(

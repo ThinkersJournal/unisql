@@ -14,6 +14,7 @@ construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C	
 construct	fn:char_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
 construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
 construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
+construct	fn:current_date	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::current_date_bare		mariadb
 construct	fn:date_format	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mariadb
 construct	fn:make_interval	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
 construct	fn:make_interval.month_year	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mariadb

@@ -19,6 +19,7 @@ const FROM_OTHER: &[&str] = &[
     "octet_length",
     "coalesce",
     "make_interval",
+    "current_date",
 ];
 
 /// Read exactly one PostgreSQL statement.
@@ -63,6 +64,10 @@ impl Target for Postgres {
             }
         }
         ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+        if n == "current_date" {
+            // A keyword form in PostgreSQL: `current_date()` is a syntax error.
+            return Ok("CURRENT_DATE".to_string());
+        }
         let order = ctx.agg_order.take();
         Ok(generic_call_ordered(
             n,

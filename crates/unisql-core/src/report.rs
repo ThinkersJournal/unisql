@@ -39,6 +39,9 @@ impl Tier {
 pub enum Allowance {
     /// `now()` yields text (`YYYY-MM-DD HH:MM:SS`, UTC) rather than a timestamptz.
     NowAsText,
+    /// `CURRENT_DATE` yields text (`YYYY-MM-DD`, the UTC date) rather than a date in the session time
+    /// zone.
+    DateAsText,
     /// `LIKE` case sensitivity is a *connection setting* on the target, not a property of the
     /// statement; the source's case-sensitive `LIKE` is exact only if that setting is on.
     LikeCaseSensitivityIsConnectionSetting,
@@ -78,6 +81,7 @@ impl Allowance {
     /// Every named allowance (what a caller who accepts all assumptions would grant).
     pub const ALL: &[Allowance] = &[
         Allowance::NowAsText,
+        Allowance::DateAsText,
         Allowance::LikeCaseSensitivityIsConnectionSetting,
         Allowance::AsciiOnlyCaseFolding,
         Allowance::LenientCast,
@@ -97,6 +101,7 @@ impl Allowance {
     pub fn name(self) -> &'static str {
         match self {
             Allowance::NowAsText => "now_as_text",
+            Allowance::DateAsText => "date_as_text",
             Allowance::LikeCaseSensitivityIsConnectionSetting => {
                 "like_case_sensitivity_is_connection_setting"
             }

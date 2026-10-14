@@ -201,6 +201,19 @@ impl Target for Sqlite {
 
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
+        if n == "current_date" {
+            if ctx.source == "sqlite" {
+                ctx.note("fn:current_date", Tier::Exact, "", None)?;
+            } else {
+                ctx.note(
+                    "fn:current_date",
+                    Tier::Conditional,
+                    "-> CURRENT_DATE; text 'YYYY-MM-DD' of the UTC date, not a date in the session time zone",
+                    Some(Allowance::DateAsText),
+                )?;
+            }
+            return Ok("CURRENT_DATE".to_string());
+        }
         if ctx.source == "sqlite" {
             if n == "now" {
                 // The reader normalised CURRENT_TIMESTAMP to now(); SQLite spells it back.

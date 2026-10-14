@@ -2,6 +2,17 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **Bare `CURRENT_DATE`** (7 `not_in_ir bare_function` rows of the corpus, all INSERT values) is read as
+  `fn:current_date` and written as `CURRENT_DATE` on PostgreSQL and MySQL/MariaDB (a date in the session
+  time zone: exact) and on SQLite as `CURRENT_DATE` with the new allowance `date_as_text` (text
+  `YYYY-MM-DD`, the UTC date). `CURRENT_DATE()` with parentheses (MySQL) reads the same.
+  The `Allowance` enum gains the variant `DateAsText` (a consumer matching it exhaustively must add an arm).
+  Leaves: `fn:current_date`, `fn:current_date.date_as_text`; contract in `docs/LEAF-CONTRACTS.tsv`.
+- Differential vs real engines: a `CAST(CURRENT_DATE AS TEXT/CHAR)` case in each direction plus the
+  allowance gate on SQLite sources and targets.
+
 ## 0.6.0 - 2026-10-14
 
 - **Gate too strict (fixed):** a statement that translates now has every leaf `analyse` names for it
