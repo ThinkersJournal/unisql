@@ -578,6 +578,14 @@ impl Target for Sqlite {
         ))
     }
 
+    fn table_function(&self, name: &str, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            &format!("table_function.{name}"),
+            &format!("SQLite has no verified mapping for the table-valued function {name}()"),
+            &["generate the rows in the application, or use a recursive CTE for generate_series"],
+        ))
+    }
+
     fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "cte.data_modifying",

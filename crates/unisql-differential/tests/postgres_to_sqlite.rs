@@ -737,6 +737,22 @@ fn cases() -> Vec<Case> {
         ),
         exp(
             c(
+                "refuse_table_function",
+                "SELECT g FROM generate_series(1, 3) AS g",
+                &[],
+            ),
+            Expect::Refused("table_function.generate_series"),
+        ),
+        exp(
+            c(
+                "pg_identity_table_function",
+                "SELECT g FROM generate_series(1, 3) AS g ORDER BY g",
+                &[],
+            ),
+            Expect::Identity,
+        ),
+        exp(
+            c(
                 "refuse_array_literal",
                 "SELECT array_length(ARRAY[1, 2, 3], 1)",
                 &[],

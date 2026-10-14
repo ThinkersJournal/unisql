@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=121
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=122
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -209,6 +209,7 @@ PASS epoch_of_difference          same
 PASS refuse_date_trunc_week       refused `fn:date_trunc.week`: no verified mapping for date_trunc('week', ..) on MySQL/MariaDB yet
 PASS gen_random_uuid_v4           360 values: all v4-shaped and distinct; control rejected
        -> SELECT CAST(LOWER(CONCAT(HEX(RANDOM_BYTES(4)), '-', HEX(RANDOM_BYTES(2)), '-4', SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', ELT(1 + (ORD(RANDOM_BYTES(1)) & 3), '8', '9', 'a', 'b'), SUBSTR(HEX(RANDOM_BYTES(2)), 2), '-', HEX(RANDOM_BYTES(6)))) AS CHAR) FROM `users`
+PASS refuse_table_function        refused `table_function.generate_series`: MySQL/MariaDB has no verified mapping for the table-valued function generate_series()
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 

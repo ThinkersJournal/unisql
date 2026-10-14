@@ -270,6 +270,9 @@ fn collect(t: &TableRef, out: &mut Vec<(String, Option<Name>)>) {
             Some(name.clone()),
         )),
         TableRef::Subquery { alias, .. } => out.push((alias.clone(), None)),
+        TableRef::Function { name, alias, .. } => {
+            out.push((alias.clone().unwrap_or_else(|| name.clone()), None))
+        }
         TableRef::Join { left, right, .. } => {
             collect(left, out);
             collect(right, out);

@@ -122,6 +122,7 @@ construct	returning	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to
 construct	returning.update	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::update_returning		postgres
 construct	row_lock	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_update	SQLite has no row-level locks (it locks the whole database)	postgres
 construct	row_lock.share	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_share	SQLite has no row-level locks (it locks the whole database)	postgres
+construct	table_function.generate_series	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_table_function	SQLite has no verified mapping for the table-valued function generate_series()	postgres
 construct	text_comparison	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	trim	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::trim_both_chars		postgres
 construct	update_from	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::update_from		postgres

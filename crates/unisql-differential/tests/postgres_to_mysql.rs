@@ -764,6 +764,13 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         Expect::RandomUuidV4,
     ));
+    v.push(exp(
+        c(
+            "refuse_table_function",
+            "SELECT g FROM generate_series(1, 3) AS g",
+        ),
+        Expect::Refused("table_function.generate_series"),
+    ));
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.
     let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";

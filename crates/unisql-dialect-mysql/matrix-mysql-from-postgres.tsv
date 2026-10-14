@@ -95,6 +95,7 @@ construct	row_lock.nowait	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		ti
 construct	row_lock.of	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_of_table		postgres
 construct	row_lock.share	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_share		postgres
 construct	row_lock.skip_locked	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_skip_locked		postgres
+construct	table_function.generate_series	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_table_function	MySQL/MariaDB has no verified mapping for the table-valued function generate_series()	postgres
 construct	text_comparison	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_text_equality	known-bad control: the result diverged from the source engine under this config	postgres
 construct	text_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	premise=text_collation, read from config; see the known-bad row	postgres
 construct	text_comparison.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	allowance=text_collation	postgres

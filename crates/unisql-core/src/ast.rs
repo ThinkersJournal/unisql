@@ -146,6 +146,12 @@ pub enum TableRef {
         query: Box<Query>,
         alias: String,
     },
+    /// A table-valued function in FROM: `generate_series(1, 3) AS g`, `jsonb_object_keys(doc) AS k`.
+    Function {
+        name: String,
+        args: Vec<Expr>,
+        alias: Option<String>,
+    },
     Join {
         left: Box<TableRef>,
         right: Box<TableRef>,
