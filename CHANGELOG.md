@@ -2,6 +2,21 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.17.4 - 2026-10-14
+
+- **MySQL/MariaDB date and time functions with verified mappings** (differential cases against real
+  MySQL 8.4, MariaDB 11.4, PostgreSQL and SQLite): `UTC_TIMESTAMP()` and `UTC_TIMESTAMP(6)`
+  (PostgreSQL `NOW() AT TIME ZONE 'UTC'`, exact; SQLite `datetime('now')` / `strftime('%f')`,
+  conditional on `timestamp_as_text`, and for precision 6 on the new allowance
+  `timestamp_millisecond_resolution`; other precisions refused, leaf `fn:utc_timestamp.precision`),
+  `UTC_DATE()` (`date_as_text` on SQLite), `CURDATE()` (read as `CURRENT_DATE`), `DATEDIFF(a, b)`
+  (PostgreSQL date subtraction under `lenient_cast`; SQLite `julianday` under `timestamp_as_text`) and
+  `DATE(x)`. A MySQL/MariaDB source writes its own `UTC_TIMESTAMP`/`UTC_DATE`/`DATEDIFF`/`DATE` back
+  unchanged. New leaves `fn:utc_timestamp`, `fn:utc_timestamp.precision`, `fn:utc_date`,
+  `fn:datediff`, `fn:date`. Statements that were refused are now translated; no AST change.
+- `Allowance` gains `TimestampMillisecondResolution` (the enum is `#[non_exhaustive]`).
+- MySQL-source corpus: both auth-framework `UTC_TIMESTAMP(6)` statements translate.
+
 ## 0.17.3 - 2026-10-14
 
 - **`Schema` carries unique keys; `ON DUPLICATE KEY UPDATE` translates to PostgreSQL and SQLite.**

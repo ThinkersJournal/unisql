@@ -39,6 +39,57 @@ impl Target for Postgres {
 
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
+        if ctx.source != "postgres" {
+            // MySQL/MariaDB date and time functions with a verified PostgreSQL spelling.
+            match n {
+                "utc_timestamp" => {
+                    let body = match unisql_core::target::utc_timestamp_precision(f) {
+                        Some(0) => "DATE_TRUNC('second', NOW() AT TIME ZONE 'UTC')",
+                        Some(6) => "(NOW() AT TIME ZONE 'UTC')",
+                        _ => {
+                            return Err(ctx.refuse(
+                                "fn:utc_timestamp.precision",
+                                "only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified (whole seconds, microseconds)",
+                                &["use UTC_TIMESTAMP() or UTC_TIMESTAMP(6)"],
+                            ));
+                        }
+                    };
+                    ctx.note(
+                        "fn:utc_timestamp",
+                        Tier::Exact,
+                        "NOW() AT TIME ZONE 'UTC'",
+                        None,
+                    )?;
+                    return Ok(body.to_string());
+                }
+                "utc_date" if args.is_empty() => {
+                    ctx.note("fn:utc_date", Tier::Exact, "the UTC date", None)?;
+                    return Ok("CAST(NOW() AT TIME ZONE 'UTC' AS DATE)".to_string());
+                }
+                "datediff" if args.len() == 2 => {
+                    ctx.note(
+                        "fn:datediff",
+                        Tier::Conditional,
+                        "whole days between the date parts; an unparsable operand is NULL in the source and an error here",
+                        Some(Allowance::LenientCast),
+                    )?;
+                    return Ok(format!(
+                        "(CAST({} AS DATE) - CAST({} AS DATE))",
+                        args[0], args[1]
+                    ));
+                }
+                "date" if args.len() == 1 => {
+                    ctx.note(
+                        "fn:date",
+                        Tier::Conditional,
+                        "the date part; an unparsable operand is NULL in the source and an error here",
+                        Some(Allowance::LenientCast),
+                    )?;
+                    return Ok(format!("CAST({} AS DATE)", args[0]));
+                }
+                _ => {}
+            }
+        }
         if ctx.source != "postgres" && !PORTABLE_FUNCTIONS.contains(&n) && !FROM_OTHER.contains(&n)
         {
             return Err(ctx.refuse(

@@ -14,9 +14,13 @@ construct	division_integer.integer_division_assumed	sqlite	3.53.2	schema=none	ye
 construct	fn:char_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
 construct	fn:coalesce	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
 construct	fn:count	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
-construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
-construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	allowance=date_as_text	mysql
+construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::curdate_is_current_date	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
+construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::curdate_is_current_date	allowance=date_as_text	mysql
+construct	fn:date	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::date_part	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
+construct	fn:date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::date_part	allowance=date_as_text	mysql
 construct	fn:date_format	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_format	no verified mapping for this function on SQLite yet	mysql
+construct	fn:datediff	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::datediff_literals	diverges from the strict contract unless accepted: allowance=timestamp_as_text	mysql
+construct	fn:datediff.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::datediff_literals	allowance=timestamp_as_text	mysql
 construct	fn:make_interval	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus		mysql
 construct	fn:make_interval.month_year	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
 construct	fn:max	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
@@ -34,6 +38,12 @@ construct	fn:substr	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sq
 construct	fn:substr.start_position	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mysql
 construct	fn:substr.start_position.substring_start_assumed_positive	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start	allowance=substring_start_assumed_positive	mysql
 construct	fn:sum	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
+construct	fn:utc_date	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
+construct	fn:utc_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_date_text	allowance=date_as_text	mysql
+construct	fn:utc_timestamp	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_timestamp6_window	diverges from the strict contract unless accepted: allowance=timestamp_as_text,timestamp_millisecond_resolution	mysql
+construct	fn:utc_timestamp.precision	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_utc_timestamp_precision	only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified	mysql
+construct	fn:utc_timestamp.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_timestamp6_window	allowance=timestamp_as_text	mysql
+construct	fn:utc_timestamp.timestamp_millisecond_resolution	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_timestamp6_window	allowance=timestamp_millisecond_resolution	mysql
 construct	insert_ignore	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
 construct	insert_ignore.ignore_covers_only_unique_conflicts	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
 construct	interval_arithmetic	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql

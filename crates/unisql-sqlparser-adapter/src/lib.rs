@@ -2024,6 +2024,7 @@ fn function(f: sp::Function) -> R<Expr> {
     if rules().name == "mysql" {
         match name.as_str() {
             "ifnull" => name = "coalesce".to_string(),
+            "curdate" if out.is_empty() => name = "current_date".to_string(),
             "group_concat" => {
                 name = "string_agg".to_string();
                 out.push(FunctionArg::Expr(Expr::Literal(Literal::String(

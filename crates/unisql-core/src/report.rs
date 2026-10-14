@@ -47,6 +47,8 @@ pub enum Allowance {
     EpochWholeSeconds,
     /// A timestamp value has whole-second resolution on the target: a fraction of a second is dropped.
     TimestampWholeSeconds,
+    /// A timestamp value has millisecond resolution on the target: digits beyond the third are 0.
+    TimestampMillisecondResolution,
     /// The column's collation (from the caller's `Schema`) orders and compares text by locale rules
     /// (case- or accent-insensitive, language order); the target compares bytes, so the result may
     /// differ for the same data.
@@ -106,6 +108,7 @@ impl Allowance {
         Allowance::TimestampAsText,
         Allowance::EpochWholeSeconds,
         Allowance::TimestampWholeSeconds,
+        Allowance::TimestampMillisecondResolution,
         Allowance::SourceCollationNotBytewise,
         Allowance::PipesAsLogicalOr,
         Allowance::IgnoreCoversOnlyUniqueConflicts,
@@ -133,6 +136,7 @@ impl Allowance {
             Allowance::TimestampAsText => "timestamp_as_text",
             Allowance::EpochWholeSeconds => "epoch_whole_seconds",
             Allowance::TimestampWholeSeconds => "timestamp_whole_seconds",
+            Allowance::TimestampMillisecondResolution => "timestamp_millisecond_resolution",
             Allowance::SourceCollationNotBytewise => "source_collation_not_bytewise",
             Allowance::PipesAsLogicalOr => "pipes_as_logical_or",
             Allowance::IgnoreCoversOnlyUniqueConflicts => "ignore_covers_only_unique_conflicts",

@@ -587,6 +587,16 @@ pub fn pg_type_name(ty: &SqlType) -> String {
     }
 }
 
+/// The fractional-second precision written in `UTC_TIMESTAMP(p)`: `Some(0)` when absent, `None`
+/// when it is not an integer literal.
+pub fn utc_timestamp_precision(f: &Function) -> Option<u32> {
+    match f.args.as_slice() {
+        [] => Some(0),
+        [FunctionArg::Expr(Expr::Literal(Literal::Number(n)))] => n.parse().ok(),
+        _ => None,
+    }
+}
+
 /// `date_trunc('<field>', x)` with a literal field: that field, lower-cased.
 pub fn date_trunc_field(f: &Function) -> Option<String> {
     if f.name != "date_trunc" {

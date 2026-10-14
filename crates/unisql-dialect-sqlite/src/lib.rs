@@ -231,6 +231,70 @@ impl Target for Sqlite {
                 order.as_deref(),
             ));
         }
+        match n {
+            "utc_timestamp" => {
+                let (text, allow2) = match unisql_core::target::utc_timestamp_precision(f) {
+                    Some(0) => ("datetime('now')", None),
+                    Some(6) => (
+                        "strftime('%Y-%m-%d %H:%M:%f', 'now')",
+                        Some(Allowance::TimestampMillisecondResolution),
+                    ),
+                    _ => {
+                        return Err(ctx.refuse(
+                            "fn:utc_timestamp.precision",
+                            "only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified",
+                            &["use UTC_TIMESTAMP() or UTC_TIMESTAMP(6)"],
+                        ));
+                    }
+                };
+                ctx.note(
+                    "fn:utc_timestamp",
+                    Tier::Conditional,
+                    "text 'YYYY-MM-DD HH:MM:SS[.fff]' in UTC, not a timestamp type",
+                    Some(Allowance::TimestampAsText),
+                )?;
+                if let Some(a) = allow2 {
+                    ctx.note(
+                        "fn:utc_timestamp",
+                        Tier::Conditional,
+                        "SQLite's %f has millisecond resolution; MySQL's UTC_TIMESTAMP(6) has microseconds",
+                        Some(a),
+                    )?;
+                }
+                return Ok(text.to_string());
+            }
+            "utc_date" if args.is_empty() => {
+                ctx.note(
+                    "fn:utc_date",
+                    Tier::Conditional,
+                    "text 'YYYY-MM-DD' of the UTC date, not a date type",
+                    Some(Allowance::DateAsText),
+                )?;
+                return Ok("date('now')".to_string());
+            }
+            "datediff" if args.len() == 2 => {
+                ctx.note(
+                    "fn:datediff",
+                    Tier::Conditional,
+                    "operands are timestamp text; whole days between their date parts",
+                    Some(Allowance::TimestampAsText),
+                )?;
+                return Ok(format!(
+                    "CAST(julianday(date({})) - julianday(date({})) AS INTEGER)",
+                    args[0], args[1]
+                ));
+            }
+            "date" if args.len() == 1 => {
+                ctx.note(
+                    "fn:date",
+                    Tier::Conditional,
+                    "text 'YYYY-MM-DD', not a date type",
+                    Some(Allowance::DateAsText),
+                )?;
+                return Ok(format!("date({})", args[0]));
+            }
+            _ => {}
+        }
         if f.over.is_some()
             && matches!(
                 n,

@@ -14,8 +14,12 @@ construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C;
 construct	fn:char_length	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
 construct	fn:coalesce	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
 construct	fn:count	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
-construct	fn:current_date	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::current_date_bare		mariadb
+construct	fn:current_date	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::curdate_is_current_date		mariadb
+construct	fn:date	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::date_part	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
+construct	fn:date.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::date_part	allowance=lenient_cast	mariadb
 construct	fn:date_format	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mariadb
+construct	fn:datediff	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::datediff_literals	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
+construct	fn:datediff.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::datediff_literals	allowance=lenient_cast	mariadb
 construct	fn:make_interval	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
 construct	fn:make_interval.month_year	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mariadb
 construct	fn:max	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
@@ -30,6 +34,9 @@ construct	fn:substr	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;sui
 construct	fn:substr.start_position	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mariadb
 construct	fn:substr.start_position.substring_start_assumed_positive	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start	allowance=substring_start_assumed_positive	mariadb
 construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
+construct	fn:utc_date	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::utc_date_text		mariadb
+construct	fn:utc_timestamp	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::utc_timestamp6_window		mariadb
+construct	fn:utc_timestamp.precision	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_utc_timestamp_precision	only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified (whole seconds, microseconds)	mariadb
 construct	insert_ignore	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mariadb
 construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mariadb
 construct	interval_arithmetic	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
