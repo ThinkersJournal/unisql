@@ -1559,6 +1559,7 @@ dependencies = [
  "unisql-dialect-mysql",
  "unisql-dialect-postgres",
  "unisql-dialect-sqlite",
+ "unisql-sqlparser-adapter",
 ]
 
 [[package]]

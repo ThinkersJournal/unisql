@@ -12,7 +12,7 @@ use sqlparser::ast as sp;
 use sqlparser::dialect::Dialect;
 use sqlparser::parser::Parser;
 use unisql_core::ast::*;
-use unisql_core::{Allowance, Read, ReadError, ReadNote};
+use unisql_core::{Allowance, Column, ColumnClass, Read, ReadError, ReadNote, Schema};
 
 /// What differs between source dialects at the AST-to-IR step.
 pub struct Rules {
@@ -218,6 +218,190 @@ fn pipes_to_or(sql: &str, dialect: &dyn sqlparser::dialect::Dialect) -> Option<S
     }
     out.extend(&chars[at..]);
     Some(out)
+}
+
+/// The classes of the base-table columns a DDL script declares, read for types only: this is not DDL
+/// translation, and no statement of it is ever written out.
+#[derive(Clone, Debug, Default)]
+pub struct SchemaRead {
+    pub schema: Schema,
+    /// Statements the parser could not read (a function body, a `DO` block): each head and reason.
+    /// They are skipped, which can only leave a column unregistered (unknown).
+    pub skipped: Vec<String>,
+}
+
+/// Class of a declared type, from its spelling (`None`: a type UniSQL does not classify). MySQL's
+/// `tinyint(1)` is numeric; `boolean` is `Boolean` only because the declared type says so.
+fn class_of_type(dt: &sp::DataType) -> Option<ColumnClass> {
+    let t = dt.to_string().to_ascii_lowercase();
+    if t.ends_with("[]") || t.starts_with("array") {
+        return None;
+    }
+    let base: String = t
+        .chars()
+        .take_while(|c| c.is_ascii_alphanumeric() || *c == '_' || *c == ' ')
+        .collect();
+    let base = base.trim();
+    let first = base.split_whitespace().next().unwrap_or("");
+    Some(match base {
+        "character varying" | "character" | "national character varying" | "national character" => {
+            ColumnClass::Text
+        }
+        "double precision" => ColumnClass::Numeric,
+        b if b.starts_with("timestamp")
+            || b == "time"
+            || b.starts_with("time with")
+            || b.starts_with("time without") =>
+        {
+            ColumnClass::Other
+        }
+        _ => match first {
+            "text" | "varchar" | "char" | "nchar" | "nvarchar" | "tinytext" | "mediumtext"
+            | "longtext" | "string" | "bpchar" | "clob" => ColumnClass::Text,
+            "int" | "integer" | "smallint" | "bigint" | "tinyint" | "mediumint" | "int2"
+            | "int4" | "int8" | "serial" | "bigserial" | "smallserial" | "decimal" | "numeric"
+            | "dec" | "float" | "float4" | "float8" | "real" | "double" | "number" => {
+                ColumnClass::Numeric
+            }
+            "boolean" | "bool" => ColumnClass::Boolean,
+            "date" | "datetime" | "timestamptz" | "year" | "interval" | "uuid" | "json"
+            | "jsonb" | "bytea" | "blob" | "tinyblob" | "mediumblob" | "longblob" | "binary"
+            | "varbinary" | "bit" | "inet" | "cidr" | "macaddr" => ColumnClass::Other,
+            _ => return None,
+        },
+    })
+}
+
+fn column_from_def(c: &sp::ColumnDef) -> Column {
+    let class = class_of_type(&c.data_type);
+    let collation = c.options.iter().find_map(|o| match &o.option {
+        sp::ColumnOption::Collation(n) => {
+            Some(n.to_string().trim_matches(['"', '`', '\'']).to_string())
+        }
+        _ => None,
+    });
+    let mut col = Column::new(class.unwrap_or(ColumnClass::Unknown));
+    col.collation = collation;
+    col
+}
+
+/// Read `CREATE TABLE`, `ALTER TABLE .. ADD|DROP|ALTER COLUMN` and `DROP TABLE` out of a DDL script
+/// (a migration file) in the dialect described by `rules`. Statements are split on `;` tokens, so a
+/// dollar-quoted body does not split; a statement that does not parse is listed in `skipped`.
+pub fn read_schema(ddl: &str, rules: &'static Rules) -> R<SchemaRead> {
+    use sqlparser::tokenizer::{Token, Tokenizer};
+    let d = (rules.dialect)();
+    let tokens = Tokenizer::new(d.as_ref(), ddl)
+        .tokenize_with_location()
+        .map_err(|e| ReadError::Syntax(e.to_string()))?;
+    let chars: Vec<char> = ddl.chars().collect();
+    let line_starts: Vec<usize> = std::iter::once(0)
+        .chain(
+            chars
+                .iter()
+                .enumerate()
+                .filter(|(_, c)| **c == '\n')
+                .map(|(i, _)| i + 1),
+        )
+        .collect();
+    let offset = |loc: sqlparser::tokenizer::Location| -> Option<usize> {
+        let line = usize::try_from(loc.line).ok()?.checked_sub(1)?;
+        let col = usize::try_from(loc.column).ok()?.checked_sub(1)?;
+        Some(line_starts.get(line)? + col)
+    };
+    let mut cuts: Vec<usize> = tokens
+        .iter()
+        .filter(|t| t.token == Token::SemiColon)
+        .filter_map(|t| offset(t.span.start))
+        .collect();
+    cuts.push(chars.len());
+    let mut out = SchemaRead::default();
+    let mut from = 0;
+    for cut in cuts {
+        if cut < from || cut > chars.len() {
+            continue;
+        }
+        let text: String = chars[from..cut].iter().collect();
+        from = (cut + 1).min(chars.len());
+        if text.trim().is_empty() {
+            continue;
+        }
+        let stmts = match Parser::parse_sql(d.as_ref(), &text) {
+            Ok(s) => s,
+            Err(e) => {
+                let head: String = text
+                    .split_whitespace()
+                    .take(4)
+                    .collect::<Vec<_>>()
+                    .join(" ");
+                out.skipped.push(format!("{head}: {e}"));
+                continue;
+            }
+        };
+        for st in stmts {
+            apply_ddl(&mut out.schema, st);
+        }
+    }
+    Ok(out)
+}
+
+fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
+    match st {
+        sp::Statement::CreateTable(ct) => {
+            if ct.query.is_some() || ct.like.is_some() {
+                return;
+            }
+            let Ok(name) = object_name(&ct.name) else {
+                return;
+            };
+            schema.drop_table(&name);
+            for c in &ct.columns {
+                schema.set_column(name.0.clone(), ident(&c.name), column_from_def(c));
+            }
+        }
+        sp::Statement::AlterTable(at) => {
+            let Ok(name) = object_name(&at.name) else {
+                return;
+            };
+            for op in at.operations {
+                match op {
+                    sp::AlterTableOperation::AddColumn { column_def, .. } => {
+                        schema.set_column(
+                            name.0.clone(),
+                            ident(&column_def.name),
+                            column_from_def(&column_def),
+                        );
+                    }
+                    sp::AlterTableOperation::DropColumn { column_names, .. } => {
+                        for c in &column_names {
+                            schema.drop_column(&name, &ident(c));
+                        }
+                    }
+                    sp::AlterTableOperation::AlterColumn {
+                        column_name,
+                        op: sp::AlterColumnOperation::SetDataType { data_type, .. },
+                    } => {
+                        let class = class_of_type(&data_type).unwrap_or(ColumnClass::Unknown);
+                        // A new type resets the collation unless the statement states one.
+                        schema.set_column(name.0.clone(), ident(&column_name), Column::new(class));
+                    }
+                    _ => {}
+                }
+            }
+        }
+        sp::Statement::Drop {
+            object_type: sp::ObjectType::Table,
+            names,
+            ..
+        } => {
+            for n in &names {
+                if let Ok(name) = object_name(n) {
+                    schema.drop_table(&name);
+                }
+            }
+        }
+        _ => {}
+    }
 }
 
 fn statement(s: sp::Statement) -> R<Statement> {

@@ -10,6 +10,7 @@ description = "Translate SQL text from one dialect to another. No I/O, no driver
 
 [dependencies]
 unisql-core.workspace = true
+unisql-sqlparser-adapter.workspace = true
 unisql-dialect-postgres.workspace = true
 unisql-dialect-sqlite.workspace = true
 unisql-dialect-mysql.workspace = true

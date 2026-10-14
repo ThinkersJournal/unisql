@@ -2,6 +2,24 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **`unisql::schema_from_ddl(ddl, dialect)`** (option B): fills a `Schema` from DDL text (a project's
+  migrations, concatenated in order). Reads `CREATE TABLE`, `ALTER TABLE .. ADD | DROP | ALTER COLUMN ..
+  TYPE` and `DROP TABLE`; reading only, nothing is translated or written. Statements split on `;`
+  tokens, so a dollar-quoted function body does not split; a statement the parser cannot read is listed
+  in `DdlSchema::skipped` (it can only leave columns unregistered). A column whose declared type is not
+  classified (a custom type such as `citext`, an array) is registered as `ColumnClass::Unknown`, never
+  omitted, so an unqualified reference cannot be taken for another table's column. `boolean` is
+  `Boolean` only when declared so (MySQL `tinyint(1)` is `Numeric`). The collation is only what the
+  column states (`COLLATE x`); no database default is guessed (PersistAnt's ask).
+- `ColumnClass::Unknown`, `Schema::set_column / drop_column / drop_table`.
+- **Measured on Humboldt `backend/migrations` + `backend/src` @ b7cd95e7** (365 statements, all
+  allowances granted; the `corpus` runner takes the DDL as a second argument): on the MySQL target
+  97 statements go from conditional to exact and the statements needing `text_collation` fall from 226
+  to 108; on SQLite 1 changes (53 -> 47 needing it). 6 of the migrations' statements are skipped
+  (`DO` blocks, one `COMMENT` the parser rejects).
+
 ## 0.12.0 - 2026-10-14
 
 - **`Schema` (option A of the schema-input ruling):** `Options::with_schema(Schema)` tells the translator
