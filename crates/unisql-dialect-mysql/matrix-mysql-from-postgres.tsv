@@ -1,4 +1,5 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
+construct	array_literal	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_array_literal	MySQL/MariaDB has no array type	postgres
 construct	array_param	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
 construct	array_param.array_null_semantics	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	allowance=array_null_semantics	postgres
 construct	array_subquery	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_array_subquery	MySQL/MariaDB has no array type	postgres
@@ -19,6 +20,7 @@ construct	division	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite
 construct	division.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=division_by_zero_is_null	postgres
 construct	division_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
 construct	division_integer.integer_division_assumed	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=integer_division_assumed	postgres
+construct	extract.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_extract_year	MySQL/MariaDB: no verified mapping for EXTRACT(year ..) yet	postgres
 construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
 construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
@@ -27,6 +29,7 @@ construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=n
 construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
+construct	fn:current_user	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_current_user	no verified mapping for this function on MySQL/MariaDB yet	postgres
 construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres

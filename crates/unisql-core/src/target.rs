@@ -224,6 +224,20 @@ pub trait Target {
         Ok(format!("{lhs} IS NOT DISTINCT FROM {rhs}"))
     }
 
+    /// `EXTRACT(field FROM expr)`, operand printed. Default (PostgreSQL): exact, one leaf per field
+    /// (`extract.year`, `extract.epoch`, ...): a target maps a field only once it is verified.
+    fn extract(&self, field: &str, expr: &str, ctx: &mut Ctx) -> R<String> {
+        ctx.note(format!("extract.{field}"), Tier::Exact, "", None)?;
+        Ok(format!("EXTRACT({} FROM {expr})", field.to_uppercase()))
+    }
+
+    /// `ARRAY[..]`, elements printed. Default (PostgreSQL): exact; a target without an array type
+    /// refuses the leaf `array_literal`.
+    fn array_literal(&self, items: &[String], ctx: &mut Ctx) -> R<String> {
+        ctx.note("array_literal", Tier::Exact, "", None)?;
+        Ok(format!("ARRAY[{}]", items.join(", ")))
+    }
+
     /// `expr AT TIME ZONE zone`. Default (PostgreSQL): exact. A target without it refuses the leaf
     /// `at_time_zone`.
     fn at_time_zone(&self, ctx: &mut Ctx) -> R<()> {

@@ -2,6 +2,17 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.14.0 - 2026-10-14
+
+- **The last three DML forms the Humboldt/auth corpus could not read** (one statement each):
+  `ARRAY[a, b]` (`Expr::ArrayLiteral`, leaf `array_literal`), `EXTRACT(field FROM x)` (`Expr::Extract`,
+  one leaf per field: `extract.epoch`, `extract.year`, ...) and the bare identity keywords `current_user`,
+  `session_user`, `current_role` (`fn:current_user`, ...). PostgreSQL writes each back (round trip on the
+  engine); SQLite and MySQL/MariaDB refuse each by leaf. A field is mapped on a target only once it is
+  verified, so enabling one later changes one leaf, not all of EXTRACT.
+- `Expr` and `Target` gain variants/hooks (`extract`, `array_literal`): breaking for consumers of
+  `unisql-core::ast`.
+
 ## 0.13.0 - 2026-10-14
 
 - **Column collation is interpreted** (the `Schema` field was only carried until now). A comparison

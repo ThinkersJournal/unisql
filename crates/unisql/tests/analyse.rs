@@ -378,6 +378,11 @@ fn catalogue() -> &'static [(&'static str, &'static str)] {
             "SELECT id FROM users WHERE id = 1 FOR UPDATE NOWAIT",
         ),
         ("postgres", "SELECT md5(name), current_schema() FROM users"),
+        ("postgres", "SELECT EXTRACT(EPOCH FROM (now() - now()))"),
+        (
+            "postgres",
+            "SELECT array_length(ARRAY[1, 2], 1), current_user",
+        ),
         (
             "postgres",
             "WITH s AS (SELECT id FROM users WHERE age > 3) UPDATE users SET age = 1 WHERE id IN (SELECT id FROM s)",

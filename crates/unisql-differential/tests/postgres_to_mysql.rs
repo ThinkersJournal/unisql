@@ -715,6 +715,25 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::NeedsAllowance(A::TextCollation),
         ));
     }
+    for (name, sql, leaf) in [
+        (
+            "refuse_extract_year",
+            "SELECT EXTRACT(YEAR FROM now())",
+            "extract.year",
+        ),
+        (
+            "refuse_array_literal",
+            "SELECT array_length(ARRAY[1, 2, 3], 1)",
+            "array_literal",
+        ),
+        (
+            "refuse_current_user",
+            "SELECT CAST(current_user AS TEXT)",
+            "fn:current_user",
+        ),
+    ] {
+        v.push(exp(c(name, sql), Expect::Refused(leaf)));
+    }
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.
     let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";

@@ -443,6 +443,14 @@ impl Walk<'_> {
                 self.add("array_param");
                 self.expr(expr);
             }
+            Expr::Extract { field, expr } => {
+                self.add(format!("extract.{field}"));
+                self.expr(expr);
+            }
+            Expr::ArrayLiteral(items) => {
+                self.add("array_literal");
+                items.iter().for_each(|x| self.expr(x));
+            }
             Expr::AtTimeZone { expr, zone } => {
                 self.add("at_time_zone");
                 self.expr(expr);

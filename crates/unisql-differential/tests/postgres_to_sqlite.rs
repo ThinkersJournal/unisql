@@ -652,6 +652,63 @@ fn cases() -> Vec<Case> {
             },
             Expect::NeedsAllowance(A::TextCollation),
         ),
+        // ---- forms only PostgreSQL has: each refused by leaf elsewhere, round-tripped on PostgreSQL
+        exp(
+            c(
+                "refuse_extract_year",
+                "SELECT EXTRACT(YEAR FROM now())",
+                &[A::NowAsText],
+            ),
+            Expect::Refused("extract.year"),
+        ),
+        exp(
+            c(
+                "refuse_extract_epoch",
+                "SELECT EXTRACT(EPOCH FROM (at - now())) FROM events",
+                &[A::NowAsText, A::TimestampArithmeticAsText],
+            ),
+            Expect::Refused("extract.epoch"),
+        ),
+        exp(
+            c(
+                "refuse_array_literal",
+                "SELECT array_length(ARRAY[1, 2, 3], 1)",
+                &[],
+            ),
+            Expect::Refused("array_literal"),
+        ),
+        exp(
+            c(
+                "refuse_current_user",
+                "SELECT CAST(current_user AS TEXT)",
+                &[A::LenientCast],
+            ),
+            Expect::Refused("fn:current_user"),
+        ),
+        exp(
+            c(
+                "pg_identity_extract",
+                "SELECT CAST(EXTRACT(YEAR FROM CAST('2020-06-01 00:00:00+00' AS TIMESTAMPTZ)) AS INTEGER)",
+                &[],
+            ),
+            Expect::Identity,
+        ),
+        exp(
+            c(
+                "pg_identity_array_literal",
+                "SELECT array_length(ARRAY[1, 2, 3], 1)",
+                &[],
+            ),
+            Expect::Identity,
+        ),
+        exp(
+            c(
+                "pg_identity_current_user",
+                "SELECT CAST(current_user AS TEXT)",
+                &[],
+            ),
+            Expect::Identity,
+        ),
         // PostgreSQL has the form itself: it must read and write back unchanged in meaning.
         exp(
             Case {

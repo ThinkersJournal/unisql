@@ -1,4 +1,5 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
+construct	array_literal	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_array_literal	SQLite has no array type	postgres
 construct	array_param	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
 construct	array_param.array_null_semantics	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::all_ne_empty_array	allowance=array_null_semantics	postgres
 construct	array_subquery	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_array_subquery	SQLite has no array type	postgres
@@ -19,6 +20,8 @@ construct	distinct_on.star_projection	sqlite	3.53.2	schema=none	no	missing	suite
 construct	division	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	division.division_by_zero_is_null	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division	allowance=division_by_zero_is_null	postgres
 construct	division_integer	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::int_division		postgres
+construct	extract.epoch	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_epoch	SQLite: no verified mapping for EXTRACT(epoch ..) yet	postgres
+construct	extract.year	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_year	SQLite: no verified mapping for EXTRACT(year ..) yet	postgres
 construct	filter_clause	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	fn:avg	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast		postgres
 construct	fn:btrim	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::btrim_forms		postgres
@@ -29,6 +32,7 @@ construct	fn:count	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-
 construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::current_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	postgres
 construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::current_date_text	allowance=date_as_text	postgres
 construct	fn:current_schema	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_schema	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
+construct	fn:current_user	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_user	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:lag	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres
 construct	fn:lead	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres
 construct	fn:length	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::string_funcs		postgres
