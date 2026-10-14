@@ -45,6 +45,11 @@ jobs:
       - name: cargo test (everything that needs no engine)
         run: cargo test --workspace --exclude unisql-differential --no-fail-fast
 
+      # The leaf-contract and licence-copy checks read the workspace layout (docs/, sibling crates), so
+      # they live in the unpublished differential crate; they need no engine.
+      - name: cargo test (workspace-layout checks, no engine)
+        run: cargo test -p unisql-differential --test leaf_contracts
+
   msrv:
     name: MSRV (rust-version in Cargo.toml)
     runs-on: ubuntu-latest
