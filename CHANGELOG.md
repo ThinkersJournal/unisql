@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.0.3 - 2026-10-13
 
 - `unisql::analyse(sql, source)`: target-free needs extraction (`constructs`, `refused`, `unreadable`),
   backed by a new IR walker in `unisql-core` (`needs::constructs`) and `Allowance::ALL`. Requested by
