@@ -260,7 +260,8 @@ impl Target for Mysql {
                 Ok(format!("CAST(DATE_FORMAT({}, '{fmt}') AS DATETIME)", args[1]))
             }
             // A MySQL/MariaDB source's own date/time functions are the identity.
-            "utc_timestamp" | "utc_date" | "datediff" | "date"
+            "utc_timestamp" | "utc_date" | "datediff" | "date" | "concat_ws" | "left" | "right"
+            | "lpad" | "rpad" | "repeat" | "reverse"
                 if matches!(ctx.source, "mysql" | "mariadb") =>
             {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;

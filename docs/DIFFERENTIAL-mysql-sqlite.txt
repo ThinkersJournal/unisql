@@ -1,4 +1,4 @@
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=72
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=77
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -132,10 +132,18 @@ PASS datediff_literals          same
        -> SELECT CAST(julianday(date('2024-03-01')) - julianday(date('2024-02-01')) AS INTEGER), CAST(julianday(date('2024-01-01 23:59:59')) - julianday(date('2024-01-02 00:00:01')) AS INTEGER)
 PASS date_part                  same
        -> SELECT CAST(date('2024-05-06 07:08:09') AS TEXT)
+PASS concat_ws_skips_null       same
+       -> SELECT "id", concat_ws('-', "name", "email", "city") FROM "users" ORDER BY "id"
+PASS left_right_literal         same
+       -> SELECT "id", substr("name", 1, 2), substr("name", -3), substr("name", 1, 0), substr("name", 1, 0), substr("name", 1, 99), substr("name", -99) FROM "users" ORDER BY "id"
+PASS repeat_literal             same
+       -> SELECT "id", replace(hex(zeroblob(2)), '00', "name"), replace(hex(zeroblob(0)), '00', "name") FROM "users" ORDER BY "id"
+PASS refuse_left_negative       refused `fn:left.length`: LEFT(s, n) is mapped only for a literal n >= 0
+PASS refuse_left_column         refused `fn:left.length`: LEFT(s, n) is mapped only for a literal n >= 0
 PASS refuse_utc_timestamp_precision refused `fn:utc_timestamp.precision`: only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on SQLite yet
 
-MATRIX (construct, tier) from 63 passing translated cases:
+MATRIX (construct, tier) from 66 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
@@ -145,16 +153,20 @@ MATRIX (construct, tier) from 63 passing translated cases:
   division_integer             exact
   fn:char_length               emulated
   fn:coalesce                  exact
+  fn:concat_ws                 exact
   fn:count                     exact
   fn:current_date              conditional
   fn:date                      conditional
   fn:datediff                  conditional
+  fn:left                      exact
   fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
   fn:now                       conditional
   fn:octet_length              emulated
   fn:rank                      exact
+  fn:repeat                    emulated
+  fn:right                     exact
   fn:string_agg                conditional
   fn:string_agg                emulated
   fn:string_agg.order_by       exact

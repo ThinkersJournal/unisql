@@ -78,6 +78,51 @@ impl Target for Postgres {
                         args[0], args[1]
                     ));
                 }
+                "concat_ws" if args.len() >= 2 => {
+                    // Both skip NULL arguments; a NULL separator gives NULL.
+                    ctx.note("fn:concat_ws", Tier::Exact, "", None)?;
+                    return Ok(format!("CONCAT_WS({})", args.join(", ")));
+                }
+                "left" | "right"
+                    if args.len() == 2 && unisql_core::target::literal_count(f, 1).is_some() =>
+                {
+                    // A negative count is '' in MySQL and "all but" in PostgreSQL: only a literal
+                    // non-negative count is mapped.
+                    ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+                    return Ok(format!("{}({})", n.to_uppercase(), args.join(", ")));
+                }
+                "left" | "right" => {
+                    return Err(ctx.refuse(
+                        &format!("fn:{n}.length"),
+                        &format!("{}(s, n) with a negative n differs between the engines; only a literal n >= 0 is mapped", n.to_uppercase()),
+                        &["use a literal non-negative count"],
+                    ));
+                }
+                "lpad" | "rpad"
+                    if args.len() == 3
+                        && unisql_core::target::literal_count(f, 1).is_some()
+                        && unisql_core::target::literal_nonempty_string(f, 2) =>
+                {
+                    ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+                    return Ok(format!("{}({})", n.to_uppercase(), args.join(", ")));
+                }
+                "lpad" | "rpad" => {
+                    return Err(ctx.refuse(
+                        &format!("fn:{n}.args"),
+                        "LPAD/RPAD differ for a negative length or an empty pad; only a literal length >= 0 and a literal non-empty pad are mapped",
+                        &["use a literal length and pad"],
+                    ));
+                }
+                "repeat"
+                    if args.len() == 2 && unisql_core::target::literal_count(f, 1).is_some() =>
+                {
+                    ctx.note("fn:repeat", Tier::Exact, "", None)?;
+                    return Ok(format!("REPEAT({})", args.join(", ")));
+                }
+                "reverse" if args.len() == 1 => {
+                    ctx.note("fn:reverse", Tier::Exact, "", None)?;
+                    return Ok(format!("REVERSE({})", args[0]));
+                }
                 "date" if args.len() == 1 => {
                     ctx.note(
                         "fn:date",

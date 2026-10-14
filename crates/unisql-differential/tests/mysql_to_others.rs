@@ -489,6 +489,26 @@ fn cases(dir: Dir) -> Vec<Case> {
             "date_part",
             "SELECT CAST(DATE('2024-05-06 07:08:09') AS CHAR)",
         ),
+        c(
+            "concat_ws_skips_null",
+            "SELECT id, CONCAT_WS('-', name, email, city) FROM users ORDER BY id",
+        ),
+        c(
+            "left_right_literal",
+            "SELECT id, LEFT(name, 2), RIGHT(name, 3), LEFT(name, 0), RIGHT(name, 0), LEFT(name, 99), RIGHT(name, 99) FROM users ORDER BY id",
+        ),
+        c(
+            "repeat_literal",
+            "SELECT id, REPEAT(name, 2), REPEAT(name, 0) FROM users ORDER BY id",
+        ),
+        exp(
+            c("refuse_left_negative", "SELECT LEFT(name, -1) FROM users"),
+            Expect::Refused("fn:left.length"),
+        ),
+        exp(
+            c("refuse_left_column", "SELECT LEFT(name, age) FROM users"),
+            Expect::Refused("fn:left.length"),
+        ),
         exp(
             c("refuse_utc_timestamp_precision", "SELECT UTC_TIMESTAMP(3)"),
             Expect::Refused("fn:utc_timestamp.precision"),
@@ -501,6 +521,21 @@ fn cases(dir: Dir) -> Vec<Case> {
     if matches!(dir, Dir::MysqlToPg | Dir::MariadbToPg) {
         // MySQL `1/0` is NULL; PostgreSQL raises an error. (SQLite agrees with MySQL here.)
         v.push(exp(c("diverge_div_zero", "SELECT 1 / 0"), Expect::Diverges));
+        v.push(c(
+            "lpad_rpad_literal",
+            "SELECT id, LPAD(name, 8, '*'), LPAD(name, 3, 'ab'), RPAD(name, 8, 'xy'), RPAD(name, 2, '.') FROM users ORDER BY id",
+        ));
+        v.push(c(
+            "reverse_text",
+            "SELECT id, REVERSE(name) FROM users ORDER BY id",
+        ));
+        v.push(exp(
+            c(
+                "refuse_lpad_empty_pad",
+                "SELECT LPAD(name, 8, '') FROM users",
+            ),
+            Expect::Refused("fn:lpad.args"),
+        ));
         // No schema: PostgreSQL has no REPLACE and the columns and key are unknown.
         v.push(exp(
             c(

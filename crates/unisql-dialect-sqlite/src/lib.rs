@@ -284,6 +284,50 @@ impl Target for Sqlite {
                     args[0], args[1]
                 ));
             }
+            "concat_ws" if args.len() >= 2 => {
+                ctx.note("fn:concat_ws", Tier::Exact, "requires SQLite >= 3.44", None)?;
+                return Ok(format!("concat_ws({})", args.join(", ")));
+            }
+            "left" if args.len() == 2 && unisql_core::target::literal_count(f, 1).is_some() => {
+                ctx.note("fn:left", Tier::Exact, "-> substr(s, 1, n)", None)?;
+                return Ok(format!("substr({}, 1, {})", args[0], args[1]));
+            }
+            "left" if args.len() == 2 => {
+                return Err(ctx.refuse(
+                    "fn:left.length",
+                    "LEFT(s, n) is mapped only for a literal n >= 0",
+                    &["use a literal non-negative count"],
+                ));
+            }
+            "right" if args.len() == 2 => {
+                return match unisql_core::target::literal_count(f, 1) {
+                    Some(0) => {
+                        ctx.note("fn:right", Tier::Exact, "-> substr(s, 1, 0)", None)?;
+                        Ok(format!("substr({}, 1, 0)", args[0]))
+                    }
+                    Some(_) => {
+                        ctx.note("fn:right", Tier::Exact, "-> substr(s, -n)", None)?;
+                        Ok(format!("substr({}, -{})", args[0], args[1]))
+                    }
+                    None => Err(ctx.refuse(
+                        "fn:right.length",
+                        "RIGHT(s, n) is mapped only for a literal n >= 0",
+                        &["use a literal non-negative count"],
+                    )),
+                };
+            }
+            "repeat" if args.len() == 2 && unisql_core::target::literal_count(f, 1).is_some() => {
+                ctx.note(
+                    "fn:repeat",
+                    Tier::Emulated,
+                    "-> replace(hex(zeroblob(n)), '00', s)",
+                    None,
+                )?;
+                return Ok(format!(
+                    "replace(hex(zeroblob({})), '00', {})",
+                    args[1], args[0]
+                ));
+            }
             "date" if args.len() == 1 => {
                 ctx.note(
                     "fn:date",
