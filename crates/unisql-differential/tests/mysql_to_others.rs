@@ -85,7 +85,17 @@ const ALL: &[A] = &[
     A::NowAsText,
     A::DateAsText,
     A::TimestampArithmeticAsText,
+    A::PipesAsLogicalOr,
+    A::IgnoreCoversOnlyUniqueConflicts,
+    A::SubstringStartAssumedPositive,
 ];
+
+fn c_only(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
+    Case {
+        allow: allow.to_vec(),
+        ..c(name, sql)
+    }
+}
 
 fn c(name: &'static str, sql: &'static str) -> Case {
     Case {
@@ -271,27 +281,74 @@ fn cases(dir: Dir) -> Vec<Case> {
             ),
             Expect::Refused("upsert.no_conflict_key"),
         ),
-        exp(
-            c(
-                "ir_insert_ignore",
-                "INSERT IGNORE INTO kv (k, v) VALUES ('a', 'b')",
-            ),
-            Expect::NotInIr("insert_option"),
+        // ---- MySQL-only forms the reader now accepts (each with the assumption it carries)
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "insert_ignore_duplicate",
+                "INSERT IGNORE INTO kv (k, v, n) VALUES ('a', 'dup', 99)",
+            )
+        },
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "insert_ignore_new",
+                "INSERT IGNORE INTO kv (k, v, n) VALUES ('new', 'x', 5)",
+            )
+        },
+        c("pipes_as_or", "SELECT id FROM users WHERE id = 1 || id = 2"),
+        c(
+            "pipes_inside_string_untouched",
+            "SELECT id FROM users WHERE name = 'a||b' || id = 3",
+        ),
+        c(
+            "null_safe_eq_null",
+            "SELECT id FROM users WHERE age <=> NULL",
+        ),
+        c(
+            "null_safe_eq_value",
+            "SELECT id FROM users WHERE age <=> 25",
+        ),
+        // A start that is an expression: the engines agree here because every id is >= 1; that this
+        // is so is the caller's stated assumption (the allowance).
+        c(
+            "substring_expression_start",
+            "SELECT substring(name, id, 2) FROM users",
+        ),
+        c(
+            "substring_positive_start",
+            "SELECT substring(name, 2, 3) FROM users",
         ),
         exp(
             c(
-                "ir_pipes_operator",
+                "substring_zero_start_diverges",
+                "SELECT substring(name, 0, 3) FROM users",
+            ),
+            Expect::Diverges,
+        ),
+        exp(
+            c_only(
+                "gate_substring_zero_start",
+                "SELECT substring(name, 0, 3) FROM users",
+                &[],
+            ),
+            Expect::NeedsAllowance(A::SubstringStartAssumedPositive),
+        ),
+        exp(
+            c_only(
+                "gate_pipes",
                 "SELECT id FROM users WHERE id = 1 || id = 2",
+                &[],
             ),
-            Expect::NotInIr("pipes_operator"),
+            Expect::NeedsAllowance(A::PipesAsLogicalOr),
         ),
         exp(
-            c("ir_null_safe_eq", "SELECT id FROM users WHERE age <=> NULL"),
-            Expect::NotInIr("binary_operator"),
-        ),
-        exp(
-            c("ir_substring", "SELECT substring(name, 0, 3) FROM users"),
-            Expect::NotInIr("substring"),
+            c_only(
+                "gate_insert_ignore",
+                "INSERT IGNORE INTO kv (k, v) VALUES ('a', 'b')",
+                &[],
+            ),
+            Expect::NeedsAllowance(A::IgnoreCoversOnlyUniqueConflicts),
         ),
         c(
             "current_date_bare",

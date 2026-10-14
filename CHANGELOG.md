@@ -2,6 +2,25 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.10.0 - 2026-10-14
+
+- **MySQL reader gaps closed**, each tested differentially from a MySQL and a MariaDB source against
+  PostgreSQL and SQLite, and each with the assumption it carries named:
+  - `a <=> b` is `BinaryOp::NullSafeEq` (leaf `null_safe_eq`): `IS NOT DISTINCT FROM` on PostgreSQL,
+    `IS` on SQLite, `<=>` on MySQL/MariaDB. Exact.
+  - `INSERT IGNORE` reads as `ON CONFLICT DO NOTHING` (no target), allowance
+    `ignore_covers_only_unique_conflicts` (leaf `insert_ignore`).
+  - `||` is read as logical OR (MySQL's default `sql_mode`) by rewriting the operator token before
+    parsing (the parser gives it concatenation's precedence), allowance `pipes_as_logical_or`
+    (leaf `pipes_as_or`). A `||` inside a string or comment is untouched (tested).
+  - `SUBSTRING`: exact for a literal start >= 1 and a literal length >= 0 (or none); any other start
+    or length carries allowance `substring_start_assumed_positive` (leaf `fn:substr.start_position`).
+    Measured: a start of 0 returns '' on MySQL and a prefix on PostgreSQL (a divergence case).
+  - A MySQL/MariaDB source's own `SUBSTRING` passes through to a MySQL/MariaDB target unchanged.
+- Three new `Allowance` variants (the enum is `#[non_exhaustive]` since 0.7.0) and `BinaryOp::NullSafeEq`.
+- **Breaking:** `BinaryOp` is now `#[non_exhaustive]` (taken once, like `Allowance` at 0.7.0, so a later
+  operator is not breaking again): a consumer matching it needs a wildcard arm.
+
 ## 0.9.0 - 2026-10-14
 
 - **`expr AT TIME ZONE zone`** and **`ARRAY(SELECT ..)`** are in the IR (`Expr::AtTimeZone`,

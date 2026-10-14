@@ -88,6 +88,10 @@ like	`a LIKE p` is a case-sensitive pattern match with `%` and `_` wildcards.
 limit	LIMIT n returns at most n rows of the ordered result.
 named_arg	`f(name => value)` calls a function with a named argument. Refused where function arguments are positional only.
 null_ordering	NULLS FIRST / NULLS LAST places NULLs as stated; the default places NULLs last for ASC and first for DESC.
+null_safe_eq	a <=> b is true when both are NULL or equal, false when exactly one is NULL, never NULL.
+insert_ignore	INSERT IGNORE skips a row whose unique key already exists and inserts the others.
+pipes_as_or	a || b between conditions is logical OR with the lowest precedence (MySQL default sql_mode).
+fn:substr.start_position	SUBSTRING(s, pos[, len]) with pos >= 1 and len >= 0 is the substring from the 1-based pos.
 offset	OFFSET n skips the first n rows of the ordered result.
 order_by	ORDER BY orders by the keys, ascending unless stated, comparing text bytewise in the C locale.
 ordered_comparison	`<`, `<=`, `>`, `>=` and BETWEEN compare two values; text compares bytewise in the C locale.

@@ -567,6 +567,16 @@ impl Printer<'_> {
                     }
                 }
             }
+            Expr::Binary {
+                op: BinaryOp::NullSafeEq,
+                left,
+                right,
+            } => {
+                let l = self.operand(left, c)?;
+                let r = self.operand(right, c)?;
+                let text = self.t.null_safe_eq(&l, &r, c)?;
+                format!("({text})")
+            }
             Expr::Binary { op, left, right } => {
                 let sym = match op {
                     BinaryOp::Eq => "=",
@@ -585,6 +595,7 @@ impl Printer<'_> {
                     BinaryOp::Concat => "||",
                     BinaryOp::IntDivide => "/",
                     BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
+                    BinaryOp::NullSafeEq => unreachable!("handled above"),
                 };
                 let numeric = is_numeric(left) || is_numeric(right);
                 self.t.binary_op(*op, numeric, c)?;

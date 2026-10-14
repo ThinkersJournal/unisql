@@ -14,7 +14,7 @@ exclude = ["measure/classify"]
 
 [workspace.package]
 # One version number for every crate in this project (CLAUDE.md section 9). The PM allocates real numbers.
-version = "0.9.0"
+version = "0.10.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ThinkersJournal/unisql"
@@ -22,9 +22,9 @@ publish = false
 rust-version = "1.94"
 
 [workspace.dependencies]
-unisql = { path = "crates/unisql", version = "0.9.0" }
-unisql-core = { path = "crates/unisql-core", version = "0.9.0" }
-unisql-sqlparser-adapter = { path = "crates/unisql-sqlparser-adapter", version = "0.9.0" }
-unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.9.0" }
-unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.9.0" }
-unisql-dialect-mysql = { path = "crates/unisql-dialect-mysql", version = "0.9.0" }
+unisql = { path = "crates/unisql", version = "0.10.0" }
+unisql-core = { path = "crates/unisql-core", version = "0.10.0" }
+unisql-sqlparser-adapter = { path = "crates/unisql-sqlparser-adapter", version = "0.10.0" }
+unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.10.0" }
+unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.10.0" }
+unisql-dialect-mysql = { path = "crates/unisql-dialect-mysql", version = "0.10.0" }
