@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=85
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=86
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -79,6 +79,8 @@ PASS not_like                     same
        -> SELECT `id` FROM `users` WHERE `name` NOT LIKE '%a%'
 PASS ilike                        same
        -> SELECT `id` FROM `users` WHERE LOWER(`email`) LIKE LOWER(?)
+PASS ilike_non_ascii              diverges: postgres [[Int(0)]] vs mariadb [[Int(1)]]
+       -> SELECT LOWER('É') LIKE LOWER('é')
 PASS insert_values                same
        -> INSERT INTO `users` (`id`, `name`, `active`) VALUES (?, ?, TRUE)
 PASS upsert_do_update             same
@@ -156,7 +158,7 @@ PASS delete_returning             same
        -> DELETE FROM `orders` WHERE `status` = 'open' RETURNING `id`
 PASS refuse_update_returning      refused `returning.update`: MariaDB supports RETURNING on INSERT and DELETE only, not on UPDATE
 
-MATRIX (construct, tier) from 71 passing translated cases:
+MATRIX (construct, tier) from 72 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional

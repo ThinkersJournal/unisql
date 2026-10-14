@@ -113,13 +113,23 @@ impl Target for Mysql {
             Escape::None => " ESCAPE ''".to_string(),
             Escape::Custom(c) => format!(" ESCAPE {c}"),
         };
+        // On MySQL/MariaDB LIKE follows the column collation (not a connection setting, as on
+        // SQLite): exact under a binary collation, which a gate can read from the configuration.
         ctx.note(
             if ci { "ilike" } else { "like" },
             Tier::Conditional,
             "LIKE case sensitivity follows the column collation: exact only under a binary (_bin) collation",
-            Some(Allowance::LikeCaseSensitivityIsConnectionSetting),
+            Some(Allowance::TextCollation),
         )?;
         if ci {
+            // ILIKE is spelled LOWER(a) LIKE LOWER(b): MySQL lowercases beyond ASCII, PostgreSQL's
+            // ILIKE in the C locale does not.
+            ctx.note(
+                "ilike",
+                Tier::Conditional,
+                "case folding outside ASCII differs between the engines and their locales",
+                Some(Allowance::AsciiOnlyCaseFolding),
+            )?;
             Ok(format!("LOWER({lhs}) {not}LIKE LOWER({rhs}){tail}"))
         } else {
             Ok(format!("{lhs} {not}LIKE {rhs}{tail}"))
