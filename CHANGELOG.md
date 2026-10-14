@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.2.1 - 2026-10-14
 
 - `ROADMAP.md` (unisql had none). The `Allowance` doc comment now says a variant's name and text are a
   contract: rewording is a new variant, not an edit (PersistAnt request). No behaviour change.
