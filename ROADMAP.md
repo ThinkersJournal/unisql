@@ -113,6 +113,67 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
 - **`text_collation` on almost everything:** the schema's string columns carry
   `utf8mb4_unicode_ci` (stated), so every comparison needs the allowance by design.
 
+## Integration proposal: auth-framework's storage SQL through UniSQL
+
+Proposal only, no code. Written 2026-10-14 at unisql 0.18.2 from auth-framework `origin/main`
+`86de4cdf` (read with `git show`, never a working tree). The numbers below are from the `corpus`
+runner over the SQL string literals of the two files named, with every allowance granted and no
+schema; they are a classification of the text, not an execution.
+
+**What is there today.** auth-framework has no `unisql` dependency. Its MySQL backend is gone from
+`main` (removed because `sqlx-mysql` pulls `rsa`, RUSTSEC-2023-0071; its Cargo.toml says so), so the
+statements this repository's MySQL-source corpus was cut from (`881c696d`, `src/storage/mysql.rs`) no
+longer ship. Two SQL backends remain, each hand-written: `src/storage/postgres.rs` (sqlx, 29 literals:
+20 DML, 9 DDL) and `auth-storage-sqlite/src/lib.rs` (unpublished crate, 28 literals: 22 DML, 6 DDL).
+Migrations (DDL) live in `src/migrations`.
+
+**What UniSQL does with them.**
+
+| Direction | DML statements | Result |
+|---|---|---|
+| PostgreSQL text -> SQLite | 20 | all 20 translate: 11 exact, 9 conditional |
+| SQLite text -> PostgreSQL | 22 | all 22 translate: 17 exact, 5 conditional (`text_collation`) |
+| PostgreSQL text -> MariaDB/MySQL | 20 | 19 translate; 1 refused: `ON CONFLICT .. DO UPDATE .. WHERE` (no WHERE on `ON DUPLICATE KEY UPDATE`; line 410 of `postgres.rs`) |
+
+Allowances the PostgreSQL -> SQLite set needs: `now_as_text` (9), `text_collation` (9),
+`epoch_whole_seconds` (1), `lenient_cast` (1), `like_case_sensitivity_is_connection_setting` (1).
+Each is a statement about their data that they can read and grant or not; `text_collation` shrinks
+when a `Schema` read from their migrations says which columns are not text.
+
+**What it would take.**
+
+1. **One source of truth.** Keep the PostgreSQL statements (the recommended backend) as the text they
+   maintain; derive the SQLite statements with `unisql::translate(sql, "postgres", "sqlite", &opts)`
+   once at storage construction and cache the `Translation` (text, `ParamBinding`s). The second
+   hand-written copy (`auth-storage-sqlite`) becomes generated, which is where the drift risk is.
+2. **A reviewed allowance list** in one place in their crate, with a comment per allowance saying why
+   it holds for their data. Anything not granted fails at startup naming the construct, not at query
+   time.
+3. **A schema.** `schema_from_ddl(<migrations>, "postgres")` into `Options::with_schema`, so non-text
+   columns need no collation assumption and `ON CONFLICT`/upsert keys are known.
+4. **Parameter binding.** Placeholders are renumbered by the translator; an array parameter
+   (`= ANY($1)`) has a per-target binding in the report (`ParamBinding`) that the driver glue must
+   follow (a JSON text on SQLite).
+5. **Their tests do the proof.** Their existing storage tests run against both engines; the
+   `unisql-differential` pattern (run the source text on one engine, the translation on the other,
+   compare rows) is the model if they want the proof for each statement rather than a spot check.
+6. **Dependencies and versions.** `unisql = "0.18"` from crates.io once the PM has published it
+   (0.x: the second number is the breaking one, so pin the minor); its MSRV (1.94) is below theirs
+   (1.95). No driver is pulled in.
+
+**What stays theirs.** DDL and migrations (UniSQL does not translate DDL), drivers, row mapping, and
+any statement outside the DML the corpus covers (`CREATE TABLE`, `CREATE INDEX`, 15 of the 57 literals).
+
+**MySQL/MariaDB again.** UniSQL would produce MySQL text for 19 of 20 statements, but the blocker that
+removed the backend was the driver crate's dependency, not the SQL: a MySQL driver without that
+advisory, or an accepted risk, is their decision; the refused statement needs a rewrite of the
+`WHERE` into the SET expressions.
+
+**Risks.** Allowances are assumptions, so a wrong one is a silent behavioural difference: that is why
+each is named and why they should be granted one by one. UniSQL is pre-1.0 and has no consumer yet;
+auth-framework would be the first, so an API change in either direction is cheap now and expensive
+later.
+
 ## Known gaps (documented, not planned)
 
 - **`ON CONFLICT (cols) WHERE <index predicate> DO ...`** (a partial unique index as the arbiter):

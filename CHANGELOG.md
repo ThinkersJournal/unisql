@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.18.3 - 2026-10-14
+
+- Docs only: ROADMAP gains the integration proposal for auth-framework's storage SQL (measured at
+  auth-framework `86de4cdf`); no code change.
+
 ## 0.18.2 - 2026-10-14
 
 - **MySQL/MariaDB string functions with verified mappings** (differential cases against the real
