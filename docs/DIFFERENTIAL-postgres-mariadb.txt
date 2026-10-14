@@ -1,10 +1,18 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=122
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=126
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
        -> SELECT `id` FROM `users` WHERE ((`id` = ?) OR (`id` = ?)) OR (`id` = ?)
 PASS is_null                      same
        -> SELECT `id` FROM `users` WHERE (`age` IS NULL) OR (`city` IS NULL)
+PASS is_true                      same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS TRUE
+PASS is_not_true                  same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS NOT TRUE
+PASS is_false                     same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS FALSE
+PASS is_not_false                 same
+       -> SELECT `id` FROM `users` WHERE (`age` > 30) IS NOT FALSE
 PASS in_list                      same
        -> SELECT `id` FROM `users` WHERE (`id` IN (1, 3, 5)) AND (`id` NOT IN (5))
 PASS between                      same
@@ -213,7 +221,7 @@ PASS refuse_table_function        refused `table_function.generate_series`: MySQ
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 90 passing translated cases:
+MATRIX (construct, tier) from 94 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_bigint               conditional

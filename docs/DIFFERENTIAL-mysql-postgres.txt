@@ -1,4 +1,4 @@
-mysql 8.4.11 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=82
+mysql 8.4.11 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=86
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_two                     same
@@ -9,6 +9,14 @@ PASS select_where               same
        -> SELECT "id" FROM "users" WHERE ("city" = 'Oslo') AND ("active" = 1)
 PASS is_null                    same
        -> SELECT "id" FROM "users" WHERE ("age" IS NULL) OR ("city" IS NULL)
+PASS is_true                    same
+       -> SELECT "id" FROM "users" WHERE ("age" > 30) IS TRUE
+PASS is_not_true                same
+       -> SELECT "id" FROM "users" WHERE ("age" > 30) IS NOT TRUE
+PASS is_false                   same
+       -> SELECT "id" FROM "users" WHERE ("age" > 30) IS FALSE
+PASS is_not_false               same
+       -> SELECT "id" FROM "users" WHERE ("age" > 30) IS NOT FALSE
 PASS in_list                    same
        -> SELECT "id" FROM "users" WHERE ("id" IN (1, 3, 5)) AND ("id" NOT IN (5))
 PASS aggregates                 same
@@ -151,7 +159,7 @@ PASS reverse_text               same
 PASS refuse_lpad_empty_pad      refused `fn:lpad.args`: LPAD/RPAD differ for a negative length or an empty pad; only a literal length >= 0 and a literal non-empty pad are mapped
 PASS refuse_replace_no_schema   refused `replace_into`: REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key
 
-MATRIX (construct, tier) from 69 passing translated cases:
+MATRIX (construct, tier) from 73 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional

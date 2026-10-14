@@ -261,6 +261,13 @@ pub enum Expr {
         expr: Box<Expr>,
         negated: bool,
     },
+    /// `expr IS [NOT] TRUE` / `expr IS [NOT] FALSE`: never NULL (`NULL IS TRUE` is false,
+    /// `NULL IS NOT TRUE` is true). `value` is the truth value tested.
+    IsBool {
+        expr: Box<Expr>,
+        value: bool,
+        negated: bool,
+    },
     InList {
         expr: Box<Expr>,
         list: Vec<Expr>,

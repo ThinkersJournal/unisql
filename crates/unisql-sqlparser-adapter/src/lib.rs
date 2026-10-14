@@ -1399,6 +1399,14 @@ fn boxed(e: sp::Expr) -> R<Box<Expr>> {
     Ok(Box::new(expr(e)?))
 }
 
+fn is_bool(x: sp::Expr, value: bool, negated: bool) -> R<Expr> {
+    Ok(Expr::IsBool {
+        expr: boxed(x)?,
+        value,
+        negated,
+    })
+}
+
 fn expr(e: sp::Expr) -> R<Expr> {
     use sp::Expr as E;
     Ok(match e {
@@ -1419,6 +1427,10 @@ fn expr(e: sp::Expr) -> R<Expr> {
             expr: boxed(*x)?,
             negated: true,
         },
+        E::IsTrue(x) => is_bool(*x, true, false)?,
+        E::IsNotTrue(x) => is_bool(*x, true, true)?,
+        E::IsFalse(x) => is_bool(*x, false, false)?,
+        E::IsNotFalse(x) => is_bool(*x, false, true)?,
         E::InList {
             expr: x,
             list,

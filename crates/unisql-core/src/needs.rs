@@ -363,7 +363,7 @@ impl Walk<'_> {
                 self.expr(left);
                 self.expr(right);
             }
-            Expr::IsNull { expr, .. } => self.expr(expr),
+            Expr::IsNull { expr, .. } | Expr::IsBool { expr, .. } => self.expr(expr),
             Expr::InList { expr, list, .. } => {
                 self.expr(expr);
                 list.iter().for_each(|x| self.expr(x));

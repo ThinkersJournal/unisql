@@ -602,6 +602,7 @@ impl Printer<'_> {
             Expr::Binary { .. }
             | Expr::Unary { .. }
             | Expr::IsNull { .. }
+            | Expr::IsBool { .. }
             | Expr::InList { .. }
             | Expr::InSubquery { .. }
             | Expr::Between { .. }
@@ -804,6 +805,18 @@ impl Printer<'_> {
                     "{} IS {}NULL",
                     self.operand(expr, c)?,
                     if *negated { "NOT " } else { "" }
+                )
+            }
+            Expr::IsBool {
+                expr,
+                value,
+                negated,
+            } => {
+                format!(
+                    "{} IS {}{}",
+                    self.operand(expr, c)?,
+                    if *negated { "NOT " } else { "" },
+                    if *value { "TRUE" } else { "FALSE" }
                 )
             }
             Expr::InList {
