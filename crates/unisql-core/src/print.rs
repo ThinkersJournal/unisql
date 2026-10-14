@@ -353,6 +353,8 @@ impl Printer<'_> {
                 right,
                 kind,
                 on,
+                using,
+                natural,
             } => {
                 let kw = match kind {
                     JoinKind::Inner => "INNER JOIN",
@@ -361,12 +363,24 @@ impl Printer<'_> {
                     JoinKind::Full => "FULL JOIN",
                     JoinKind::Cross => "CROSS JOIN",
                 };
+                if *natural {
+                    c.note("join.natural", Tier::Exact, "", None)?;
+                }
+                if !using.is_empty() {
+                    c.note("join.using", Tier::Exact, "", None)?;
+                }
                 c.note(
                     format!("join:{}", kw.to_lowercase().replace(' ', "_")),
                     self.t.join_tier(*kind),
                     "",
                     None,
                 )?;
+                let kw = if *natural {
+                    // `NATURAL INNER JOIN` is spelled `NATURAL JOIN`.
+                    format!("NATURAL {}", kw.replace("INNER ", ""))
+                } else {
+                    kw.to_string()
+                };
                 let mut s = format!(
                     "{} {} {}",
                     self.table_ref(left, c)?,
@@ -375,6 +389,10 @@ impl Printer<'_> {
                 );
                 if let Some(on) = on {
                     s.push_str(&format!(" ON {}", self.expr(on, c)?));
+                }
+                if !using.is_empty() {
+                    let cols = using.iter().map(|u| self.id(u)).collect::<Vec<_>>();
+                    s.push_str(&format!(" USING ({})", cols.join(", ")));
                 }
                 Ok(s)
             }
@@ -390,7 +408,17 @@ impl Printer<'_> {
     }
 
     fn insert(&self, i: &Insert, c: &mut Ctx) -> R<String> {
-        let mut out = format!("INSERT INTO {}", self.name(&i.table));
+        // REPLACE INTO: native where the target has it, else an upsert from the schema (below).
+        let replace_native = if i.replace {
+            self.t.replace_keyword()
+        } else {
+            None
+        };
+        let mut out = format!(
+            "{} {}",
+            replace_native.unwrap_or("INSERT INTO"),
+            self.name(&i.table)
+        );
         if !i.columns.is_empty() {
             out.push_str(&format!(
                 " ({})",
@@ -412,6 +440,49 @@ impl Printer<'_> {
                 }
                 out.push_str(&format!(" VALUES {}", rs.join(", ")));
             }
+        }
+        if i.replace && replace_native.is_some() {
+            c.note("replace_into", Tier::Exact, "", None)?;
+        } else if i.replace {
+            // No native form: every column is set from EXCLUDED over the table's only unique key.
+            let table_cols = c.scopes.complete_columns(&i.table);
+            let key = match c.scopes.unique_keys(&i.table) {
+                Some([k]) => Some(k),
+                _ => None,
+            };
+            let (Some(all), Some(key)) = (table_cols, key) else {
+                return Err(c.refuse(
+                    "replace_into",
+                    "REPLACE INTO deletes conflicting rows; this target has no such statement. It can be \
+                     written as an upsert only when the schema states the table's complete column list and \
+                     exactly one unique key",
+                    &["give the schema the table (schema_from_ddl)", "or write the upsert yourself"],
+                ));
+            };
+            c.note(
+                "replace_into",
+                Tier::Conditional,
+                "written as an upsert setting every column: the old row is updated in place, not deleted",
+                Some(Allowance::ReplaceIsUpsert),
+            )?;
+            let cols: Vec<String> = key.iter().map(|x| self.id(x)).collect();
+            let set: Vec<String> = all
+                .iter()
+                .filter(|col| !key.iter().any(|k| k == *col))
+                .map(|col| {
+                    let q = self.id(col);
+                    format!("{q} = {}", self.t.excluded_ref(&q))
+                })
+                .collect();
+            let first = i.columns.first().map(|x| self.id(x)).unwrap_or_default();
+            out.push_str(&self.t.upsert_clause(
+                &cols,
+                set.is_empty(),
+                &set.join(", "),
+                None,
+                &first,
+                c,
+            )?);
         }
         if let Some(oc) = &i.on_conflict {
             let mut cols: Vec<String> = oc.target.iter().map(|x| self.id(x)).collect();

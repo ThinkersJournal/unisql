@@ -48,6 +48,8 @@ construct	insert_ignore	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite
 construct	insert_ignore.ignore_covers_only_unique_conflicts	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
 construct	interval_arithmetic	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql
 construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=timestamp_arithmetic_as_text	mysql
+construct	join.natural	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::natural_join		mysql
+construct	join.using	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::join_using		mysql
 construct	join:inner_join	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte		mysql
 construct	join:left_join	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_join		mysql
 construct	like	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql

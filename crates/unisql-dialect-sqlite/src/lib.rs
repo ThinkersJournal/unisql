@@ -675,6 +675,10 @@ impl Target for Sqlite {
         ctx.note("returning", Tier::Exact, "requires SQLite >= 3.35", None)
     }
 
+    fn replace_keyword(&self) -> Option<&'static str> {
+        Some("INSERT OR REPLACE INTO")
+    }
+
     fn upsert_clause(
         &self,
         conflict_cols: &[String],

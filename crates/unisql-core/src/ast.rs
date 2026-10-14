@@ -157,6 +157,10 @@ pub enum TableRef {
         right: Box<TableRef>,
         kind: JoinKind,
         on: Option<Expr>,
+        /// `JOIN .. USING (a, b)`: the shared column names (empty when absent).
+        using: Vec<String>,
+        /// `NATURAL [LEFT|RIGHT|FULL] JOIN`: joins on every column name the two sides share.
+        natural: bool,
     },
 }
 
@@ -181,6 +185,9 @@ pub struct OrderItem {
 #[derive(Clone, Debug, PartialEq)]
 pub struct Insert {
     pub table: Name,
+    /// `REPLACE INTO` (MySQL, MariaDB; `INSERT OR REPLACE` on SQLite): a row that conflicts on any
+    /// unique key is deleted first. `on_conflict` is `None` when this is set.
+    pub replace: bool,
     pub columns: Vec<String>,
     pub source: InsertSource,
     pub on_conflict: Option<OnConflict>,

@@ -88,6 +88,8 @@ pub struct Schema {
     /// Tables whose key list must not be trusted as complete (an index the reader could not
     /// interpret, such as a partial or expression index).
     keys_unreliable: BTreeSet<Vec<String>>,
+    /// Tables whose column list is stated in full (read from a `CREATE TABLE`, or marked).
+    columns_complete: BTreeSet<Vec<String>>,
 }
 
 impl Schema {
@@ -129,6 +131,7 @@ impl Schema {
         self.tables.remove(&table.0);
         self.keys.remove(&table.0);
         self.keys_unreliable.remove(&table.0);
+        self.columns_complete.remove(&table.0);
     }
 
     /// State one unique key (primary key, unique constraint or unique index, **not** a partial or
@@ -161,6 +164,27 @@ impl Schema {
     pub fn mark_all_keys_unreliable(&mut self) {
         let all: Vec<Vec<String>> = self.keys.keys().cloned().collect();
         self.keys_unreliable.extend(all);
+    }
+
+    /// Say that the columns registered for `table` are all it has (a `REPLACE INTO` written as an
+    /// upsert sets every column, so it needs the full list). `schema_from_ddl` does this for each
+    /// `CREATE TABLE` it reads.
+    pub fn mark_columns_complete(&mut self, table: Vec<String>) {
+        self.columns_complete.insert(table);
+    }
+
+    /// All column names of `table`, when its column list is marked complete.
+    pub fn complete_columns(&self, table: &Name) -> Option<Vec<&str>> {
+        if !self.columns_complete.contains(&table.0) {
+            return None;
+        }
+        Some(
+            self.tables
+                .get(&table.0)?
+                .keys()
+                .map(String::as_str)
+                .collect(),
+        )
     }
 
     /// The stated unique keys of `table`; `None` when none were stated or the list is unreliable.
@@ -235,6 +259,11 @@ impl<'a> Scopes<'a> {
     /// The stated unique keys of a base table (see [`Schema::unique_keys`]).
     pub fn unique_keys(&self, table: &Name) -> Option<&'a [Vec<String>]> {
         self.schema?.unique_keys(table)
+    }
+
+    /// The complete column list of a base table (see [`Schema::complete_columns`]).
+    pub fn complete_columns(&self, table: &Name) -> Option<Vec<&'a str>> {
+        self.schema?.complete_columns(table)
     }
 
     pub fn pop(&mut self) {

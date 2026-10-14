@@ -8,7 +8,7 @@ upsert_values	upsert	curated	ok	ok	translated	translated	conditional:upsert_any_
 upsert_alias	upsert	curated	ok	rejected	not_in_ir:insert_option	not_in_ir:insert_option	not_in_ir:insert_option
 insert_ignore	upsert	curated	ok	ok	conditional:ignore_covers_only_unique_conflicts	conditional:ignore_covers_only_unique_conflicts	conditional:ignore_covers_only_unique_conflicts+upsert_any_unique_key
 insert_set	insert	curated	ok	ok	translated	translated	translated
-replace_into	upsert	curated	ok	ok	not_in_ir:insert_option	not_in_ir:insert_option	not_in_ir:insert_option
+replace_into	upsert	curated	ok	ok	conditional:replace_is_upsert	translated	translated
 insert_select	insert	curated	ok	ok	translated	translated	translated
 insert_multi	insert	curated	ok	ok	translated	translated	translated
 insert_default	insert	curated	ok	ok	not_in_ir:default_value	not_in_ir:default_value	not_in_ir:default_value
@@ -66,8 +66,8 @@ lock_in_share_mode	locking	curated	ok	ok	syntax	syntax	syntax
 for_update_skip_locked	locking	curated	ok	ok	conditional:text_collation	refused:row_lock	conditional:text_collation
 straight_join	join	curated	ok	ok	not_in_ir:select_clause	not_in_ir:select_clause	not_in_ir:select_clause
 use_index	join	curated	ok	ok	not_in_ir:table_option	not_in_ir:table_option	not_in_ir:table_option
-natural_join	join	curated	ok	ok	not_in_ir:natural_join	not_in_ir:natural_join	not_in_ir:natural_join
-join_using	join	curated	ok	ok	not_in_ir:join_using	not_in_ir:join_using	not_in_ir:join_using
+natural_join	join	curated	ok	ok	translated	translated	translated
+join_using	join	curated	ok	ok	translated	translated	translated
 cross_join	join	curated	ok	ok	translated	translated	translated
 derived_table	subquery	curated	ok	ok	translated	translated	translated
 cte	cte	curated	ok	ok	translated	translated	translated

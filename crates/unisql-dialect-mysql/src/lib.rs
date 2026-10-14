@@ -629,6 +629,10 @@ impl Target for Mysql {
         false
     }
 
+    fn replace_keyword(&self) -> Option<&'static str> {
+        Some("REPLACE INTO")
+    }
+
     fn upsert_clause(
         &self,
         _conflict_cols: &[String],

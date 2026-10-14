@@ -49,6 +49,10 @@ pub enum Allowance {
     TimestampWholeSeconds,
     /// A timestamp value has millisecond resolution on the target: digits beyond the third are 0.
     TimestampMillisecondResolution,
+    /// `REPLACE INTO` is written as an upsert over every column of the table: the conflicting row is
+    /// updated in place instead of deleted and re-inserted (DELETE triggers and `ON DELETE` actions
+    /// do not fire; the new row keeps no value of the old one).
+    ReplaceIsUpsert,
     /// The column's collation (from the caller's `Schema`) orders and compares text by locale rules
     /// (case- or accent-insensitive, language order); the target compares bytes, so the result may
     /// differ for the same data.
@@ -109,6 +113,7 @@ impl Allowance {
         Allowance::EpochWholeSeconds,
         Allowance::TimestampWholeSeconds,
         Allowance::TimestampMillisecondResolution,
+        Allowance::ReplaceIsUpsert,
         Allowance::SourceCollationNotBytewise,
         Allowance::PipesAsLogicalOr,
         Allowance::IgnoreCoversOnlyUniqueConflicts,
@@ -137,6 +142,7 @@ impl Allowance {
             Allowance::EpochWholeSeconds => "epoch_whole_seconds",
             Allowance::TimestampWholeSeconds => "timestamp_whole_seconds",
             Allowance::TimestampMillisecondResolution => "timestamp_millisecond_resolution",
+            Allowance::ReplaceIsUpsert => "replace_is_upsert",
             Allowance::SourceCollationNotBytewise => "source_collation_not_bytewise",
             Allowance::PipesAsLogicalOr => "pipes_as_logical_or",
             Allowance::IgnoreCoversOnlyUniqueConflicts => "ignore_covers_only_unique_conflicts",

@@ -2,6 +2,23 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.18.0 - 2026-10-14
+
+- **Breaking (IR, `unisql_core::ast`, re-exported as `unisql::ast`):** `TableRef::Join` gains `using: Vec<String>` and
+  `natural: bool`; `Insert` gains `replace: bool`. A consumer that constructs or exhaustively
+  destructures these nodes must add the fields.
+- **`JOIN .. USING (cols)` and `NATURAL [LEFT|RIGHT|FULL] JOIN` are read and written** by all four
+  dialects (leaves `join.using`, `join.natural`, Exact), tested against real engines (inner, left,
+  natural, natural left).
+- **`REPLACE INTO`** (MySQL/MariaDB) is read (leaf `replace_into`): native `REPLACE INTO` on
+  MySQL/MariaDB, `INSERT OR REPLACE INTO` on SQLite (tested), and on PostgreSQL an upsert
+  `ON CONFLICT (key) DO UPDATE SET <every other column> = EXCLUDED.<column>` when the schema states
+  the table's complete column list and exactly one unique key; allowance `replace_is_upsert` (the old
+  row is updated, not deleted: DELETE triggers and `ON DELETE` actions do not fire). Otherwise
+  refused (`replace_into`). New: `Schema::mark_columns_complete`, `Schema::complete_columns`
+  (`schema_from_ddl` marks every `CREATE TABLE` it reads); `Target::replace_keyword`;
+  `Allowance::ReplaceIsUpsert`.
+
 ## 0.17.5 - 2026-10-14
 
 - **`INSERT INTO t SET a = 1, b = 2` (MySQL/MariaDB) is read** as `INSERT INTO t (a, b) VALUES (1, 2)`,

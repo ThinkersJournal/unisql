@@ -73,9 +73,10 @@ refusal for another separator).
 Gaps, by what closing them takes (statement ids in the corpus in parentheses):
 
 - **Reader, done at 0.17.5:** `INSERT .. SET` (a reader desugar to `(cols) VALUES (..)`).
-- **Reader (not in the IR), would be mappable (each needs an IR field: an AST break, 0.18.0):** `REPLACE INTO`
-  (`replace_into`; with `INSERT OR REPLACE`, one IR form); `JOIN .. USING` (`join_using`) and
-  `NATURAL JOIN` (`natural_join`); `UPDATE/DELETE .. ORDER BY .. LIMIT` (`update_limit`,
+- **Reader, done at 0.18.0 (IR fields, an AST break):** `REPLACE INTO` (native on MySQL/MariaDB and as
+  `INSERT OR REPLACE` on SQLite; on PostgreSQL an upsert over every column when the schema states the
+  table and its one unique key, allowance `replace_is_upsert`), `JOIN .. USING` and `NATURAL JOIN`.
+- **Reader (not in the IR), would be mappable:** `UPDATE/DELETE .. ORDER BY .. LIMIT` (`update_limit`,
   `delete_limit`: PostgreSQL has no direct form, needs a key subquery, SQLite needs a compile
   option); multi-table `UPDATE .. JOIN` / `DELETE t FROM .. JOIN` (`update_join`, `delete_join`);
   `DEFAULT` as a value (`insert_default`); `INSERT .. AS alias ON DUPLICATE KEY UPDATE a = alias.x`
