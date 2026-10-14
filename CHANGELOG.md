@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.9.0 - 2026-10-14
 
 - **`expr AT TIME ZONE zone`** and **`ARRAY(SELECT ..)`** are in the IR (`Expr::AtTimeZone`,
   `Expr::ArraySubquery`) with leaves `at_time_zone` and `array_subquery`: PostgreSQL writes them back
