@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.4.1 - 2026-10-14
+
+- ROADMAP corrected from the corpus counts: date/time functions are one statement of the corpus, not
+  the largest residual (`not_in_ir expression` 25 and `data_type` 25 are). The `corpus` runner now
+  emits a `note` field with the reader's detail for `not_in_ir` rows. No translation change.
+
 ## 0.4.0 - 2026-10-14
 
 - **Row locks:** `FOR UPDATE | FOR SHARE [OF table] [NOWAIT | SKIP LOCKED]` are in the IR
