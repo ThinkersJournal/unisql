@@ -1,26 +1,26 @@
-subject_kind	subject	backend	version	how	evidence	note	from
-construct	cast	postgres	16.15	conditional	proven	allowance=lenient_cast	mariadb
-construct	division	postgres	16.15	conditional	proven	allowance=decimal_division_as_float,division_by_zero_is_null	mariadb
-construct	division_integer	postgres	16.15	conditional	proven	allowance=integer_division_assumed	mariadb
-construct	fn:char_length	postgres	16.15	native	proven		mariadb
-construct	fn:coalesce	postgres	16.15	native	proven		mariadb
-construct	fn:count	postgres	16.15	native	proven		mariadb
-construct	fn:date_format.refused	postgres	16.15	absent	declared	no verified mapping for this function on PostgreSQL yet	mariadb
-construct	fn:max	postgres	16.15	native	proven		mariadb
-construct	fn:min	postgres	16.15	native	proven		mariadb
-construct	fn:octet_length	postgres	16.15	native	proven		mariadb
-construct	fn:rank	postgres	16.15	native	proven		mariadb
-construct	fn:string_agg	postgres	16.15	conditional	proven	allowance=aggregate_string_truncation	mariadb
-construct	fn:sum	postgres	16.15	native	proven		mariadb
-construct	join:inner_join	postgres	16.15	native	proven		mariadb
-construct	join:left_join	postgres	16.15	native	proven		mariadb
-construct	like	postgres	16.15	conditional	proven	allowance=like_case_sensitivity_is_connection_setting	mariadb
-construct	limit	postgres	16.15	native	proven		mariadb
-construct	null_ordering	postgres	16.15	native	proven		mariadb
-construct	offset	postgres	16.15	native	proven		mariadb
-construct	order_by	postgres	16.15	conditional	proven	allowance=text_collation	mariadb
-construct	ordered_comparison	postgres	16.15	conditional	proven	allowance=text_collation	mariadb
-construct	recursive_cte	postgres	16.15	native	proven		mariadb
-construct	text_comparison	postgres	16.15	conditional	proven	allowance=text_collation	mariadb
-construct	upsert.refused	postgres	16.15	absent	declared	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mariadb
-construct	window_function	postgres	16.15	native	proven		mariadb
+subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
+construct	cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=lenient_cast	mariadb
+construct	division	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=decimal_division_as_float,division_by_zero_is_null	mariadb
+construct	division_integer	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=integer_division_assumed	mariadb
+construct	fn:char_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:date_format.refused	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres	no verified mapping for this function on PostgreSQL yet	mariadb
+construct	fn:max	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:min	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:octet_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:rank	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	fn:string_agg	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=aggregate_string_truncation	mariadb
+construct	fn:sum	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	join:inner_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	join:left_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	like	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=like_case_sensitivity_is_connection_setting	mariadb
+construct	limit	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	order_by	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=text_collation	mariadb
+construct	ordered_comparison	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=text_collation	mariadb
+construct	recursive_cte	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb
+construct	text_comparison	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres	allowance=text_collation	mariadb
+construct	upsert.refused	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mariadb
+construct	window_function	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres		mariadb

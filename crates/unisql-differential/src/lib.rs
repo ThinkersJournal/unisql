@@ -790,19 +790,28 @@ pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
     m
 }
 
-/// Matrix rows in PersistAnt's agreed schema (agreed with the PersistAnt lane 2026-10-12):
-/// `subject_kind, subject, backend, version, how, evidence, note, from`.
+/// Matrix rows in PersistAnt's row schema (DESIGN-KINDS.md section 2.4 at PersistAnt 4fed258e):
+/// `subject_kind, subject, backend, version, config, enabled, reason, metadata, note, from`.
 ///
-/// - `how`: `native` (Exact), `emulated` (Emulated), `conditional` (Conditional: the construct
-///   translates only if the call site names the allowance, listed as `allowance=a,b` at the start of
-///   `note`, so a gate can read it), `absent` (refused). Weakest proven form wins per subject.
-/// - `evidence`: `proven` only for a construct that translated and whose result matched on the real
-///   engines; a refusal is `declared` (the translator refuses; the engine's lack is not itself tested).
+/// - `enabled` is boolean: `yes` only for a construct that translated and whose result matched on the
+///   real engines. A refusal is `no` with `reason=missing` (the translator refuses; nothing else was
+///   measured). No row means untested, which is off.
+/// - `config` is `k=v;k=v` facts a gate can read at open: the collation the fixture engines ran under
+///   (PostgreSQL `lc_collate=C`, MySQL/MariaDB `collation=utf8mb4_bin`). A row holds for that config.
+/// - `metadata` is `k=v;k=v`: `tier` (`native` = Exact, `emulated` = Emulated, `conditional` =
+///   Conditional, weakest proven form wins per subject) and `suite` (source-to-target). No date: the
+///   file is regenerated in CI and must not drift.
+/// - `note` starts with `allowance=a,b` for a conditional construct, so a gate can read the names.
 /// - A refusal is always its own subject `<construct>.refused` (matching
-///   `Untranslatable::subject()`), never a note on a proven cell, so a gate that keys on subject
-///   sees the split.
+///   `Untranslatable::subject()`), never a note on a proven cell. Leaf ids are not minted yet.
 pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str) -> String {
     use std::collections::{BTreeMap, BTreeSet};
+    let config = match backend {
+        "postgres" => "lc_collate=C",
+        "mysql" | "mariadb" => "collation=utf8mb4_bin",
+        _ => "",
+    };
+    let suite = format!("{from}-to-{backend}");
     let rank = |h: &str| match h {
         "native" => 0,
         "emulated" => 1,
@@ -838,11 +847,22 @@ pub fn matrix_tsv(outcomes: &[Outcome], backend: &str, version: &str, from: &str
                 .or_insert_with(|| why.replace(['\t', '\n'], " "));
         }
     }
-    let mut out =
-        String::from("subject_kind\tsubject\tbackend\tversion\thow\tevidence\tnote\tfrom\n");
+    let mut out = String::from(
+        "subject_kind\tsubject\tbackend\tversion\tconfig\tenabled\treason\tmetadata\tnote\tfrom\n",
+    );
     let mut row = |subject: &str, how: &str, ev: &str, note: &str| {
+        let (enabled, reason) = if ev == "proven" {
+            ("yes", "")
+        } else {
+            ("no", "missing")
+        };
+        let metadata = if enabled == "yes" {
+            format!("tier={how};suite={suite}")
+        } else {
+            format!("suite={suite}")
+        };
         out.push_str(&format!(
-            "construct\t{subject}\t{backend}\t{version}\t{how}\t{ev}\t{note}\t{from}\n"
+            "construct\t{subject}\t{backend}\t{version}\t{config}\t{enabled}\t{reason}\t{metadata}\t{note}\t{from}\n"
         ));
     };
     let mut subjects: BTreeSet<String> = proven.keys().cloned().collect();
