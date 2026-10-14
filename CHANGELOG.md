@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.11.0 - 2026-10-14
+
+- **Breaking, taken once:** `Options` is `#[non_exhaustive]`, so a field added later (the planned
+  column-type `Schema`) is not breaking again. Build it with `Options::default().with(..)`; a struct
+  literal `Options { allow }` outside `unisql-core` no longer compiles. Nothing else changes.
+
 ## 0.10.0 - 2026-10-14
 
 - **MySQL reader gaps closed**, each tested differentially from a MySQL and a MariaDB source against
