@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=97
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=98
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -132,6 +132,7 @@ PASS interval_secs                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
 PASS interval_wide                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
+PASS refuse_interval_positional   refused `fn:make_interval.standalone`: only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated
 PASS interval_literal_minute      same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (1) MINUTE))
 PASS interval_literal_minutes     same
@@ -194,6 +195,7 @@ MATRIX (construct, tier) from 81 passing translated cases:
   fn:count                     exact
   fn:length                    emulated
   fn:ltrim                     exact
+  fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
   fn:now                       conditional
@@ -214,6 +216,7 @@ MATRIX (construct, tier) from 81 passing translated cases:
   offset                       emulated
   offset                       exact
   order_by                     conditional
+  ordered_comparison           exact
   recursive_cte                exact
   row_lock                     exact
   row_lock.nowait              exact

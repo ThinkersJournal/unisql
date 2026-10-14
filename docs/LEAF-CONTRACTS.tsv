@@ -49,6 +49,7 @@ fn:length	length(s) is the number of characters of s.
 fn:lower	lower(s) maps every character of s to lower case.
 fn:ltrim	ltrim(s) removes leading spaces.
 fn:make_interval	make_interval(...) builds an interval from named parts. Refused where month/year arithmetic differs.
+fn:make_interval.standalone	make_interval(..) used on its own, not as the right operand of a timestamp +/-. Refused by every target without an interval type.
 fn:make_interval.month_year	make_interval(months|years => n) added to or subtracted from a timestamp. Refused by every target that does not give the source engine's end-of-month behaviour; the fixed-length units (secs, mins, hours, days, weeks) are `fn:make_interval`.
 fn:max	max(x) is the greatest non-NULL x under the source's ordering of x.
 fn:md5	md5(s) is the lower-case hexadecimal MD5 digest of the bytes of s. Refused where no hashing is built in.

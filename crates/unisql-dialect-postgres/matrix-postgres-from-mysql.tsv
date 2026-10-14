@@ -5,11 +5,12 @@ construct	cast.to_double	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-pos
 construct	cast.to_double.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=lenient_cast	mysql
 construct	cast.to_text	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
 construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cast_forms	allowance=lenient_cast	mysql
+construct	concat	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::ifnull_concat_if		mysql
 construct	division	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mysql
 construct	division.decimal_division_as_float	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=decimal_division_as_float	mysql
 construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=division_by_zero_is_null	mysql
-construct	division_integer	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::div_integer	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mysql
-construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_integer	allowance=integer_division_assumed	mysql
+construct	division_integer	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mysql
+construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=integer_division_assumed	mysql
 construct	fn:char_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::length_is_bytes		mysql
 construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::ifnull_concat_if		mysql
 construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
@@ -25,18 +26,18 @@ construct	fn:string_agg	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-post
 construct	fn:string_agg.aggregate_string_truncation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_default	allowance=aggregate_string_truncation	mysql
 construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep		mysql
 construct	fn:sum	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
+construct	interval_arithmetic	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
 construct	join:inner_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::cte		mysql
 construct	join:left_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::left_join		mysql
 construct	like	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::like_escape	allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	limit	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::limit_comma		mysql
-construct	named_arg	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
 construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep		mysql
 construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::limit_comma		mysql
 construct	order_by	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	order_by.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep	allowance=text_collation	mysql
-construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::ph_two	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::ph_two	allowance=text_collation	mysql
+construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::backticks	allowance=text_collation	mysql
 construct	recursive_cte	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::with_recursive		mysql
 construct	text_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	text_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cte	allowance=text_collation	mysql

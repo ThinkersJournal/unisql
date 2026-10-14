@@ -5,6 +5,7 @@ construct	cast.to_text	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-post
 construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::cast_ok	allowance=lenient_cast	sqlite
 construct	division	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	sqlite
 construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division	allowance=division_by_zero_is_null	sqlite
+construct	division_integer	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::int_division		sqlite
 construct	filter_clause	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
 construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::ifnull_coalesce		sqlite
 construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
@@ -35,10 +36,12 @@ construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlit
 construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::limit_minus_one_offset		sqlite
 construct	order_by	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
 construct	order_by.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered	allowance=text_collation	sqlite
-construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::ph_mixed_anon	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
-construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::ph_mixed_anon	allowance=text_collation	sqlite
+construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
+construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	allowance=text_collation	sqlite
 construct	recursive_cte	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::with_recursive		sqlite
 construct	returning	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::insert_returning		sqlite
+construct	returning.update	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::update_returning		sqlite
+construct	text_comparison	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
 construct	trim	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
 construct	upsert	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::upsert		sqlite
 construct	window_function	postgres	16.15	lc_collate=C	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::window_rank		sqlite

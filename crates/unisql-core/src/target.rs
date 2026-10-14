@@ -19,6 +19,9 @@ pub struct Ctx<'a> {
     /// Printed `ORDER BY` of the aggregate call being printed, for the function hook to consume.
     /// A hook that does not `take()` it cannot honour the order, and the printer then refuses.
     pub agg_order: Option<String>,
+    /// True while a `make_interval(unit => n)` call is printed as the right side of `ts +/- ..`: the
+    /// named notation is then only how PostgreSQL spells the interval, not a `named_arg` need.
+    pub interval_notation: bool,
     /// Parameters used as arrays, with the binding the target requires.
     pub array_params: std::collections::BTreeMap<u32, ParamBinding>,
     /// Parameters used as plain values (a parameter must not be both).
@@ -36,6 +39,7 @@ impl<'a> Ctx<'a> {
             param_order: Vec::new(),
             in_upsert: false,
             agg_order: None,
+            interval_notation: false,
             array_params: Default::default(),
             scalar_params: Default::default(),
         }
