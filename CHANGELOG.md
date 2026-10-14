@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.2.0 - 2026-10-14
 
 - **Breaking (ids, matrix files, `analyse`):** constructs are now leaf ids. `cast` becomes
   `cast.to_<type>`; partial forms get their own leaf (`upsert.no_conflict_key`, `returning.update`,
