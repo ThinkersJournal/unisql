@@ -21,7 +21,7 @@ pub struct Ctx<'a> {
     /// The printed (last-part) name of the INSERT's table while `in_upsert`: an unqualified column in
     /// a MySQL-written SET list names the existing row, which PostgreSQL (ambiguous with `EXCLUDED`)
     /// needs spelled `table.col`.
-    pub upsert_table: Option<String>,
+    pub(crate) upsert_table: Option<String>,
     /// Printed `ORDER BY` of the aggregate call being printed, for the function hook to consume.
     /// A hook that does not `take()` it cannot honour the order, and the printer then refuses.
     pub agg_order: Option<String>,

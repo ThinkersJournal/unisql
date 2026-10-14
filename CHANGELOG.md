@@ -13,7 +13,7 @@ One version number for every crate in the workspace. Pre-1.0, the second number 
   target (new leaf `upsert.key_from_schema`, Exact, sound only if the stated keys are all the table
   has); with several keys, none or an unreliable list it is refused as before
   (`upsert.no_conflict_key`, the message now says the schema must state exactly one). `Target` gains
-  `needs_conflict_key` (default true; false for MySQL/MariaDB).
+  `needs_conflict_key` (default true; false for MySQL/MariaDB). No existing public item changes: the new `Ctx` field is crate-private.
 - **Fixed:** an unqualified column in a MySQL-written upsert SET list (`n = n + 1`) is now written
   `"table"."n"`: PostgreSQL finds it ambiguous with `EXCLUDED`. A subquery's own columns are not
   touched. Previously unreachable (the statement was refused), found by the new differential cases.
