@@ -17,8 +17,8 @@ use std::fmt;
 
 pub use unisql_core::ast;
 pub use unisql_core::{
-    Allowance, Entry, Options, ParamBinding, ReadError, Report, Target, Tier, Translation,
-    Untranslatable,
+    Allowance, Column, ColumnClass, Entry, Options, ParamBinding, ReadError, Report, Schema,
+    Target, Tier, Translation, Untranslatable,
 };
 use unisql_dialect_mysql::Mysql;
 use unisql_dialect_postgres::Postgres;
@@ -145,6 +145,13 @@ pub struct Analysis {
 /// Extract a statement's needs. `Err` only for text the source dialect cannot parse, or an unknown
 /// source dialect; a construct outside the IR is reported in [`Analysis::unreadable`].
 pub fn analyse(sql: &str, source: &str) -> Result<Analysis, Error> {
+    analyse_with(sql, source, &Options::default())
+}
+
+/// As [`analyse`], with the caller's [`Options`]: a [`Schema`] in them makes a comparison on a column
+/// that is not text name no `text_comparison`, as `translate` with the same options records none.
+/// (The allowances in `opts` are not used: `analyse` always asks what every allowance would permit.)
+pub fn analyse_with(sql: &str, source: &str, opts: &Options) -> Result<Analysis, Error> {
     let read = match read(sql, source) {
         Ok(r) => r,
         Err(Error::Read(ReadError::NotInIr { construct, .. })) => {
@@ -156,7 +163,7 @@ pub fn analyse(sql: &str, source: &str) -> Result<Analysis, Error> {
         Err(e) => return Err(e),
     };
     let mut a = Analysis {
-        constructs: unisql_core::needs::constructs(&read.stmt),
+        constructs: unisql_core::needs::constructs_with(&read.stmt, opts.schema.as_ref()),
         ..Analysis::default()
     };
     for n in &read.notes {
@@ -164,7 +171,7 @@ pub fn analyse(sql: &str, source: &str) -> Result<Analysis, Error> {
     }
     let all = Allowance::ALL
         .iter()
-        .fold(Options::default(), |o, al| o.with(*al));
+        .fold(opts.clone(), |o, al| o.with(*al));
     for name in dialects() {
         let Ok(tgt) = target(name) else { continue };
         match unisql_core::write(&read.stmt, source, tgt.as_ref(), &all) {

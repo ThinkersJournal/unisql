@@ -9,6 +9,7 @@ pub mod needs;
 pub mod print;
 pub mod report;
 pub mod rewrite;
+pub mod schema;
 pub mod target;
 
 pub use print::write;
@@ -16,4 +17,5 @@ pub use report::{
     Allowance, Entry, Options, ParamBinding, Read, ReadError, ReadNote, Report, Tier, Translation,
     Untranslatable,
 };
+pub use schema::{Column, ColumnClass, Schema};
 pub use target::{Ctx, Target};

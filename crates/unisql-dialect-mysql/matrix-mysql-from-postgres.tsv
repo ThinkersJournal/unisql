@@ -1,89 +1,89 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
-construct	array_param	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
-construct	array_param.array_null_semantics	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	allowance=array_null_semantics	postgres
-construct	array_subquery	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_array_subquery	MySQL/MariaDB has no array type	postgres
-construct	at_time_zone	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_at_time_zone	MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp	postgres
-construct	boolean_literal	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
-construct	boolean_literal.boolean_as_integer	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::insert_values	allowance=boolean_as_integer	postgres
-construct	cast.to_double	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
-construct	cast.to_double.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast	allowance=lenient_cast	postgres
-construct	cast.to_integer	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
-construct	cast.to_integer.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
-construct	cast.to_text	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
-construct	cast.to_text.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
-construct	cast.to_uuid	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
-construct	concat	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::concat_op		postgres
-construct	cte.data_modifying	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_data_modifying_cte	MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error	postgres
-construct	distinct_on	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
-construct	division	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
-construct	division.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=division_by_zero_is_null	postgres
-construct	division_integer	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
-construct	division_integer.integer_division_assumed	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=integer_division_assumed	postgres
-construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
-construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
-construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
-construct	fn:char_length	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::escape_string_literal		postgres
-construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
-construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
-construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
-construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
-construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
-construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
-construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres
-construct	fn:make_interval.month_year	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
-construct	fn:make_interval.standalone	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_positional	only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
-construct	fn:max	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
-construct	fn:max	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
-construct	fn:max.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
-construct	fn:min	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_min_text	known-bad control: the result diverged from the source engine under this config	postgres
-construct	fn:min	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
-construct	fn:min.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
-construct	fn:now	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
-construct	fn:now.now_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=now_as_text	postgres
-construct	fn:nullif	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
-construct	fn:replace	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
-construct	fn:row_number	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
-construct	fn:string_agg	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	postgres
-construct	fn:string_agg.aggregate_string_truncation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=aggregate_string_truncation	postgres
-construct	fn:string_agg.order_by	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres
-construct	fn:substr	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_substr	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
-construct	fn:sum	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
-construct	fn:sum.order_by	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
-construct	ilike	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
-construct	ilike.ascii_only_case_folding	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=ascii_only_case_folding	postgres
-construct	ilike.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=text_collation	postgres
-construct	interval_arithmetic	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
-construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=timestamp_arithmetic_as_text	postgres
-construct	join:inner_join	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::cte		postgres
-construct	join:left_join	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join		postgres
-construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
-construct	like	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_like_text	known-bad control: the result diverged from the source engine under this config	postgres
-construct	like	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	premise=text_collation, read from config; see the known-bad row	postgres
-construct	like.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	allowance=text_collation	postgres
-construct	limit	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
-construct	null_ordering	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres
-construct	offset	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
-construct	order_by	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_order_by_text	known-bad control: the result diverged from the source engine under this config	postgres
-construct	order_by	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	premise=text_collation, read from config; see the known-bad row	postgres
-construct	order_by.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=text_collation	postgres
-construct	ordered_comparison	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder		postgres
-construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_recursive		postgres
-construct	returning	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_returning	MySQL has no RETURNING clause	postgres
-construct	row_lock	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_for_update_plain		postgres
-construct	row_lock.nowait	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_nowait_on_free_row		postgres
-construct	row_lock.of	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_of_table		postgres
-construct	row_lock.share	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_share		postgres
-construct	row_lock.skip_locked	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_skip_locked		postgres
-construct	text_comparison	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_text_equality	known-bad control: the result diverged from the source engine under this config	postgres
-construct	text_comparison	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	premise=text_collation, read from config; see the known-bad row	postgres
-construct	text_comparison.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	allowance=text_collation	postgres
-construct	trim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trim_both_char		postgres
-construct	trim.multi_char	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_trim_set	PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
-construct	update_from	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_update_from		postgres
-construct	upsert	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	diverges from the strict contract unless accepted: allowance=upsert_any_unique_key	postgres
-construct	upsert.upsert_any_unique_key	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	allowance=upsert_any_unique_key	postgres
-construct	upsert_where	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_upsert_where	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
-construct	window_function	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
-construct	with.delete	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_delete		postgres
-construct	with.insert	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::with_insert	MySQL has no WITH before this statement (probed: a syntax error)	postgres
-construct	with.update	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_update		postgres
+construct	array_param	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
+construct	array_param.array_null_semantics	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	allowance=array_null_semantics	postgres
+construct	array_subquery	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_array_subquery	MySQL/MariaDB has no array type	postgres
+construct	at_time_zone	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_at_time_zone	MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp	postgres
+construct	boolean_literal	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	boolean_literal.boolean_as_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::insert_values	allowance=boolean_as_integer	postgres
+construct	cast.to_double	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_double.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast	allowance=lenient_cast	postgres
+construct	cast.to_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_integer.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
+construct	cast.to_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
+construct	cast.to_text.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
+construct	cast.to_uuid	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
+construct	concat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::concat_op		postgres
+construct	cte.data_modifying	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_data_modifying_cte	MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error	postgres
+construct	distinct_on	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
+construct	division	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
+construct	division.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=division_by_zero_is_null	postgres
+construct	division_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
+construct	division_integer.integer_division_assumed	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=integer_division_assumed	postgres
+construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
+construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
+construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
+construct	fn:char_length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::escape_string_literal		postgres
+construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
+construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
+construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
+construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
+construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres
+construct	fn:make_interval.month_year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
+construct	fn:make_interval.standalone	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_positional	only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
+construct	fn:max	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_max_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	fn:max	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
+construct	fn:max.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
+construct	fn:min	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_min_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	fn:min	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	premise=text_collation, read from config; see the known-bad row	postgres
+construct	fn:min.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates	allowance=text_collation	postgres
+construct	fn:now	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
+construct	fn:now.now_as_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=now_as_text	postgres
+construct	fn:nullif	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
+construct	fn:replace	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:row_number	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
+construct	fn:string_agg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	postgres
+construct	fn:string_agg.aggregate_string_truncation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=aggregate_string_truncation	postgres
+construct	fn:string_agg.order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres
+construct	fn:substr	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_substr	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
+construct	fn:sum	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
+construct	fn:sum.order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
+construct	ilike	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
+construct	ilike.ascii_only_case_folding	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=ascii_only_case_folding	postgres
+construct	ilike.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=text_collation	postgres
+construct	interval_arithmetic	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=timestamp_arithmetic_as_text	postgres
+construct	join:inner_join	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::cte		postgres
+construct	join:left_join	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join		postgres
+construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
+construct	like	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_like_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	like	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	premise=text_collation, read from config; see the known-bad row	postgres
+construct	like.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	allowance=text_collation	postgres
+construct	limit	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
+construct	null_ordering	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres
+construct	offset	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
+construct	order_by	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_order_by_text	known-bad control: the result diverged from the source engine under this config	postgres
+construct	order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	premise=text_collation, read from config; see the known-bad row	postgres
+construct	order_by.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=text_collation	postgres
+construct	ordered_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder		postgres
+construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_recursive		postgres
+construct	returning	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_returning	MySQL has no RETURNING clause	postgres
+construct	row_lock	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_for_update_plain		postgres
+construct	row_lock.nowait	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_nowait_on_free_row		postgres
+construct	row_lock.of	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_of_table		postgres
+construct	row_lock.share	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_share		postgres
+construct	row_lock.skip_locked	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_skip_locked		postgres
+construct	text_comparison	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_text_equality	known-bad control: the result diverged from the source engine under this config	postgres
+construct	text_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	premise=text_collation, read from config; see the known-bad row	postgres
+construct	text_comparison.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	allowance=text_collation	postgres
+construct	trim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trim_both_char		postgres
+construct	trim.multi_char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_trim_set	PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
+construct	update_from	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_update_from		postgres
+construct	upsert	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	diverges from the strict contract unless accepted: allowance=upsert_any_unique_key	postgres
+construct	upsert.upsert_any_unique_key	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	allowance=upsert_any_unique_key	postgres
+construct	upsert_where	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_upsert_where	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres
+construct	window_function	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
+construct	with.delete	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_delete		postgres
+construct	with.insert	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::with_insert	MySQL has no WITH before this statement (probed: a syntax error)	postgres
+construct	with.update	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_update		postgres

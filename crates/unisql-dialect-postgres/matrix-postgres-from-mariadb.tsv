@@ -1,55 +1,55 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
-construct	cast.to_bigint	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
-construct	cast.to_bigint.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	allowance=lenient_cast	mariadb
-construct	cast.to_double	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
-construct	cast.to_double.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=lenient_cast	mariadb
-construct	cast.to_text	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
-construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	allowance=lenient_cast	mariadb
-construct	concat	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
-construct	division	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mariadb
-construct	division.decimal_division_as_float	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=decimal_division_as_float	mariadb
-construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=division_by_zero_is_null	mariadb
-construct	division_integer	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mariadb
-construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=integer_division_assumed	mariadb
-construct	fn:char_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
-construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
-construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
-construct	fn:current_date	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::current_date_bare		mariadb
-construct	fn:date_format	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mariadb
-construct	fn:make_interval	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
-construct	fn:make_interval.month_year	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mariadb
-construct	fn:max	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
-construct	fn:min	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
-construct	fn:now	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
-construct	fn:octet_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
-construct	fn:rank	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::window_rank		mariadb
-construct	fn:string_agg	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mariadb
-construct	fn:string_agg.aggregate_string_truncation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_default	allowance=aggregate_string_truncation	mariadb
-construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep		mariadb
-construct	fn:substr	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start		mariadb
-construct	fn:substr.start_position	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mariadb
-construct	fn:substr.start_position.substring_start_assumed_positive	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start	allowance=substring_start_assumed_positive	mariadb
-construct	fn:sum	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
-construct	insert_ignore	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mariadb
-construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mariadb
-construct	interval_arithmetic	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
-construct	join:inner_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::cte		mariadb
-construct	join:left_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::left_join		mariadb
-construct	like	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mariadb
-construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::like_escape	allowance=like_case_sensitivity_is_connection_setting	mariadb
-construct	limit	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::limit_comma		mariadb
-construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep		mariadb
-construct	null_safe_eq	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::null_safe_eq_null		mariadb
-construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::limit_comma		mariadb
-construct	order_by	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
-construct	order_by.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep	allowance=text_collation	mariadb
-construct	ordered_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
-construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::backticks	allowance=text_collation	mariadb
-construct	pipes_as_or	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mariadb
-construct	pipes_as_or.pipes_as_logical_or	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::pipes_as_or	allowance=pipes_as_logical_or	mariadb
-construct	recursive_cte	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::with_recursive		mariadb
-construct	text_comparison	postgres	16.15	lc_collate=C	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cte	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
-construct	text_comparison.text_collation	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cte	allowance=text_collation	mariadb
-construct	upsert	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate		mariadb
-construct	upsert.no_conflict_key	postgres	16.15	lc_collate=C	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mariadb
-construct	window_function	postgres	16.15	lc_collate=C	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::window_rank		mariadb
+construct	cast.to_bigint	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
+construct	cast.to_bigint.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	allowance=lenient_cast	mariadb
+construct	cast.to_double	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
+construct	cast.to_double.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=lenient_cast	mariadb
+construct	cast.to_text	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
+construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	allowance=lenient_cast	mariadb
+construct	concat	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
+construct	division	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mariadb
+construct	division.decimal_division_as_float	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=decimal_division_as_float	mariadb
+construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=division_by_zero_is_null	mariadb
+construct	division_integer	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mariadb
+construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=integer_division_assumed	mariadb
+construct	fn:char_length	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
+construct	fn:coalesce	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
+construct	fn:count	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
+construct	fn:current_date	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::current_date_bare		mariadb
+construct	fn:date_format	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mariadb
+construct	fn:make_interval	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
+construct	fn:make_interval.month_year	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mariadb
+construct	fn:max	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
+construct	fn:min	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
+construct	fn:now	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
+construct	fn:octet_length	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
+construct	fn:rank	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::window_rank		mariadb
+construct	fn:string_agg	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mariadb
+construct	fn:string_agg.aggregate_string_truncation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_default	allowance=aggregate_string_truncation	mariadb
+construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep		mariadb
+construct	fn:substr	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start		mariadb
+construct	fn:substr.start_position	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mariadb
+construct	fn:substr.start_position.substring_start_assumed_positive	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::substring_expression_start	allowance=substring_start_assumed_positive	mariadb
+construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::aggregates		mariadb
+construct	insert_ignore	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mariadb
+construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mariadb
+construct	interval_arithmetic	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb
+construct	join:inner_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::cte		mariadb
+construct	join:left_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::left_join		mariadb
+construct	like	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mariadb
+construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::like_escape	allowance=like_case_sensitivity_is_connection_setting	mariadb
+construct	limit	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::limit_comma		mariadb
+construct	null_ordering	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep		mariadb
+construct	null_safe_eq	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::null_safe_eq_null		mariadb
+construct	offset	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::limit_comma		mariadb
+construct	order_by	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
+construct	order_by.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::group_concat_sep	allowance=text_collation	mariadb
+construct	ordered_comparison	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
+construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::backticks	allowance=text_collation	mariadb
+construct	pipes_as_or	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mariadb
+construct	pipes_as_or.pipes_as_logical_or	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::pipes_as_or	allowance=pipes_as_logical_or	mariadb
+construct	recursive_cte	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::with_recursive		mariadb
+construct	text_comparison	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cte	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
+construct	text_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cte	allowance=text_collation	mariadb
+construct	upsert	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate		mariadb
+construct	upsert.no_conflict_key	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns	mariadb
+construct	window_function	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::window_rank		mariadb

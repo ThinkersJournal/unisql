@@ -583,12 +583,18 @@ pub struct Case {
     /// A locking SELECT (source dialect) a second session runs and keeps open while the case runs,
     /// on the source engine as written and on the target engine as translated.
     pub hold: Option<&'static str>,
+    /// Column classes the caller knows (see `unisql::Schema`). Cases without one translate from
+    /// syntax alone, which is what the matrix files record (`schema=none`).
+    pub schema: Option<unisql::Schema>,
     pub expect: Expect,
 }
 
 #[derive(Debug)]
 pub struct Outcome {
     pub name: &'static str,
+    /// The case was translated with a caller `Schema`: its facts are not `schema=none` facts, so the
+    /// matrix files leave it out.
+    pub with_schema: bool,
     pub passed: bool,
     pub detail: String,
     pub translated: Option<String>,
@@ -692,9 +698,13 @@ pub fn run_case(e: &mut Engines, c: &Case) -> Outcome {
 
 pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
     let (src, tgt) = (dir.source(), dir.target());
-    let opts = c.allow.iter().fold(Options::default(), |o, a| o.with(*a));
+    let mut opts = c.allow.iter().fold(Options::default(), |o, a| o.with(*a));
+    if let Some(s) = &c.schema {
+        opts = opts.with_schema(s.clone());
+    }
     let mut out = Outcome {
         name: c.name,
+        with_schema: c.schema.is_some(),
         passed: false,
         detail: String::new(),
         translated: None,
@@ -923,7 +933,7 @@ pub fn matrix_rows(outcomes: &[Outcome]) -> BTreeSet<(String, &'static str)> {
     let mut m = BTreeSet::new();
     for o in outcomes
         .iter()
-        .filter(|o| o.passed && o.translated.is_some())
+        .filter(|o| o.passed && o.translated.is_some() && !o.with_schema)
     {
         for (c, t) in &o.constructs {
             m.insert((c.clone(), t.name()));
@@ -979,9 +989,11 @@ pub fn matrix_tsv(
 ) -> String {
     use std::collections::{BTreeMap, BTreeSet};
     let config = match backend {
-        "postgres" => "lc_collate=C",
-        "mysql" | "mariadb" => "collation=utf8mb4_bin",
-        _ => "",
+        // Every row is computed without a Schema: a row proven that way must not be read as
+        // proven for a caller's column map (PersistAnt, 2026-10-14).
+        "postgres" => "lc_collate=C;schema=none",
+        "mysql" | "mariadb" => "collation=utf8mb4_bin;schema=none",
+        _ => "schema=none",
     };
     let suite = format!("{from}-to-{backend}");
 
@@ -994,7 +1006,7 @@ pub fn matrix_tsv(
         case: Option<&'static str>,
     }
     let mut proven: BTreeMap<String, Seen> = BTreeMap::new();
-    for o in outcomes.iter().filter(|o| o.passed) {
+    for o in outcomes.iter().filter(|o| o.passed && !o.with_schema) {
         for (c, t) in &o.constructs {
             let e = proven.entry(c.clone()).or_default();
             match t {
@@ -1011,7 +1023,7 @@ pub fn matrix_tsv(
         }
     }
     let mut refused: BTreeMap<String, (String, &'static str)> = BTreeMap::new();
-    for o in outcomes.iter().filter(|o| o.passed) {
+    for o in outcomes.iter().filter(|o| o.passed && !o.with_schema) {
         if let Some((c, why)) = &o.refusal {
             let e = refused
                 .entry(c.clone())

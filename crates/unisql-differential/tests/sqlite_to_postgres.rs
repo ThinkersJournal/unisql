@@ -55,6 +55,7 @@ fn c(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
         ordered: false,
         after: None,
         hold: None,
+        schema: None,
         expect: Expect::Same,
     }
 }

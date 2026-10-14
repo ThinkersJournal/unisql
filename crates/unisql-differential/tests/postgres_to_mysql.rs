@@ -80,6 +80,7 @@ fn c(name: &'static str, sql: &'static str) -> Case {
         ordered: false,
         after: None,
         hold: None,
+        schema: None,
         expect: Expect::Same,
     }
 }
@@ -674,6 +675,46 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         Expect::Refused("array_subquery"),
     ));
+    // A Schema removes the text-collation assumption from comparisons on non-text columns.
+    {
+        use unisql::Column;
+        let users = unisql::Schema::new()
+            .with_column("users", "id", Column::numeric())
+            .with_column("users", "name", Column::text())
+            .with_column("users", "age", Column::numeric());
+        v.push(Case {
+            schema: Some(users.clone()),
+            params: vec![Param::Int(25)],
+            allow: vec![],
+            ..c(
+                "schema_numeric_column_needs_no_allowance",
+                "SELECT id FROM users WHERE age > $1 AND age BETWEEN 20 AND 60",
+            )
+        });
+        v.push(exp(
+            Case {
+                schema: Some(users),
+                params: vec![Param::Text("b")],
+                allow: vec![],
+                ..c(
+                    "schema_text_column_still_conditional",
+                    "SELECT id FROM users WHERE name > $1",
+                )
+            },
+            Expect::NeedsAllowance(A::TextCollation),
+        ));
+        v.push(exp(
+            Case {
+                params: vec![Param::Int(25)],
+                allow: vec![],
+                ..c(
+                    "no_schema_unknown_column_is_conditional",
+                    "SELECT id FROM users WHERE age > $1",
+                )
+            },
+            Expect::NeedsAllowance(A::TextCollation),
+        ));
+    }
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.
     let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";
@@ -766,6 +807,7 @@ fn known_bad_controls(maria: bool, dir: Dir) -> Vec<KnownBad> {
             ordered,
             after: None,
             hold: None,
+            schema: None,
             expect: Expect::Diverges,
         };
         let o = run_case_dir(&mut e, &case, dir);
@@ -776,7 +818,7 @@ fn known_bad_controls(maria: bool, dir: Dir) -> Vec<KnownBad> {
         );
         out.push(KnownBad {
             leaf,
-            config: format!("collation={coll}"),
+            config: format!("collation={coll};schema=none"),
             case: name,
         });
     }

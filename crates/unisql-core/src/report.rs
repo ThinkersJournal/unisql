@@ -185,9 +185,18 @@ impl Report {
 #[non_exhaustive]
 pub struct Options {
     pub allow: BTreeSet<Allowance>,
+    /// What the caller knows about its base tables, if anything (see [`crate::schema`]).
+    pub schema: Option<crate::schema::Schema>,
 }
 
 impl Options {
+    /// Give the translator the classes of base-table columns; a comparison on a column that is not
+    /// text then involves no text collation.
+    pub fn with_schema(mut self, schema: crate::schema::Schema) -> Self {
+        self.schema = Some(schema);
+        self
+    }
+
     pub fn with(mut self, a: Allowance) -> Self {
         self.allow.insert(a);
         self

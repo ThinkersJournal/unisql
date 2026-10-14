@@ -1,60 +1,60 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
-construct	cast.to_bigint	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
-construct	cast.to_bigint.lenient_cast	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
-construct	cast.to_double	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
-construct	cast.to_double.lenient_cast	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=lenient_cast	mysql
-construct	cast.to_text	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
-construct	cast.to_text.lenient_cast	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
-construct	concat	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
-construct	division	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mysql
-construct	division.decimal_division_as_float	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=decimal_division_as_float	mysql
-construct	division.division_by_zero_is_null	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=division_by_zero_is_null	mysql
-construct	division_integer	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mysql
-construct	division_integer.integer_division_assumed	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=integer_division_assumed	mysql
-construct	fn:char_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
-construct	fn:coalesce	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
-construct	fn:count	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
-construct	fn:current_date	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
-construct	fn:current_date.date_as_text	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	allowance=date_as_text	mysql
-construct	fn:date_format	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_format	no verified mapping for this function on SQLite yet	mysql
-construct	fn:make_interval	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus		mysql
-construct	fn:make_interval.month_year	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
-construct	fn:max	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	fn:max.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
-construct	fn:min	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	fn:min.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
-construct	fn:now	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=now_as_text	mysql
-construct	fn:now.now_as_text	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=now_as_text	mysql
-construct	fn:octet_length	sqlite	3.53.2		yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
-construct	fn:rank	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql
-construct	fn:string_agg	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mysql
-construct	fn:string_agg.aggregate_string_truncation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	allowance=aggregate_string_truncation	mysql
-construct	fn:string_agg.order_by	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
-construct	fn:substr	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start		mysql
-construct	fn:substr.start_position	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mysql
-construct	fn:substr.start_position.substring_start_assumed_positive	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start	allowance=substring_start_assumed_positive	mysql
-construct	fn:sum	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
-construct	insert_ignore	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
-construct	insert_ignore.ignore_covers_only_unique_conflicts	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
-construct	interval_arithmetic	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql
-construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=timestamp_arithmetic_as_text	mysql
-construct	join:inner_join	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte		mysql
-construct	join:left_join	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_join		mysql
-construct	like	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql
-construct	like.like_case_sensitivity_is_connection_setting	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	allowance=like_case_sensitivity_is_connection_setting	mysql
-construct	limit	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::limit_comma		mysql
-construct	null_ordering	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
-construct	null_safe_eq	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::null_safe_eq_null		mysql
-construct	offset	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::limit_comma		mysql
-construct	order_by	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	order_by.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep	allowance=text_collation	mysql
-construct	ordered_comparison	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	ordered_comparison.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::backticks	allowance=text_collation	mysql
-construct	pipes_as_or	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mysql
-construct	pipes_as_or.pipes_as_logical_or	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	allowance=pipes_as_logical_or	mysql
-construct	recursive_cte	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::with_recursive		mysql
-construct	text_comparison	sqlite	3.53.2		no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
-construct	text_comparison.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	allowance=text_collation	mysql
-construct	upsert	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate		mysql
-construct	upsert.no_conflict_key	sqlite	3.53.2		no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns	mysql
-construct	window_function	sqlite	3.53.2		yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql
+construct	cast.to_bigint	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
+construct	cast.to_bigint.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
+construct	cast.to_double	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
+construct	cast.to_double.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=lenient_cast	mysql
+construct	cast.to_text	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
+construct	cast.to_text.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
+construct	concat	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
+construct	division	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mysql
+construct	division.decimal_division_as_float	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=decimal_division_as_float	mysql
+construct	division.division_by_zero_is_null	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=division_by_zero_is_null	mysql
+construct	division_integer	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mysql
+construct	division_integer.integer_division_assumed	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=integer_division_assumed	mysql
+construct	fn:char_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
+construct	fn:coalesce	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
+construct	fn:count	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
+construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	diverges from the strict contract unless accepted: allowance=date_as_text	mysql
+construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::current_date_bare	allowance=date_as_text	mysql
+construct	fn:date_format	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_format	no verified mapping for this function on SQLite yet	mysql
+construct	fn:make_interval	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus		mysql
+construct	fn:make_interval.month_year	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
+construct	fn:max	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	fn:max.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
+construct	fn:min	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	fn:min.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
+construct	fn:now	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=now_as_text	mysql
+construct	fn:now.now_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=now_as_text	mysql
+construct	fn:octet_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
+construct	fn:rank	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql
+construct	fn:string_agg	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mysql
+construct	fn:string_agg.aggregate_string_truncation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_default	allowance=aggregate_string_truncation	mysql
+construct	fn:string_agg.order_by	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
+construct	fn:substr	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start		mysql
+construct	fn:substr.start_position	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start	diverges from the strict contract unless accepted: allowance=substring_start_assumed_positive	mysql
+construct	fn:substr.start_position.substring_start_assumed_positive	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::substring_expression_start	allowance=substring_start_assumed_positive	mysql
+construct	fn:sum	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates		mysql
+construct	insert_ignore	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
+construct	insert_ignore.ignore_covers_only_unique_conflicts	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
+construct	interval_arithmetic	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql
+construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=timestamp_arithmetic_as_text	mysql
+construct	join:inner_join	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte		mysql
+construct	join:left_join	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_join		mysql
+construct	like	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql
+construct	like.like_case_sensitivity_is_connection_setting	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::like_escape	allowance=like_case_sensitivity_is_connection_setting	mysql
+construct	limit	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::limit_comma		mysql
+construct	null_ordering	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep		mysql
+construct	null_safe_eq	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::null_safe_eq_null		mysql
+construct	offset	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::limit_comma		mysql
+construct	order_by	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	order_by.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::group_concat_sep	allowance=text_collation	mysql
+construct	ordered_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	ordered_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::backticks	allowance=text_collation	mysql
+construct	pipes_as_or	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mysql
+construct	pipes_as_or.pipes_as_logical_or	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::pipes_as_or	allowance=pipes_as_logical_or	mysql
+construct	recursive_cte	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::with_recursive		mysql
+construct	text_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
+construct	text_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	allowance=text_collation	mysql
+construct	upsert	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate		mysql
+construct	upsert.no_conflict_key	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns	mysql
+construct	window_function	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql

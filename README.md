@@ -70,7 +70,8 @@ is a **leaf id** and a fact a test established:
   that a different collation really diverges, in which case the strict leaf is `yes` under
   `config=collation=utf8mb4_bin` and the control's collation has its own `no/wrong` row.
 - `enabled=no, reason=missing`: the translator refuses the form (`cast.to_uuid`, `fn:md5`).
-- No row means untested, which is off. `config` is what the fixture engines ran under.
+- No row means untested, which is off. `config` is what the fixture engines ran under and ends
+  `schema=none`: every row is computed from syntax alone, without a caller `Schema`.
 
 `docs/LEAF-CONTRACTS.tsv` holds each leaf's written contract (a test checks that every leaf in a
 matrix file has one). `unisql::analyse` returns the same ids a statement needs, including the

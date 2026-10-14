@@ -106,6 +106,7 @@ fn c(name: &'static str, sql: &'static str) -> Case {
         ordered: false,
         after: None,
         hold: None,
+        schema: None,
         expect: Expect::Same,
     }
 }

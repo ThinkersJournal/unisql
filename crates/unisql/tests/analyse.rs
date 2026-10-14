@@ -2,7 +2,7 @@
 //! `analyse` is target-free: it reports what a statement needs, and which of its forms some target
 //! refuses. No engine is involved.
 
-use unisql::{Allowance, Options, analyse, translate};
+use unisql::{Allowance, Column, Options, Schema, analyse, analyse_with, translate};
 
 fn all() -> Options {
     Allowance::ALL
@@ -150,6 +150,70 @@ fn a_data_modifying_cte_is_read_and_named() {
     // ... and PostgreSQL writes it back.
     let t = translate(sql, "postgres", "postgres", &all()).unwrap();
     assert!(t.sql.to_uppercase().starts_with("WITH "), "{}", t.sql);
+}
+
+fn users() -> Schema {
+    Schema::new()
+        .with_column("users", "id", Column::numeric())
+        .with_column("users", "name", Column::text())
+        .with_column("users", "age", Column::numeric())
+        .with_column("orders", "user_id", Column::numeric())
+        .with_column("orders", "status", Column::text())
+}
+
+#[test]
+fn a_schema_removes_text_comparison_for_non_text_columns_only() {
+    let opts = Options::default().with_schema(users());
+    let sql = |q: &str| analyse_with(q, "postgres", &opts).unwrap().constructs;
+    let plain = |q: &str| analyse(q, "postgres").unwrap().constructs;
+
+    // Without a schema `age > $1` could be text; with it, it is numeric.
+    assert!(plain("SELECT id FROM users WHERE age > $1").contains("text_comparison"));
+    assert!(!sql("SELECT id FROM users WHERE age > $1").contains("text_comparison"));
+    // ... still an ordered comparison.
+    assert!(sql("SELECT id FROM users WHERE age > $1").contains("ordered_comparison"));
+    // A text column stays conditional, and an unregistered one stays unknown.
+    assert!(sql("SELECT id FROM users WHERE name > $1").contains("text_comparison"));
+    assert!(sql("SELECT id FROM users WHERE nick > $1").contains("text_comparison"));
+    // A qualified reference resolves through the alias; the wrong table's column does not.
+    assert!(!sql("SELECT u.id FROM users u WHERE u.age = $1").contains("text_comparison"));
+    assert!(sql("SELECT o.id FROM orders o WHERE o.status = $1").contains("text_comparison"));
+    // Unqualified column in a join resolves only when one registered table has it.
+    assert!(
+        !sql("SELECT u.id FROM users u JOIN orders o ON o.user_id = u.id WHERE age = 3")
+            .contains("text_comparison")
+    );
+    // An unregistered table in scope makes an unqualified column unknown (it could be its column).
+    assert!(
+        sql("SELECT 1 FROM users u JOIN other x ON TRUE WHERE u.id = 1 AND age = $1")
+            .contains("text_comparison")
+    );
+    // A derived table is opaque.
+    assert!(
+        sql("SELECT d.n FROM (SELECT age AS n FROM users) d WHERE d.n > $1")
+            .contains("text_comparison")
+    );
+    // UPDATE and DELETE scopes.
+    assert!(!sql("UPDATE users SET name = 'x' WHERE age > $1").contains("text_comparison"));
+    assert!(!sql("DELETE FROM users WHERE age BETWEEN 1 AND 3").contains("text_comparison"));
+    // The invariant the gate relies on holds with a schema too: every need a target records is named.
+    for target in unisql::dialects() {
+        let t = translate(
+            "SELECT id FROM users WHERE age > $1 AND name = 'a'",
+            "postgres",
+            target,
+            &all().with_schema(users()),
+        );
+        if let Ok(t) = t {
+            let needs = sql("SELECT id FROM users WHERE age > $1 AND name = 'a'");
+            for e in &t.report.entries {
+                assert!(needs.contains(&e.construct), "{target}: {}", e.construct);
+            }
+            for n in &needs {
+                assert!(t.report.constructs().contains(n.as_str()), "{target}: {n}");
+            }
+        }
+    }
 }
 
 #[test]

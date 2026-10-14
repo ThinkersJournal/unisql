@@ -8,5 +8,5 @@ publish.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-unisql-core = { version = "0.11.0", path = "../unisql-core" }
+unisql-core = { version = "0.12.0", path = "../unisql-core" }
 unisql-sqlparser-adapter.workspace = true

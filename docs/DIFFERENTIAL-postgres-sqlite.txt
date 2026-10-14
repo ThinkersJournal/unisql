@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=140
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=144
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -154,6 +154,12 @@ PASS pg_identity_at_time_zone     identity: same rows and state
        -> SELECT CAST((CAST('2020-01-01 00:00:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'UTC') AS TEXT)
 PASS pg_identity_array_subquery   identity: same rows and state
        -> SELECT ARRAY_LENGTH(ARRAY(SELECT "id" FROM "users"), 1)
+PASS schema_numeric_column_needs_no_allowance same
+       -> SELECT "id" FROM "users" WHERE ("age" > ?1) AND ("id" <> 3)
+PASS schema_numeric_between_and_alias same
+       -> SELECT "u"."id" FROM "users" AS "u" WHERE ("u"."age" BETWEEN 25 AND 41) AND ("u"."active" = 1)
+PASS schema_text_column_still_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the target's collation (BINARY by default)
+PASS no_schema_unknown_column_is_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the target's collation (BINARY by default)
 PASS pg_identity_data_modifying_cte identity: same rows and state
        -> WITH "s" AS (INSERT INTO "kv" ("key", "value", "n") VALUES ('w', 'z', 5) RETURNING "key") UPDATE "kv" SET "n" = "n" + 1 WHERE "key" IN (SELECT "key" FROM "s")
 PASS refuse_data_modifying_cte    refused `cte.data_modifying`: SQLite has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error
@@ -249,7 +255,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 108 passing translated cases:
+MATRIX (construct, tier) from 110 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
