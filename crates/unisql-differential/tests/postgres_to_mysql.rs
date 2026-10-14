@@ -656,6 +656,24 @@ fn cases(maria: bool) -> Vec<Case> {
             v.push(exp(c(name, sql), Expect::Refused(leaf)));
         }
     }
+    v.push(c(
+        "escape_string_literal",
+        "SELECT char_length(E'a\\nb\\t\\\\') FROM users WHERE id = 1",
+    ));
+    v.push(exp(
+        c(
+            "refuse_at_time_zone",
+            "SELECT CAST(CAST('2020-01-01 00:00:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'UTC' AS TEXT)",
+        ),
+        Expect::Refused("at_time_zone"),
+    ));
+    v.push(exp(
+        c(
+            "refuse_array_subquery",
+            "SELECT array_length(ARRAY(SELECT id FROM users), 1)",
+        ),
+        Expect::Refused("array_subquery"),
+    ));
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.
     let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";

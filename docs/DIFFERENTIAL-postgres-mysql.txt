@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=103
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=106
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -182,12 +182,17 @@ PASS with_update                  same
 PASS with_delete                  same
        -> WITH `s` AS (SELECT `key` FROM `kv` WHERE `n` = 1) DELETE FROM `kv` WHERE `key` IN (SELECT `key` FROM `s`)
 PASS with_insert                  refused `with.insert`: MySQL has no WITH before this statement (probed: a syntax error)
+PASS escape_string_literal        same
+       -> SELECT CHAR_LENGTH('a
+b	\\') FROM `users` WHERE `id` = 1
+PASS refuse_at_time_zone          refused `at_time_zone`: MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp
+PASS refuse_array_subquery        refused `array_subquery`: MySQL/MariaDB has no array type
 PASS lock_share                   same
        -> SELECT `id` FROM `users` WHERE `id` = 4 FOR SHARE
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 84 passing translated cases:
+MATRIX (construct, tier) from 85 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -199,6 +204,7 @@ MATRIX (construct, tier) from 84 passing translated cases:
   division_integer             conditional
   fn:avg                       exact
   fn:btrim                     emulated
+  fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
   fn:current_date              exact

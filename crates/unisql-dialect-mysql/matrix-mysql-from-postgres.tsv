@@ -1,6 +1,8 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
 construct	array_param	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
 construct	array_param.array_null_semantics	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::all_ne_empty_array	allowance=array_null_semantics	postgres
+construct	array_subquery	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_array_subquery	MySQL/MariaDB has no array type	postgres
+construct	at_time_zone	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_at_time_zone	MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp	postgres
 construct	boolean_literal	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
 construct	boolean_literal.boolean_as_integer	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::insert_values	allowance=boolean_as_integer	postgres
 construct	cast.to_double	mysql	8.4.11	collation=utf8mb4_bin	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
@@ -20,6 +22,7 @@ construct	division_integer.integer_division_assumed	mysql	8.4.11	collation=utf8m
 construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
 construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
+construct	fn:char_length	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::escape_string_literal		postgres
 construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
 construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres

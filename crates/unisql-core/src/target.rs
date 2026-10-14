@@ -215,6 +215,18 @@ pub trait Target {
         ctx.note("distinct_on", Tier::Exact, "", None)
     }
 
+    /// `expr AT TIME ZONE zone`. Default (PostgreSQL): exact. A target without it refuses the leaf
+    /// `at_time_zone`.
+    fn at_time_zone(&self, ctx: &mut Ctx) -> R<()> {
+        ctx.note("at_time_zone", Tier::Exact, "", None)
+    }
+
+    /// `ARRAY(SELECT ..)`. Default (PostgreSQL): exact. A target without an array type refuses the
+    /// leaf `array_subquery`.
+    fn array_subquery(&self, ctx: &mut Ctx) -> R<()> {
+        ctx.note("array_subquery", Tier::Exact, "", None)
+    }
+
     /// `WITH .. INSERT | UPDATE | DELETE ..` (the common table expressions precede the modifying
     /// statement). The default (PostgreSQL) has all three; each is its own leaf: `with.insert`,
     /// `with.update`, `with.delete`.

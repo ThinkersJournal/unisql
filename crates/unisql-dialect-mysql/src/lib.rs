@@ -406,6 +406,22 @@ impl Target for Mysql {
         Err(ctx.refuse("distinct_on", "unexpected DISTINCT ON", &[]))
     }
 
+    fn at_time_zone(&self, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            "at_time_zone",
+            "MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp",
+            &["convert in the application, or store UTC"],
+        ))
+    }
+
+    fn array_subquery(&self, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            "array_subquery",
+            "MySQL/MariaDB has no array type",
+            &["select the rows and collect them in the application"],
+        ))
+    }
+
     fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "cte.data_modifying",

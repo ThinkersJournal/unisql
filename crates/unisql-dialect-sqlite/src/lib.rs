@@ -414,6 +414,22 @@ impl Target for Sqlite {
         ))
     }
 
+    fn at_time_zone(&self, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            "at_time_zone",
+            "SQLite has no time zones: its datetimes are text in UTC",
+            &["convert in the application, or store UTC"],
+        ))
+    }
+
+    fn array_subquery(&self, ctx: &mut Ctx) -> R<()> {
+        Err(ctx.refuse(
+            "array_subquery",
+            "SQLite has no array type",
+            &["select the rows and collect them in the application"],
+        ))
+    }
+
     fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "cte.data_modifying",

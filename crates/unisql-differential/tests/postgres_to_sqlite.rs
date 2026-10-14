@@ -532,6 +532,43 @@ fn cases() -> Vec<Case> {
                 &[],
             )
         },
+        c(
+            "escape_string_literal",
+            "SELECT char_length(E'a\\nb\\t\\\\') FROM users WHERE id = 1",
+            &[],
+        ),
+        exp(
+            c(
+                "refuse_at_time_zone",
+                "SELECT CAST(CAST('2020-01-01 00:00:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'UTC' AS TEXT)",
+                &[A::LenientCast],
+            ),
+            Expect::Refused("at_time_zone"),
+        ),
+        exp(
+            c(
+                "refuse_array_subquery",
+                "SELECT array_length(ARRAY(SELECT id FROM users), 1)",
+                &[],
+            ),
+            Expect::Refused("array_subquery"),
+        ),
+        exp(
+            c(
+                "pg_identity_at_time_zone",
+                "SELECT CAST(CAST('2020-01-01 00:00:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'UTC' AS TEXT)",
+                &[],
+            ),
+            Expect::Identity,
+        ),
+        exp(
+            c(
+                "pg_identity_array_subquery",
+                "SELECT array_length(ARRAY(SELECT id FROM users), 1)",
+                &[],
+            ),
+            Expect::Identity,
+        ),
         // PostgreSQL has the form itself: it must read and write back unchanged in meaning.
         exp(
             Case {

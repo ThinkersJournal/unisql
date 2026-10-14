@@ -27,6 +27,8 @@ cast.to_double	CAST to a double-precision float returns the source's value; a ma
 cast.to_integer	CAST to a 32-bit integer returns the source's value; a malformed or out-of-range operand raises an error as at the source.
 cast.to_text	CAST to text yields the source's text form of the operand.
 cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
+array_subquery	ARRAY(SELECT ...) is an array of the single column of the query, in the query order. Refused where there is no array type.
+at_time_zone	ts AT TIME ZONE zone converts between timestamptz and a timestamp in the named zone. Refused where zone conversion differs or is unavailable.
 concat	`a || b` concatenates text; a NULL operand gives NULL.
 cte.data_modifying	WITH x AS (INSERT | UPDATE | DELETE ... RETURNING ...) ...: the modifying statement in the WITH runs once, its RETURNING rows are the CTE. Refused where only SELECT may appear in a WITH.
 with.delete	WITH ... DELETE ...: the common table expressions are visible to the DELETE. Refused where WITH may not precede a DELETE.

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=135
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=140
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -145,6 +145,15 @@ PASS with_delete                  same
        -> WITH "s" AS (SELECT "key" FROM "kv" WHERE "n" = 1) DELETE FROM "kv" WHERE "key" IN (SELECT "key" FROM "s")
 PASS with_insert                  same
        -> WITH "s" AS (SELECT 'z' AS "key") INSERT INTO "kv" ("key", "value", "n") SELECT "key", 'v', 9 FROM "s"
+PASS escape_string_literal        same
+       -> SELECT LENGTH('a
+b	\') FROM "users" WHERE "id" = 1
+PASS refuse_at_time_zone          refused `at_time_zone`: SQLite has no time zones: its datetimes are text in UTC
+PASS refuse_array_subquery        refused `array_subquery`: SQLite has no array type
+PASS pg_identity_at_time_zone     identity: same rows and state
+       -> SELECT CAST((CAST('2020-01-01 00:00:00+00' AS TIMESTAMPTZ) AT TIME ZONE 'UTC') AS TEXT)
+PASS pg_identity_array_subquery   identity: same rows and state
+       -> SELECT ARRAY_LENGTH(ARRAY(SELECT "id" FROM "users"), 1)
 PASS pg_identity_data_modifying_cte identity: same rows and state
        -> WITH "s" AS (INSERT INTO "kv" ("key", "value", "n") VALUES ('w', 'z', 5) RETURNING "key") UPDATE "kv" SET "n" = "n" + 1 WHERE "key" IN (SELECT "key" FROM "s")
 PASS refuse_data_modifying_cte    refused `cte.data_modifying`: SQLite has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error
@@ -240,7 +249,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 105 passing translated cases:
+MATRIX (construct, tier) from 108 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional

@@ -1,6 +1,8 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
 construct	array_param	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::all_ne_empty_array	diverges from the strict contract unless accepted: allowance=array_null_semantics	postgres
 construct	array_param.array_null_semantics	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::all_ne_empty_array	allowance=array_null_semantics	postgres
+construct	array_subquery	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_array_subquery	SQLite has no array type	postgres
+construct	at_time_zone	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_at_time_zone	SQLite has no time zones: its datetimes are text in UTC	postgres
 construct	boolean_literal	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::insert_values	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
 construct	boolean_literal.boolean_as_integer	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::insert_values	allowance=boolean_as_integer	postgres
 construct	cast.to_double	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
