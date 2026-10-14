@@ -74,7 +74,11 @@ impl Walk<'_> {
                             });
                             // A target that needs the conflict key refuses this form.
                             if oc.target.is_empty() {
-                                self.add("upsert.no_conflict_key");
+                                // With exactly one stated unique key the target can write it.
+                                match self.scopes.unique_keys(&i.table) {
+                                    Some([_]) => self.add("upsert.key_from_schema"),
+                                    _ => self.add("upsert.no_conflict_key"),
+                                }
                             }
                             set.iter().for_each(|a| self.expr(&a.value));
                             if let Some(e) = where_ {

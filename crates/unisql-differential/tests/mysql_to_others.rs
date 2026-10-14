@@ -282,6 +282,37 @@ fn cases(dir: Dir) -> Vec<Case> {
             ),
             Expect::Refused("upsert.no_conflict_key"),
         ),
+        // ---- the conflict key from the schema: kv has exactly one unique key, `k`
+        Case {
+            schema: Some(unisql::Schema::new().with_unique_key("kv", &["k"])),
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "odku_key_from_schema_duplicate",
+                "INSERT INTO kv (k, v, n) VALUES ('a', 'dup', 99) ON DUPLICATE KEY UPDATE v = VALUES(v), n = n + 1",
+            )
+        },
+        Case {
+            schema: Some(unisql::Schema::new().with_unique_key("kv", &["k"])),
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "odku_key_from_schema_new",
+                "INSERT INTO kv (k, v, n) VALUES ('new', 'x', 5) ON DUPLICATE KEY UPDATE v = VALUES(v)",
+            )
+        },
+        exp(
+            Case {
+                schema: Some(
+                    unisql::Schema::new()
+                        .with_unique_key("kv", &["k"])
+                        .with_unique_key("kv", &["n"]),
+                ),
+                ..c(
+                    "refuse_odku_two_keys",
+                    "INSERT INTO kv (k, v) VALUES ('a', 'b') ON DUPLICATE KEY UPDATE v = VALUES(v)",
+                )
+            },
+            Expect::Refused("upsert.no_conflict_key"),
+        ),
         // ---- MySQL-only forms the reader now accepts (each with the assumption it carries)
         Case {
             after: Some("SELECT * FROM kv ORDER BY 1"),

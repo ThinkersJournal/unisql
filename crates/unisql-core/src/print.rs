@@ -134,6 +134,15 @@ impl Printer<'_> {
     }
 
     fn query(&self, q: &Query, c: &mut Ctx) -> R<String> {
+        // A subquery's own columns are not the upserted row's: leave upsert spelling for its scope.
+        let saved = (c.in_upsert, c.upsert_table.take());
+        c.in_upsert = false;
+        let out = self.query_inner(q, c);
+        (c.in_upsert, c.upsert_table) = saved;
+        out
+    }
+
+    fn query_inner(&self, q: &Query, c: &mut Ctx) -> R<String> {
         if let Some(q2) = self.t.rewrite_query(q, c)? {
             return self.query(&q2, c);
         }
@@ -405,15 +414,32 @@ impl Printer<'_> {
             }
         }
         if let Some(oc) = &i.on_conflict {
-            let cols: Vec<String> = oc.target.iter().map(|x| self.id(x)).collect();
+            let mut cols: Vec<String> = oc.target.iter().map(|x| self.id(x)).collect();
+            // MySQL's ON DUPLICATE KEY UPDATE names no key; a target that needs one takes the
+            // table's sole unique key from the schema (with several, or none stated, it refuses).
+            if oc.target.is_empty()
+                && matches!(oc.action, ConflictAction::DoUpdate { .. })
+                && self.t.needs_conflict_key()
+                && let Some([key]) = c.scopes.unique_keys(&i.table)
+            {
+                cols = key.iter().map(|x| self.id(x)).collect();
+                c.note(
+                    "upsert.key_from_schema",
+                    Tier::Exact,
+                    "conflict key taken from the schema's only unique key of the table",
+                    None,
+                )?;
+            }
             let first = i.columns.first().map(|x| self.id(x)).unwrap_or_default();
             let (do_nothing, set, where_) = match &oc.action {
                 ConflictAction::DoNothing => (true, String::new(), None),
                 ConflictAction::DoUpdate { set, where_ } => {
                     c.in_upsert = true;
+                    c.upsert_table = Some(self.id(i.table.last()));
                     let s = self.assignments(set, c);
                     let w = where_.as_ref().map(|w| self.expr(w, c)).transpose();
                     c.in_upsert = false;
+                    c.upsert_table = None;
                     (false, s?, w?)
                 }
             };
@@ -555,6 +581,19 @@ impl Printer<'_> {
         Ok(match e {
             Expr::Column(n) if c.in_upsert && n.0.len() == 2 && n.0[0] == "excluded" => {
                 self.t.excluded_ref(&self.id(&n.0[1]))
+            }
+            // MySQL writes the existing row's column unqualified in ON DUPLICATE KEY UPDATE.
+            Expr::Column(n)
+                if c.in_upsert
+                    && n.0.len() == 1
+                    && matches!(c.source, "mysql" | "mariadb")
+                    && c.upsert_table.is_some() =>
+            {
+                format!(
+                    "{}.{}",
+                    c.upsert_table.as_deref().unwrap_or(""),
+                    self.id(&n.0[0])
+                )
             }
             Expr::Column(n) => self.name(n),
             Expr::Literal(l) => match l {

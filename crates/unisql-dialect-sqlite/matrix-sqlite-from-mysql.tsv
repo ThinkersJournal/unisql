@@ -56,5 +56,5 @@ construct	recursive_cte	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-t
 construct	text_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	text_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	allowance=text_collation	mysql
 construct	upsert	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate		mysql
-construct	upsert.no_conflict_key	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns	mysql
+construct	upsert.no_conflict_key	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns, and the schema does not state exactly one unique key for the table	mysql
 construct	window_function	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql

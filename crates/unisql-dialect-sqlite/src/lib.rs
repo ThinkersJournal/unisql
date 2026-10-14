@@ -623,8 +623,8 @@ impl Target for Sqlite {
         if !do_nothing && conflict_cols.is_empty() {
             return Err(ctx.refuse(
                 "upsert.no_conflict_key",
-                "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns",
-                &["state the conflict key columns in the statement"],
+                "the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns, and the schema does not state exactly one unique key for the table",
+                &["state the conflict key columns in the statement", "or give the schema the table's unique key (Schema::with_unique_key, or schema_from_ddl)"],
             ));
         }
         ctx.note(
