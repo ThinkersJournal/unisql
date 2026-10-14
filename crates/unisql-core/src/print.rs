@@ -2,7 +2,7 @@
 //! The shared printer: IR -> SQL text for any [`Target`].
 
 use crate::ast::*;
-use crate::report::{Options, ParamBinding, Tier, Translation, Untranslatable};
+use crate::report::{Allowance, Options, ParamBinding, Tier, Translation, Untranslatable};
 use crate::target::{Ctx, Escape, StmtKind, Target};
 
 type R<T> = Result<T, Untranslatable>;
@@ -144,7 +144,19 @@ impl Printer<'_> {
         out.push_str(&self.set_expr(&q.body, c)?);
         if !q.order_by.is_empty() {
             out.push_str(" ORDER BY ");
-            out.push_str(&self.order_items(&q.order_by, c)?);
+            // ORDER BY of a plain SELECT sees that SELECT's FROM tables (the scope was left with it).
+            let from = match &q.body {
+                SetExpr::Select(sel) => Some(&sel.from),
+                SetExpr::SetOp { .. } => None,
+            };
+            if let Some(f) = from {
+                c.scopes.push_from(f);
+            }
+            let items = self.order_items(&q.order_by, c);
+            if from.is_some() {
+                c.scopes.pop();
+            }
+            out.push_str(&items?);
         }
         let limit = q.limit.as_ref().map(|e| self.expr(e, c)).transpose()?;
         let offset = q.offset.as_ref().map(|e| self.expr(e, c)).transpose()?;
@@ -181,9 +193,32 @@ impl Printer<'_> {
         Ok(out)
     }
 
+    /// A comparison or ordering on a text column whose stated collation is not bytewise: when the
+    /// target is another dialect this is a divergence the caller must accept by name.
+    fn collation_note(&self, construct: &str, operands: &[&Expr], c: &mut Ctx) -> R<()> {
+        if c.source == c.target {
+            return Ok(());
+        }
+        for e in operands {
+            if let Some(name) = c.scopes.non_bytewise_collation(e) {
+                c.note(
+                    construct,
+                    Tier::Conditional,
+                    format!(
+                        "the column's collation `{name}` compares and orders text by locale rules; \
+                         the target compares bytes"
+                    ),
+                    Some(Allowance::SourceCollationNotBytewise),
+                )?;
+            }
+        }
+        Ok(())
+    }
+
     fn order_items(&self, items: &[OrderItem], c: &mut Ctx) -> R<String> {
         let mut parts = Vec::new();
         for it in items {
+            self.collation_note("order_by", &[&it.expr], c)?;
             let e = self.expr(&it.expr, c)?;
             // The reader fills in the source default, so `nulls_first` is always `Some` here; a
             // hand-built IR with `None` is treated as the PostgreSQL default.
@@ -622,6 +657,19 @@ impl Printer<'_> {
                     || is_numeric(right)
                     || c.scopes.is_non_text_column(left)
                     || c.scopes.is_non_text_column(right);
+                if !numeric
+                    && matches!(
+                        op,
+                        BinaryOp::Eq
+                            | BinaryOp::NotEq
+                            | BinaryOp::Lt
+                            | BinaryOp::LtEq
+                            | BinaryOp::Gt
+                            | BinaryOp::GtEq
+                    )
+                {
+                    self.collation_note("text_comparison", &[left, right], c)?;
+                }
                 self.t.binary_op(*op, numeric, c)?;
                 let (l, r) = (self.operand(left, c)?, self.operand(right, c)?);
                 match self.t.binary_override(*op, &l, &r, numeric, c)? {
@@ -668,6 +716,15 @@ impl Printer<'_> {
                 high,
                 negated,
             } => {
+                if !(is_numeric(low)
+                    || is_numeric(high)
+                    || is_numeric(expr)
+                    || c.scopes.is_non_text_column(low)
+                    || c.scopes.is_non_text_column(high)
+                    || c.scopes.is_non_text_column(expr))
+                {
+                    self.collation_note("text_comparison", &[expr, low, high], c)?;
+                }
                 self.t.between(
                     is_numeric(low)
                         || is_numeric(high)

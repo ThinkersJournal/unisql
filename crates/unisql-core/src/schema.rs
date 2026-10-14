@@ -187,29 +187,42 @@ impl<'a> Scopes<'a> {
 
     /// True when `e` is a (possibly parenthesised) column the schema says is not text.
     pub fn is_non_text_column(&self, e: &Expr) -> bool {
-        let Some(schema) = self.schema else {
-            return false;
-        };
-        match e {
-            Expr::Nested(x) => self.is_non_text_column(x),
-            Expr::Column(name) => self
-                .class_of(schema, name)
-                .is_some_and(|c| !matches!(c, ColumnClass::Text | ColumnClass::Unknown)),
-            _ => false,
+        self.column(e)
+            .is_some_and(|c| !matches!(c.class, ColumnClass::Text | ColumnClass::Unknown))
+    }
+
+    /// The collation a text column states when it is **not** bytewise (`en_US`, `NOCASE`,
+    /// `utf8mb4_0900_ai_ci`, ...). `None` for a column whose collation is unstated: an unstated
+    /// collation is unknown, never the database default.
+    pub fn non_bytewise_collation(&self, e: &Expr) -> Option<String> {
+        let c = self.column(e)?;
+        match (&c.class, &c.collation) {
+            (ColumnClass::Text, Some(name)) if !is_bytewise_collation(name) => Some(name.clone()),
+            _ => None,
         }
     }
 
-    fn class_of(&self, schema: &Schema, name: &Name) -> Option<ColumnClass> {
+    /// The column a (possibly parenthesised) column reference names, when the schema knows it.
+    fn column(&self, e: &Expr) -> Option<&Column> {
+        let schema = self.schema?;
+        match e {
+            Expr::Nested(x) => self.column(x),
+            Expr::Column(name) => self.column_of(schema, name),
+            _ => None,
+        }
+    }
+
+    fn column_of<'s>(&self, schema: &'s Schema, name: &Name) -> Option<&'s Column> {
         match name.0.as_slice() {
             [col] => {
                 for scope in self.stack.iter().rev() {
-                    let mut found: Vec<ColumnClass> = Vec::new();
+                    let mut found: Vec<&'s Column> = Vec::new();
                     let mut unknown = false;
                     for (_, table) in scope {
                         match table {
                             Some(t) if schema.knows_table(t) => {
                                 if let Some(c) = schema.get(t, col) {
-                                    found.push(c.class);
+                                    found.push(c);
                                 }
                             }
                             // A derived table or a table the schema does not list may have the column.
@@ -229,17 +242,25 @@ impl<'a> Scopes<'a> {
             [qual, col] => {
                 for scope in self.stack.iter().rev() {
                     if let Some((_, table)) = scope.iter().find(|(b, _)| b == qual) {
-                        return schema.get(table.as_ref()?, col).map(|c| c.class);
+                        return schema.get(table.as_ref()?, col);
                     }
                 }
                 None
             }
-            [s, t, col] => schema
-                .get(&Name(vec![s.clone(), t.clone()]), col)
-                .map(|c| c.class),
+            [s, t, col] => schema.get(&Name(vec![s.clone(), t.clone()]), col),
             _ => None,
         }
     }
+}
+
+/// True for a collation that compares and orders text by bytes (code points): `C`, `POSIX`,
+/// `ucs_basic`, SQLite's `BINARY`, MySQL/MariaDB `*_bin` and `binary`.
+pub fn is_bytewise_collation(name: &str) -> bool {
+    let n = name
+        .trim()
+        .trim_matches(['"', '`', '\''])
+        .to_ascii_lowercase();
+    matches!(n.as_str(), "c" | "posix" | "ucs_basic" | "binary") || n.ends_with("_bin")
 }
 
 fn collect(t: &TableRef, out: &mut Vec<(String, Option<Name>)>) {

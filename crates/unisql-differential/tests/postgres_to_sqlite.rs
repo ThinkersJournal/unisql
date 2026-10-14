@@ -598,6 +598,37 @@ fn cases() -> Vec<Case> {
                 &[A::BooleanAsInteger],
             )
         },
+        // A stated bytewise collation keeps the cross-dialect comparison exact on the data; a locale
+        // collation is a divergence that must be accepted by name.
+        Case {
+            schema: Some(users_schema().with_column(
+                "users",
+                "email",
+                unisql::Column::text().with_collation("C"),
+            )),
+            params: vec![Param::Text("alice@example.com")],
+            ..c(
+                "schema_bytewise_collation_is_accepted",
+                "SELECT id FROM users WHERE email = $1",
+                &[A::TextCollation],
+            )
+        },
+        exp(
+            Case {
+                schema: Some(users_schema().with_column(
+                    "users",
+                    "email",
+                    unisql::Column::text().with_collation("en_US"),
+                )),
+                params: vec![Param::Text("alice@example.com")],
+                ..c(
+                    "schema_locale_collation_needs_its_allowance",
+                    "SELECT id FROM users WHERE email = $1",
+                    &[A::TextCollation],
+                )
+            },
+            Expect::NeedsAllowance(A::SourceCollationNotBytewise),
+        ),
         exp(
             Case {
                 schema: Some(users_schema()),

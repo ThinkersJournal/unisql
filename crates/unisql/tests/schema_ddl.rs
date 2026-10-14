@@ -108,3 +108,80 @@ fn mysql_ddl_keeps_tinyint_numeric_and_reads_column_collation() {
 fn an_unknown_dialect_is_an_error() {
     assert!(schema_from_ddl("CREATE TABLE t (a int)", "klingon").is_err());
 }
+
+#[test]
+fn a_non_bytewise_column_collation_needs_its_own_allowance_across_dialects() {
+    use unisql::{Allowance, Column, Schema, translate};
+    let schema = Schema::new()
+        .with_column("t", "c", Column::text().with_collation("en_US"))
+        .with_column("t", "b", Column::text().with_collation("C"))
+        .with_column("t", "u", Column::text());
+    let base = Options::default()
+        .with(Allowance::TextCollation)
+        .with(Allowance::LikeCaseSensitivityIsConnectionSetting)
+        .with_schema(schema);
+    let run = |q: &str, o: &Options, target: &str| translate(q, "postgres", target, o);
+
+    // a locale collation: refused unless that divergence is accepted by name
+    let err = run("SELECT 1 FROM t WHERE c = $1", &base, "sqlite").unwrap_err();
+    assert!(
+        err.to_string().contains("source_collation_not_bytewise"),
+        "{err}"
+    );
+    let ok = base.clone().with(Allowance::SourceCollationNotBytewise);
+    let t = run("SELECT 1 FROM t WHERE c = $1", &ok, "sqlite").unwrap();
+    assert!(
+        t.report
+            .entries
+            .iter()
+            .any(|e| e.allowance == Some(Allowance::SourceCollationNotBytewise)),
+        "{:?}",
+        t.report
+    );
+    // ORDER BY and BETWEEN too
+    assert!(run("SELECT c FROM t ORDER BY c", &base, "mysql").is_err());
+    assert!(
+        run(
+            "SELECT c FROM t WHERE c BETWEEN 'a' AND 'b'",
+            &base,
+            "mysql"
+        )
+        .is_err()
+    );
+    assert!(run("SELECT c FROM t ORDER BY c", &ok, "mysql").is_ok());
+    // a bytewise collation and an unstated one (unknown, not "the default") need nothing extra
+    assert!(run("SELECT 1 FROM t WHERE b = $1", &base, "sqlite").is_ok());
+    assert!(run("SELECT 1 FROM t WHERE u = $1", &base, "sqlite").is_ok());
+    // the same dialect in and out is the identity: no divergence to accept
+    assert!(run("SELECT 1 FROM t WHERE c = $1", &base, "postgres").is_ok());
+    // no schema, no knowledge: behaves as before
+    let plain = Options::default().with(Allowance::TextCollation);
+    assert!(run("SELECT 1 FROM t WHERE c = $1", &plain, "sqlite").is_ok());
+}
+
+#[test]
+fn bytewise_collation_names() {
+    use unisql::is_bytewise_collation as b;
+    for n in [
+        "C",
+        "c",
+        "POSIX",
+        "ucs_basic",
+        "BINARY",
+        "utf8mb4_bin",
+        "\"C\"",
+        "latin1_bin",
+    ] {
+        assert!(b(n), "{n}");
+    }
+    for n in [
+        "en_US",
+        "en_US.utf8",
+        "NOCASE",
+        "utf8mb4_0900_ai_ci",
+        "utf8mb4_general_ci",
+        "und-x-icu",
+    ] {
+        assert!(!b(n), "{n}");
+    }
+}

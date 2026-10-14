@@ -163,8 +163,19 @@ impl Walk<'_> {
         if !q.order_by.is_empty() {
             self.add("order_by");
             self.add("null_ordering");
+            // The ORDER BY of a plain SELECT sees that SELECT's FROM tables, as the printer does.
+            let from = match &q.body {
+                SetExpr::Select(sel) => Some(&sel.from),
+                SetExpr::SetOp { .. } => None,
+            };
+            if let Some(f) = from {
+                self.scopes.push_from(f);
+            }
             for o in &q.order_by {
                 self.expr(&o.expr);
+            }
+            if from.is_some() {
+                self.scopes.pop();
             }
         }
         if let Some(l) = &q.limit {
