@@ -1,4 +1,4 @@
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=56
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=64
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -102,9 +102,24 @@ PASS interval_minutes           same
 PASS interval_hours_plus        same
        -> SELECT "id" FROM "events" WHERE "at" < (datetime(CURRENT_TIMESTAMP, printf('%+f hours', (2))))
 PASS refuse_interval_month      refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
+PASS curdate_is_current_date    same
+       -> SELECT CAST(CURRENT_DATE AS TEXT) FROM "users" WHERE "id" = 1
+PASS utc_timestamp_window       same
+       -> SELECT "id" FROM "events" WHERE "at" > (datetime(datetime('now'), printf('%+f minutes', (-(5))))) ORDER BY "id"
+PASS utc_timestamp6_window      same
+       -> SELECT "id" FROM "events" WHERE "at" > (datetime(strftime('%Y-%m-%d %H:%M:%f', 'now'), printf('%+f minutes', (-(5))))) ORDER BY "id"
+PASS utc_timestamp_future       same
+       -> SELECT COUNT(*) FROM "events" WHERE "at" < datetime('now')
+PASS utc_date_text              same
+       -> SELECT CAST(date('now') AS TEXT) FROM "users" WHERE "id" = 1
+PASS datediff_literals          same
+       -> SELECT CAST(julianday(date('2024-03-01')) - julianday(date('2024-02-01')) AS INTEGER), CAST(julianday(date('2024-01-01 23:59:59')) - julianday(date('2024-01-02 00:00:01')) AS INTEGER)
+PASS date_part                  same
+       -> SELECT CAST(date('2024-05-06 07:08:09') AS TEXT)
+PASS refuse_utc_timestamp_precision refused `fn:utc_timestamp.precision`: only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on SQLite yet
 
-MATRIX (construct, tier) from 48 passing translated cases:
+MATRIX (construct, tier) from 55 passing translated cases:
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
@@ -116,6 +131,8 @@ MATRIX (construct, tier) from 48 passing translated cases:
   fn:coalesce                  exact
   fn:count                     exact
   fn:current_date              conditional
+  fn:date                      conditional
+  fn:datediff                  conditional
   fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
@@ -128,6 +145,8 @@ MATRIX (construct, tier) from 48 passing translated cases:
   fn:substr                    exact
   fn:substr.start_position     conditional
   fn:sum                       exact
+  fn:utc_date                  conditional
+  fn:utc_timestamp             conditional
   insert_ignore                conditional
   interval_arithmetic          conditional
   join:inner_join              exact
@@ -143,5 +162,6 @@ MATRIX (construct, tier) from 48 passing translated cases:
   pipes_as_or                  conditional
   recursive_cte                exact
   text_comparison              conditional
+  text_comparison              exact
   upsert                       exact
   window_function              exact

@@ -84,6 +84,9 @@ const ALL: &[A] = &[
     A::BooleanAsInteger,
     A::NowAsText,
     A::DateAsText,
+    A::TimestampAsText,
+    A::TimestampMillisecondResolution,
+    A::LenientCast,
     A::TimestampArithmeticAsText,
     A::PipesAsLogicalOr,
     A::IgnoreCoversOnlyUniqueConflicts,
@@ -402,6 +405,38 @@ fn cases(dir: Dir) -> Vec<Case> {
         exp(
             c("refuse_interval_month", "SELECT NOW() - INTERVAL 1 MONTH"),
             Expect::Refused("fn:make_interval.month_year"),
+        ),
+        c(
+            "curdate_is_current_date",
+            "SELECT CAST(CURDATE() AS CHAR) FROM users WHERE id = 1",
+        ),
+        c(
+            "utc_timestamp_window",
+            "SELECT id FROM events WHERE at > UTC_TIMESTAMP() - INTERVAL 5 MINUTE ORDER BY id",
+        ),
+        c(
+            "utc_timestamp6_window",
+            "SELECT id FROM events WHERE at > UTC_TIMESTAMP(6) - INTERVAL 5 MINUTE ORDER BY id",
+        ),
+        c(
+            "utc_timestamp_future",
+            "SELECT COUNT(*) FROM events WHERE at < UTC_TIMESTAMP()",
+        ),
+        c(
+            "utc_date_text",
+            "SELECT CAST(UTC_DATE() AS CHAR) FROM users WHERE id = 1",
+        ),
+        c(
+            "datediff_literals",
+            "SELECT DATEDIFF('2024-03-01', '2024-02-01'), DATEDIFF('2024-01-01 23:59:59', '2024-01-02 00:00:01')",
+        ),
+        c(
+            "date_part",
+            "SELECT CAST(DATE('2024-05-06 07:08:09') AS CHAR)",
+        ),
+        exp(
+            c("refuse_utc_timestamp_precision", "SELECT UTC_TIMESTAMP(3)"),
+            Expect::Refused("fn:utc_timestamp.precision"),
         ),
         exp(
             c("refuse_date_format", "SELECT date_format(now(), '%Y')"),

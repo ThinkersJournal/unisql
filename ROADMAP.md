@@ -90,11 +90,17 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
 - **Statements that are not DML** (`SET`, `SHOW`, `EXPLAIN`, `USE`, transactions, `CALL`,
   `TRUNCATE`): out of scope by design (translation is of DML; DDL and session control stay with the
   caller).
-- **Target mappings missing (refused by leaf, a verified mapping would close them):**
-  `UTC_TIMESTAMP()` (2 auth-framework statements: PostgreSQL `now() AT TIME ZONE 'UTC'`, SQLite
-  `datetime('now')`), `CURDATE()`/`DATE()`/`DATE_FORMAT`/`UNIX_TIMESTAMP`/`DATEDIFF`/`TIMESTAMPDIFF`,
-  `CONCAT_WS`, `LEFT`/`RIGHT`/`LPAD`/`REPEAT`/`REVERSE`, `MD5`/`SHA1`/`SHA2`, `FIELD`, `RAND`,
-  `UUID` (v1, not v4), `LAST_INSERT_ID`/`ROW_COUNT`/`VERSION`/`SLEEP`, the JSON function family.
+- **Target mappings: date/time group done at 0.17.4** (each with differential cases against the
+  real engines): `UTC_TIMESTAMP()` / `UTC_TIMESTAMP(6)` (other precisions refused by leaf
+  `fn:utc_timestamp.precision`; on SQLite text with millisecond resolution, allowance
+  `timestamp_millisecond_resolution`), `UTC_DATE()`, `CURDATE()` (read as `CURRENT_DATE`),
+  `DATEDIFF(a, b)`, `DATE(x)`; a MySQL/MariaDB source passes these through to MySQL/MariaDB unchanged.
+  Auth-framework's two `UTC_TIMESTAMP(6)` statements now translate. **Still refused by leaf** (a
+  verified mapping would close each): `DATE_FORMAT` (format-string translation),
+  `UNIX_TIMESTAMP`/`FROM_UNIXTIME` (session time zone), `TIMESTAMPDIFF`, `YEAR`/`MONTH`/`DAY`/`HOUR`
+  (map to `EXTRACT`, whose result type differs: numeric on PostgreSQL), `CONCAT_WS`,
+  `LEFT`/`RIGHT`/`LPAD`/`REPEAT`/`REVERSE`, `MD5`/`SHA1`/`SHA2`, `FIELD`, `RAND`, `UUID` (v1, not v4),
+  `LAST_INSERT_ID`/`ROW_COUNT`/`VERSION`/`SLEEP`, the JSON function family.
 - **`ON DUPLICATE KEY UPDATE` to PostgreSQL/SQLite: done at 0.17.3.** `Schema` carries unique keys
   (`Schema::with_unique_key`, or read by `schema_from_ddl` from `PRIMARY KEY`, `UNIQUE`, `CREATE
   UNIQUE INDEX`); a statement with no stated key is written `ON CONFLICT (key)` when the table has

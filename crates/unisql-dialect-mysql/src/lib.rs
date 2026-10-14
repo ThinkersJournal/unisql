@@ -259,6 +259,13 @@ impl Target for Mysql {
                 )?;
                 Ok(format!("CAST(DATE_FORMAT({}, '{fmt}') AS DATETIME)", args[1]))
             }
+            // A MySQL/MariaDB source's own date/time functions are the identity.
+            "utc_timestamp" | "utc_date" | "datediff" | "date"
+                if matches!(ctx.source, "mysql" | "mariadb") =>
+            {
+                ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+                Ok(call(n, args))
+            }
             "current_date" => {
                 ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
                 Ok("CURRENT_DATE".to_string())
