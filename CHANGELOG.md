@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.12.0 - 2026-10-14
 
 - **`Schema` (option A of the schema-input ruling):** `Options::with_schema(Schema)` tells the translator
   the class of base-table columns (`Text | Numeric | Boolean | Other`, plus an optional collation that is
