@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate; bump in this PR)
+## 0.16.0 - 2026-10-14
 
 PM task part (b): sweep the statements of auth-framework (`origin/main` 1b31e902) and lightbulb
 (`origin/main` c5b7fd77) for gaps, read through `git show`, never a working tree.
