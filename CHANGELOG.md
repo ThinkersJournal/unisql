@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.4.1 - 2026-10-14
 
 - ROADMAP corrected from the corpus counts: date/time functions are one statement of the corpus, not
   the largest residual (`not_in_ir expression` 25 and `data_type` 25 are). The `corpus` runner now
