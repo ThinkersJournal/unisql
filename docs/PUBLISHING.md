@@ -1,8 +1,9 @@
-# Publishing checklist (nothing here has been run against the registry; `publish = true` is set)
+# Publishing checklist and record (0.16.3 is published; later versions follow the same path)
 
 Written 2026-10-14 by the unisql lane at origin/main 2b663a0 (0.16.0), for the PM. **Publishing is the
 PM's and CireSnave's call**; the manifests are ready (`publish = true` on the six crates,
-`publish = false` on `unisql-differential`) and nothing has been published. This file is the list of what must
+`publish = false` on `unisql-differential`) and the six crates were published by the PM at 0.16.3 on 2026-10-14 from a clean archive of f95d207 (crates.io
+read back: all six at 0.16.3, `yanked = false`). This file is the list of what must
 be true first, what was checked, and what was found.
 
 ## 1. State of the names (crates.io API, read-only, 2026-10-14)

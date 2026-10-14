@@ -327,6 +327,18 @@ impl Printer<'_> {
             TableRef::Subquery { query, alias } => {
                 Ok(format!("({}) AS {}", self.query(query, c)?, self.id(alias)))
             }
+            TableRef::Function { name, args, alias } => {
+                self.t.table_function(name, c)?;
+                let a = args
+                    .iter()
+                    .map(|x| self.expr(x, c))
+                    .collect::<R<Vec<_>>>()?;
+                let call = format!("{}({})", name.to_uppercase(), a.join(", "));
+                Ok(match alias {
+                    Some(al) => format!("{call} AS {}", self.id(al)),
+                    None => call,
+                })
+            }
             TableRef::Join {
                 left,
                 right,

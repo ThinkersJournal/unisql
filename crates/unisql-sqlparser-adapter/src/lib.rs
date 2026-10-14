@@ -897,8 +897,44 @@ fn table_factor(t: sp::TableFactor) -> R<TableRef> {
             sample,
             index_hints,
         } => {
-            if args.is_some()
-                || !with_hints.is_empty()
+            // A table-valued function: positional expression arguments only.
+            if let Some(targs) = args {
+                let plain = with_hints.is_empty()
+                    && version.is_none()
+                    && !with_ordinality
+                    && partitions.is_empty()
+                    && json_path.is_none()
+                    && sample.is_none()
+                    && index_hints.is_empty()
+                    && targs.settings.is_none();
+                let nm = object_name(&name)?;
+                if plain && nm.0.len() == 1 {
+                    let mut out = Vec::new();
+                    for a in targs.args {
+                        match a {
+                            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(e)) => {
+                                out.push(expr(e)?)
+                            }
+                            _ => {
+                                return no(
+                                    "table_function_arg",
+                                    "named or wildcard argument of a table function",
+                                );
+                            }
+                        }
+                    }
+                    return Ok(TableRef::Function {
+                        name: nm.0[0].clone(),
+                        args: out,
+                        alias: alias_name(alias)?,
+                    });
+                }
+                return no(
+                    "table_option",
+                    "table function args/hints/version/sample/partitions",
+                );
+            }
+            if !with_hints.is_empty()
                 || version.is_some()
                 || with_ordinality
                 || !partitions.is_empty()

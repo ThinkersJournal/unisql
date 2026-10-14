@@ -245,6 +245,13 @@ pub trait Target {
         Ok(format!("ARRAY[{}]", items.join(", ")))
     }
 
+    /// A table-valued function in FROM (`generate_series`, `jsonb_object_keys`, `unnest`, ...). Default
+    /// (PostgreSQL): exact, one leaf per function (`table_function.<name>`). A target that has not
+    /// verified the function refuses that leaf.
+    fn table_function(&self, name: &str, ctx: &mut Ctx) -> R<()> {
+        ctx.note(format!("table_function.{name}"), Tier::Exact, "", None)
+    }
+
     /// `expr AT TIME ZONE zone`. Default (PostgreSQL): exact. A target without it refuses the leaf
     /// `at_time_zone`.
     fn at_time_zone(&self, ctx: &mut Ctx) -> R<()> {

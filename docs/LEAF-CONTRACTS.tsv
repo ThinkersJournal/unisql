@@ -53,6 +53,7 @@ division_integer	Division of two integers truncates toward zero and yields an in
 filter_clause	`agg(...) FILTER (WHERE p)` aggregates only the rows for which p is true.
 fn:avg	avg() over non-NULL inputs gives the source's mean and NULL over no rows.
 fn:btrim	btrim(s) removes leading and trailing spaces.
+table_function.generate_series	FROM generate_series(a, b[, step]) yields the integers (or timestamps) from a to b inclusive in order, one row each, column named by the alias. Refused where no mapping is verified.
 fn:char_length	char_length(s) is the number of characters of s.
 fn:date_trunc.day	date_trunc('day', ts) is ts cut to the start of its day.
 fn:date_trunc.hour	date_trunc('hour', ts) is ts cut to the start of its hour.

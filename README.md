@@ -6,10 +6,9 @@
 
 Write SQL in one dialect; get it back in another. Pronounced "unicycle".
 
-**Status: pre-release (0.16.x), not published.** The crate names are held at `0.0.0` placeholders
-by the project owner; the manifests are release-ready (`cargo publish --workspace --dry-run --locked`
-passes) but nothing has been published and the repository is private. The state of the release work
-is `docs/PUBLISHING.md`.
+**Status: pre-release (0.16.x), published to crates.io** (all six crates at 0.16.3, read back
+2026-10-14). Pre-1.0: the second number is the breaking one, and `CHANGELOG.md` states what each
+version flips for a consumer. `cargo add unisql`. The release work is recorded in `docs/PUBLISHING.md`.
 
 ```rust
 use unisql::{translate, Options};

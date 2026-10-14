@@ -2,6 +2,16 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate; bump in this PR)
+
+- **Table-valued functions in FROM** (`FROM generate_series(1, 3) AS g`, `FROM t, jsonb_object_keys(doc)
+  AS k`; 4 corpus statements, until now `not_in_ir`) are in the IR (`TableRef::Function`, breaking for
+  consumers of `unisql-core::ast`): PostgreSQL writes them (round trip on the engine); SQLite and
+  MySQL/MariaDB refuse them by leaf `table_function.<name>`. Classification only: no mapping.
+- Known gap documented (ROADMAP): the partial-index conflict target `ON CONFLICT (cols) WHERE ..` is a
+  `sqlparser` limit with an upstream issue (#2625) and fix PR (#2627), both open.
+- README/PUBLISHING/ROADMAP say the six crates are published (0.16.3).
+
 ## 0.16.3 - 2026-10-14
 
 Release preparation; no code or behaviour change. **Nothing is published.**

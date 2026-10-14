@@ -252,6 +252,10 @@ impl Walk<'_> {
         match t {
             TableRef::Table { .. } => {}
             TableRef::Subquery { query, .. } => self.query(query),
+            TableRef::Function { name, args, .. } => {
+                self.add(format!("table_function.{name}"));
+                args.iter().for_each(|x| self.expr(x));
+            }
             TableRef::Join {
                 left,
                 right,

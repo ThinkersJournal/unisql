@@ -46,5 +46,18 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 
 - **DDL translation.** Decided with PersistAnt (D6): schema management stays with the migration tool.
 - **Executing statements.** UniSQL returns text and bindings; drivers are the caller's.
-- **Publishing.** `publish = false` on every crate; names are held as 0.0.0 placeholders by the PM.
-  The first release and the public flip are CireSnave's and the PM's call.
+- **Publishing is the PM's call**: 0.16.3 is on crates.io; each later version is an ordinary bump
+  (`docs/PUBLISHING.md`). The repository's public flip is CireSnave's.
+
+## Known gaps (documented, not planned)
+
+- **`ON CONFLICT (cols) WHERE <index predicate> DO ...`** (a partial unique index as the arbiter):
+  `sqlparser` 0.63.0 rejects the predicate in the conflict target, in the PostgreSQL and generic dialects,
+  so the reader reports a syntax error for it (one Humboldt statement). Upstream:
+  [apache/datafusion-sqlparser-rs#2625](https://github.com/apache/datafusion-sqlparser-rs/issues/2625)
+  (open) and its fix [#2627](https://github.com/apache/datafusion-sqlparser-rs/pull/2627) (open PR).
+  Once released, bump the pin, add `OnConflict.target_where` to the IR (PostgreSQL and SQLite write it;
+  MySQL refuses it by leaf) and a differential case. Nothing to do on our side until then.
+- **`INSERT OR REPLACE`** (SQLite replace semantics with no conflict key): not in the IR.
+- **Table-valued functions in FROM** are read and refused by leaf (`table_function.<name>`) on SQLite and
+  MySQL/MariaDB; `generate_series` could be mapped through a recursive CTE once a consumer needs it.

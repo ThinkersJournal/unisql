@@ -381,6 +381,11 @@ fn catalogue() -> &'static [(&'static str, &'static str)] {
         ("postgres", "SELECT EXTRACT(EPOCH FROM (now() - now()))"),
         (
             "postgres",
+            "SELECT k FROM users u, jsonb_object_keys(u.attributes) AS k WHERE u.id = $1",
+        ),
+        ("postgres", "SELECT g FROM generate_series(1, 3) AS g"),
+        (
+            "postgres",
             "SELECT array_length(ARRAY[1, 2], 1), current_user",
         ),
         (
