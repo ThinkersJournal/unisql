@@ -61,6 +61,15 @@ pub struct Engines {
     pub lite: rusqlite::Connection,
     /// Present only for the PostgreSQL -> MySQL/MariaDB suites.
     pub mysql: Option<mysql::Conn>,
+    /// Where a second session connects (for a case that holds a lock while the case runs).
+    pg_schema: String,
+    mysql_target: Option<(String, String)>,
+}
+
+/// A second session holding a transaction open (and so its row locks) until dropped.
+pub struct Held {
+    _pg: Option<Client>,
+    _my: Option<mysql::Conn>,
 }
 
 pub fn pg_url() -> String {
@@ -119,6 +128,8 @@ impl Engines {
             pg,
             lite,
             mysql: None,
+            pg_schema: schema,
+            mysql_target: None,
         })
     }
 
@@ -190,6 +201,7 @@ impl Engines {
                 .map_err(|e| format!("mysql fixture: {e}\n  in: {stmt}"))?;
         }
         e.mysql = Some(conn);
+        e.mysql_target = Some((url, db));
         Ok(e)
     }
 
@@ -207,6 +219,39 @@ impl Engines {
             })
             .map(|r| r.2)
             .unwrap_or_default()
+    }
+
+    /// Open a second session on `engine`, begin a transaction and run `sql` (a locking SELECT) in it.
+    /// The locks are held until the returned guard is dropped.
+    pub fn hold(&self, engine: &str, sql: &str) -> Result<Held, String> {
+        match engine {
+            "postgres" => {
+                let mut c = Client::connect(&pg_url(), NoTls).map_err(|e| e.to_string())?;
+                c.batch_execute(&format!("SET search_path = {}; BEGIN;", self.pg_schema))
+                    .map_err(|e| e.to_string())?;
+                c.simple_query(sql).map_err(|e| format!("hold: {e}"))?;
+                Ok(Held {
+                    _pg: Some(c),
+                    _my: None,
+                })
+            }
+            "mysql" | "mariadb" => {
+                use mysql::prelude::Queryable;
+                let (url, db) = self.mysql_target.clone().ok_or("no MySQL connection")?;
+                let opts = mysql::Opts::from_url(&url).map_err(|e| e.to_string())?;
+                let mut c = mysql::Conn::new(opts).map_err(|e| e.to_string())?;
+                c.query_drop(format!("USE {db}"))
+                    .map_err(|e| e.to_string())?;
+                c.query_drop("START TRANSACTION")
+                    .map_err(|e| e.to_string())?;
+                c.query_drop(sql).map_err(|e| format!("hold: {e}"))?;
+                Ok(Held {
+                    _pg: None,
+                    _my: Some(c),
+                })
+            }
+            other => Err(format!("cannot hold a lock on `{other}`")),
+        }
     }
 
     pub fn mysql_version(&mut self) -> String {
@@ -514,6 +559,8 @@ pub enum Expect {
     NeedsAllowance(Allowance),
     /// Translates (with the allowance) but the engines **disagree**: proves the allowance is needed.
     Diverges,
+    /// Translates, and **both** engines raise an error (for example `NOWAIT` on a locked row).
+    BothError,
     /// The reader refuses it: the construct is not in the IR (named).
     NotInIr(&'static str),
     /// The text is valid PostgreSQL (the engine runs it) but the parser behind the reader rejects it:
@@ -529,6 +576,9 @@ pub struct Case {
     pub ordered: bool,
     /// A SELECT run after the statement, inside the same transaction, to compare table state.
     pub after: Option<&'static str>,
+    /// A locking SELECT (source dialect) a second session runs and keeps open while the case runs,
+    /// on the source engine as written and on the target engine as translated.
+    pub hold: Option<&'static str>,
     pub expect: Expect,
 }
 
@@ -650,6 +700,26 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         rows: 0,
     };
     let tr = unisql::translate(c.sql, src, tgt, &opts);
+    // Row locks held by a second session on each engine, released when the case ends.
+    let mut _held: Vec<Held> = Vec::new();
+    if let Some(h) = c.hold {
+        let th = match unisql::translate(h, src, tgt, &opts) {
+            Ok(t) => t.sql,
+            Err(err) => {
+                out.detail = format!("hold statement does not translate: {err}");
+                return out;
+            }
+        };
+        for (engine, text) in [(src, h.to_string()), (tgt, th)] {
+            match e.hold(engine, &text) {
+                Ok(g) => _held.push(g),
+                Err(m) => {
+                    out.detail = format!("cannot hold the lock on {engine}: {m}");
+                    return out;
+                }
+            }
+        }
+    }
     match (&c.expect, tr) {
         (Expect::Refused(construct), Err(unisql::Error::Untranslatable(u))) => {
             out.passed = u.construct == *construct;
@@ -684,6 +754,25 @@ pub fn run_case_dir(e: &mut Engines, c: &Case, dir: Dir) -> Outcome {
         ) => {
             out.passed = got == *construct;
             out.detail = format!("not in IR `{got}`: {detail}");
+        }
+        (Expect::BothError, Ok(t)) => {
+            out.translated = Some(t.sql.clone());
+            let tparams = target_params(tgt, &c.params, &t.param_order, &t.param_bindings);
+            let orig = e.run_on(src, c.sql, &c.params, c.after);
+            let other = e.run_on(tgt, &t.sql, &tparams, c.after);
+            match (orig, other) {
+                (Err(a), Err(b)) => {
+                    out.passed = true;
+                    out.detail = format!("both raise: {src}: {a}; {tgt}: {b}");
+                }
+                (o, l) => {
+                    out.detail = format!(
+                        "expected an error on both engines: {:?} / {:?}",
+                        o.map(|x| x.0),
+                        l.map(|x| x.0)
+                    )
+                }
+            }
         }
         (Expect::Diverges, Ok(t)) => {
             out.translated = Some(t.sql.clone());

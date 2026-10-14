@@ -60,6 +60,11 @@ construct	order_by	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=pos
 construct	order_by.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=text_collation	postgres
 construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_recursive		postgres
 construct	returning	mysql	8.4.11	collation=utf8mb4_bin	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_returning	MySQL has no RETURNING clause	postgres
+construct	row_lock	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_for_update_plain		postgres
+construct	row_lock.nowait	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_nowait_on_free_row		postgres
+construct	row_lock.of	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_of_table		postgres
+construct	row_lock.share	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_share		postgres
+construct	row_lock.skip_locked	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_skip_locked		postgres
 construct	text_comparison	mysql	8.4.11	collation=utf8mb4_0900_ai_ci	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_text_equality	known-bad control: the result diverged from the source engine under this config	postgres
 construct	text_comparison	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	premise=text_collation, read from config; see the known-bad row	postgres
 construct	text_comparison.text_collation	mysql	8.4.11	collation=utf8mb4_bin	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	allowance=text_collation	postgres

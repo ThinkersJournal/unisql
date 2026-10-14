@@ -79,13 +79,34 @@ pub struct Select {
     pub where_: Option<Expr>,
     pub group_by: Vec<Expr>,
     pub having: Option<Expr>,
-    pub lock: Option<RowLock>,
+    pub lock: Option<RowLockClause>,
+}
+
+/// `FOR UPDATE | FOR SHARE [OF table] [NOWAIT | SKIP LOCKED]`.
+#[derive(Clone, Debug, PartialEq)]
+pub struct RowLockClause {
+    pub strength: RowLock,
+    /// `OF table`: lock only the rows of this table. (PostgreSQL also allows a list; the parser behind
+    /// the reader gives one name, so a list is not in the IR.)
+    pub of: Option<Name>,
+    pub wait: LockWait,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RowLock {
     Update,
     Share,
+}
+
+/// What to do when a row is already locked by another transaction.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LockWait {
+    /// Wait (the default).
+    Block,
+    /// `NOWAIT`: raise an error at once.
+    NoWait,
+    /// `SKIP LOCKED`: leave the locked rows out of the result.
+    SkipLocked,
 }
 
 #[derive(Clone, Debug, PartialEq)]

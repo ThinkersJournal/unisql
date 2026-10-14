@@ -114,6 +114,31 @@ impl Printer<'_> {
                 .t
                 .limit_offset(limit.as_deref(), offset.as_deref(), c)?,
         );
+        if let SetExpr::Select(sel) = &q.body
+            && let Some(l) = &sel.lock
+        {
+            out.push_str(&self.lock_clause(l, c)?);
+        }
+        Ok(out)
+    }
+
+    /// ` FOR UPDATE|SHARE [OF t] [NOWAIT|SKIP LOCKED]`. It ends the query: it comes after ORDER BY,
+    /// LIMIT and OFFSET on every engine, so `query` prints it, not `select`.
+    fn lock_clause(&self, l: &RowLockClause, c: &mut Ctx) -> R<String> {
+        self.t.row_lock(l, c)?;
+        let mut out = String::from(match l.strength {
+            RowLock::Update => " FOR UPDATE",
+            RowLock::Share => " FOR SHARE",
+        });
+        if let Some(of) = &l.of {
+            let parts: Vec<String> = of.0.iter().map(|p| self.id(p)).collect();
+            out.push_str(&format!(" OF {}", parts.join(".")));
+        }
+        out.push_str(match l.wait {
+            LockWait::Block => "",
+            LockWait::NoWait => " NOWAIT",
+            LockWait::SkipLocked => " SKIP LOCKED",
+        });
         Ok(out)
     }
 
@@ -190,13 +215,6 @@ impl Printer<'_> {
         }
         if let Some(h) = &s.having {
             out.push_str(&format!(" HAVING {}", self.expr(h, c)?));
-        }
-        if let Some(l) = s.lock {
-            self.t.row_lock(l, c)?;
-            out.push_str(match l {
-                RowLock::Update => " FOR UPDATE",
-                RowLock::Share => " FOR SHARE",
-            });
         }
         Ok(out)
     }

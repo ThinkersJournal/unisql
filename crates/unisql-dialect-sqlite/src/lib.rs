@@ -389,9 +389,9 @@ impl Target for Sqlite {
         ))
     }
 
-    fn row_lock(&self, _lock: RowLock, ctx: &mut Ctx) -> R<()> {
+    fn row_lock(&self, _lock: &RowLockClause, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
-            "row_lock",
+            unisql_core::target::row_lock_leaf(_lock),
             "SQLite has no row-level locks (it locks the whole database)",
             &["use BEGIN IMMEDIATE for a write transaction"],
         ))

@@ -157,8 +157,19 @@ impl Walk {
         if let Some(e) = &s.having {
             self.expr(e);
         }
-        if s.lock.is_some() {
-            self.add("row_lock");
+        if let Some(l) = &s.lock {
+            self.add(match l.strength {
+                RowLock::Update => "row_lock",
+                RowLock::Share => "row_lock.share",
+            });
+            if l.of.is_some() {
+                self.add("row_lock.of");
+            }
+            match l.wait {
+                LockWait::Block => {}
+                LockWait::NoWait => self.add("row_lock.nowait"),
+                LockWait::SkipLocked => self.add("row_lock.skip_locked"),
+            }
         }
     }
 

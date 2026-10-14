@@ -64,6 +64,7 @@ fn c(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
         allow: allow.to_vec(),
         ordered: false,
         after: None,
+        hold: None,
         expect: Expect::Same,
     }
 }
@@ -520,11 +521,19 @@ fn cases() -> Vec<Case> {
         // ---- reader: not in the IR (an error, never a pass-through)
         exp(
             c(
-                "ir_skip_locked",
+                "refuse_skip_locked",
                 "SELECT id FROM users FOR UPDATE SKIP LOCKED",
                 &[],
             ),
-            Expect::NotInIr("row_lock_option"),
+            Expect::Refused("row_lock"),
+        ),
+        exp(
+            c(
+                "refuse_for_share",
+                "SELECT id FROM users WHERE id = 1 FOR SHARE",
+                &[],
+            ),
+            Expect::Refused("row_lock.share"),
         ),
         exp(
             c("ir_json_path_op", "SELECT data #> '{o,k}' FROM docs", &[]),

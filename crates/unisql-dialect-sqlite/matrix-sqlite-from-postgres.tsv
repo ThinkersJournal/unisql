@@ -73,6 +73,7 @@ construct	ordered_comparison.text_collation	sqlite	3.53.2		yes		tier=conditional
 construct	recursive_cte	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::with_recursive		postgres
 construct	returning	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::delete_returning		postgres
 construct	row_lock	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_update	SQLite has no row-level locks (it locks the whole database)	postgres
+construct	row_lock.share	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_for_share	SQLite has no row-level locks (it locks the whole database)	postgres
 construct	trim	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::trim_both_chars		postgres
 construct	update_from	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::update_from		postgres
 construct	upsert	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::upsert_do_nothing		postgres

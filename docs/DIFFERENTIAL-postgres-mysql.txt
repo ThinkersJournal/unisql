@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=84
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=91
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -69,6 +69,16 @@ PASS offset_only                  same
        -> SELECT `id` FROM `users` ORDER BY (`id` IS NULL), `id` LIMIT 18446744073709551615 OFFSET 4
 PASS order_text                   same
        -> SELECT `name` FROM `users` ORDER BY (`name` IS NULL), `name`
+PASS lock_nowait_on_locked_row    both raise: postgres: query: db error; mysql: execute: MySqlError { ERROR 3572 (HY000): Statement aborted because lock(s) could not be acquired immediately and NOWAIT is set. }
+       -> SELECT `id` FROM `users` WHERE `id` = 1 FOR UPDATE NOWAIT
+PASS lock_nowait_on_free_row      same
+       -> SELECT `id` FROM `users` WHERE `id` = 2 FOR UPDATE NOWAIT
+PASS lock_skip_locked             same
+       -> SELECT `id` FROM `users` WHERE `id` IN (1, 2, 3) ORDER BY (`id` IS NULL), `id` FOR UPDATE SKIP LOCKED
+PASS lock_skip_locked_limit       same
+       -> SELECT `id` FROM `users` ORDER BY (`id` IS NULL), `id` LIMIT 1 FOR UPDATE SKIP LOCKED
+PASS lock_for_update_plain        same
+       -> SELECT `id` FROM `users` WHERE `id` = 4 FOR UPDATE
 PASS like_param                   same
        -> SELECT `name` FROM `users` WHERE `name` LIKE ?
 PASS like_case_sensitive          same
@@ -153,8 +163,12 @@ PASS refuse_trim_set              refused `trim.multi_char`: PostgreSQL trims a 
 PASS refuse_update_from           refused `update_from`: 
 PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
+PASS lock_share                   same
+       -> SELECT `id` FROM `users` WHERE `id` = 4 FOR SHARE
+PASS lock_of_table                same
+       -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 70 passing translated cases:
+MATRIX (construct, tier) from 77 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -191,6 +205,11 @@ MATRIX (construct, tier) from 70 passing translated cases:
   offset                       exact
   order_by                     conditional
   recursive_cte                exact
+  row_lock                     exact
+  row_lock.nowait              exact
+  row_lock.of                  exact
+  row_lock.share               exact
+  row_lock.skip_locked         exact
   text_comparison              conditional
   trim                         exact
   upsert                       conditional

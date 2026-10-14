@@ -2,6 +2,20 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **Row locks:** `FOR UPDATE | FOR SHARE [OF table] [NOWAIT | SKIP LOCKED]` are in the IR
+  (`RowLockClause`). Leaves: `row_lock` (FOR UPDATE), `row_lock.share`, `row_lock.of`,
+  `row_lock.nowait`, `row_lock.skip_locked`. Measured against the engines with a second session holding
+  a row: NOWAIT raises and SKIP LOCKED skips on PostgreSQL, MySQL 8.4 and MariaDB 11.4. MySQL has all
+  forms; MariaDB 11.4 has no `FOR SHARE` and no `FOR UPDATE OF` (syntax errors, probed) and refuses them;
+  SQLite refuses every form (as before).
+- **Fix:** the locking clause is printed after ORDER BY / LIMIT / OFFSET. It was printed before them,
+  so `... ORDER BY x FOR UPDATE` translated to a syntax error on every target.
+- Harness: a case can hold a lock in a second session (`Case::hold`) and expect an error on both
+  engines (`Expect::BothError`).
+- `unisql::analyse` names the new lock leaves; `docs/LEAF-CONTRACTS.tsv` has their contracts.
+
 ## 0.3.0 - 2026-10-14
 
 - **MySQL/MariaDB `LIKE`/`ILIKE`:** the cause is the column collation, not a connection setting (that is

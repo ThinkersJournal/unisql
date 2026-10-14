@@ -87,6 +87,7 @@ fn c(name: &'static str, sql: &'static str) -> Case {
         allow: ALL.to_vec(),
         ordered: false,
         after: None,
+        hold: None,
         expect: Expect::Same,
     }
 }

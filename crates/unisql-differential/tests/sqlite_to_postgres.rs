@@ -54,6 +54,7 @@ fn c(name: &'static str, sql: &'static str, allow: &[A]) -> Case {
         allow: allow.to_vec(),
         ordered: false,
         after: None,
+        hold: None,
         expect: Expect::Same,
     }
 }

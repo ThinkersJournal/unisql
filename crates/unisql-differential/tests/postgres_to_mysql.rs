@@ -53,6 +53,8 @@ INSERT INTO orders VALUES (1,1,100,'paid'),(2,1,250,'paid'),(3,2,75,'open'),(4,3
 INSERT INTO kv VALUES ('a','1',1),('b',NULL,2),('c','x',NULL),('Cap','z',3);
 "#;
 
+const LOCK_ONE: &str = "SELECT id FROM users WHERE id = 1 FOR UPDATE";
+
 /// Everything a MySQL translation may legitimately need; each case's report says what it used.
 const ALL: &[A] = &[
     A::TextCollation,
@@ -77,6 +79,7 @@ fn c(name: &'static str, sql: &'static str) -> Case {
         allow: ALL.to_vec(),
         ordered: false,
         after: None,
+        hold: None,
         expect: Expect::Same,
     }
 }
@@ -94,6 +97,11 @@ fn after(mut x: Case, q: &'static str) -> Case {
 }
 fn exp(mut x: Case, e: Expect) -> Case {
     x.expect = e;
+    x
+}
+/// Another session holds `hold` (a locking SELECT, run on both engines) while the case runs.
+fn held(mut x: Case, hold: &'static str) -> Case {
+    x.hold = Some(hold);
     x
 }
 fn only(mut x: Case, allow: &[A]) -> Case {
@@ -242,6 +250,44 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id FROM users ORDER BY id OFFSET 4",
         )),
         ord(c("order_text", "SELECT name FROM users ORDER BY name")),
+        // ---- row locks. Another session holds users.id = 1; what the statement does to that row is
+        // measured on both engines (NOWAIT raises, SKIP LOCKED leaves it out, a free row is fine).
+        exp(
+            held(
+                c(
+                    "lock_nowait_on_locked_row",
+                    "SELECT id FROM users WHERE id = 1 FOR UPDATE NOWAIT",
+                ),
+                LOCK_ONE,
+            ),
+            Expect::BothError,
+        ),
+        held(
+            c(
+                "lock_nowait_on_free_row",
+                "SELECT id FROM users WHERE id = 2 FOR UPDATE NOWAIT",
+            ),
+            LOCK_ONE,
+        ),
+        ord(held(
+            c(
+                "lock_skip_locked",
+                "SELECT id FROM users WHERE id IN (1, 2, 3) ORDER BY id FOR UPDATE SKIP LOCKED",
+            ),
+            LOCK_ONE,
+        )),
+        // The queue-worker pattern: take the first row nobody else holds.
+        ord(held(
+            c(
+                "lock_skip_locked_limit",
+                "SELECT id FROM users ORDER BY id LIMIT 1 FOR UPDATE SKIP LOCKED",
+            ),
+            LOCK_ONE,
+        )),
+        c(
+            "lock_for_update_plain",
+            "SELECT id FROM users WHERE id = 4 FOR UPDATE",
+        ),
         // ---- LIKE family
         p(
             c("like_param", "SELECT name FROM users WHERE name LIKE $1"),
@@ -531,6 +577,21 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("returning"),
         ));
     }
+    // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
+    // error for both, so it is refused rather than sent.
+    let share = "SELECT id FROM users WHERE id = 4 FOR SHARE";
+    let of =
+        "SELECT u.id FROM users u JOIN orders o ON o.user_id = u.id WHERE o.id = 1 FOR UPDATE OF u";
+    if maria {
+        v.push(exp(
+            c("lock_share", share),
+            Expect::Refused("row_lock.share"),
+        ));
+        v.push(exp(c("lock_of_table", of), Expect::Refused("row_lock.of")));
+    } else {
+        v.push(c("lock_share", share));
+        v.push(ord(c("lock_of_table", of)));
+    }
     v
 }
 
@@ -607,6 +668,7 @@ fn known_bad_controls(maria: bool, dir: Dir) -> Vec<KnownBad> {
             allow: ALL.to_vec(),
             ordered,
             after: None,
+            hold: None,
             expect: Expect::Diverges,
         };
         let o = run_case_dir(&mut e, &case, dir);

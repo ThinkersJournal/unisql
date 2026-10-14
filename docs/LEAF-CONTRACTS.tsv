@@ -86,6 +86,10 @@ recursive_cte	WITH RECURSIVE evaluates the recursive term to a fixed point and r
 returning	RETURNING returns the affected rows after the statement's changes.
 returning.update	UPDATE ... RETURNING returns the updated rows. Refused where RETURNING is not supported on UPDATE.
 row_lock	FOR UPDATE locks the selected rows until the transaction ends. Refused where there are no row locks.
+row_lock.nowait	FOR UPDATE/SHARE ... NOWAIT raises an error at once when a selected row is locked by another transaction, and behaves as without NOWAIT when none is.
+row_lock.of	FOR UPDATE/SHARE OF <table> locks only the rows of that table in a join. Refused where unsupported.
+row_lock.share	FOR SHARE takes a shared lock on the selected rows until the transaction ends. Refused where there is no such clause.
+row_lock.skip_locked	FOR UPDATE/SHARE ... SKIP LOCKED leaves rows locked by another transaction out of the result and locks the rest.
 text_comparison	`=` and `<>` on text compare bytewise (the C locale).
 trim	trim(chars FROM s) removes the single character chars (or spaces) from the stated side(s).
 trim.multi_char	trim with a set of several characters. Refused where the target trims a repeated string instead of a set.
