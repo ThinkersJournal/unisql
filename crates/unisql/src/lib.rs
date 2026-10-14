@@ -77,6 +77,36 @@ fn target(name: &str) -> Result<Box<dyn Target>, Error> {
     }
 }
 
+/// A [`Schema`] read out of DDL text, and what could not be read.
+#[derive(Clone, Debug, Default)]
+pub struct DdlSchema {
+    pub schema: Schema,
+    /// Statements skipped because the parser could not read them (head and reason). A skipped
+    /// statement can only leave columns unregistered, which the translator treats as unknown.
+    pub skipped: Vec<String>,
+}
+
+/// Fill a [`Schema`] from a DDL script (for example a project's `migrations/*.sql` concatenated, in
+/// order) written in `dialect`. Reading only: DDL is not translated and nothing is written out.
+/// `CREATE TABLE`, `ALTER TABLE .. ADD|DROP|ALTER COLUMN .. TYPE` and `DROP TABLE` are applied in
+/// order; table names are kept exactly as written (see [`Schema`]). A column whose declared type is not
+/// classified is registered as unknown, never omitted. A column's collation is only what the DDL states
+/// on the column (`COLLATE x`): no collation is guessed from the database default.
+pub fn schema_from_ddl(ddl: &str, dialect: &str) -> Result<DdlSchema, Error> {
+    use unisql_sqlparser_adapter as ad;
+    let rules = match dialect {
+        "postgres" => &ad::POSTGRES,
+        "sqlite" => &ad::SQLITE,
+        "mysql" | "mariadb" => &ad::MYSQL,
+        other => return Err(Error::UnknownDialect(other.to_string())),
+    };
+    let r = ad::read_schema(ddl, rules).map_err(Error::Read)?;
+    Ok(DdlSchema {
+        schema: r.schema,
+        skipped: r.skipped,
+    })
+}
+
 /// Translate one statement from `source` to `target`.
 pub fn translate(
     sql: &str,

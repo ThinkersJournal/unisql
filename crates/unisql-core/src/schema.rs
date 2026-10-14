@@ -31,6 +31,9 @@ pub enum ColumnClass {
     Numeric,
     Boolean,
     Other,
+    /// The column exists but its type is not one UniSQL classifies (a custom type, an array): it is
+    /// recorded so that an unqualified reference cannot be taken for another table's column.
+    Unknown,
 }
 
 /// One column: its class and, when the caller knows it, its collation (carried as given; UniSQL does
@@ -66,6 +69,10 @@ impl Column {
         Column::new(ColumnClass::Other)
     }
 
+    pub fn unknown() -> Self {
+        Column::new(ColumnClass::Unknown)
+    }
+
     pub fn with_collation(mut self, collation: impl Into<String>) -> Self {
         self.collation = Some(collation.into());
         self
@@ -95,6 +102,23 @@ impl Schema {
             .or_default()
             .insert(column.to_string(), c);
         self
+    }
+
+    /// Register or replace a column (the mutating form of [`Schema::with_qualified_column`]).
+    pub fn set_column(&mut self, table: Vec<String>, column: String, c: Column) {
+        self.tables.entry(table).or_default().insert(column, c);
+    }
+
+    /// Forget one column (an `ALTER TABLE .. DROP COLUMN`).
+    pub fn drop_column(&mut self, table: &Name, column: &str) {
+        if let Some(t) = self.tables.get_mut(&table.0) {
+            t.remove(column);
+        }
+    }
+
+    /// Forget a table (a `DROP TABLE`).
+    pub fn drop_table(&mut self, table: &Name) {
+        self.tables.remove(&table.0);
     }
 
     pub fn is_empty(&self) -> bool {
@@ -170,7 +194,7 @@ impl<'a> Scopes<'a> {
             Expr::Nested(x) => self.is_non_text_column(x),
             Expr::Column(name) => self
                 .class_of(schema, name)
-                .is_some_and(|c| c != ColumnClass::Text),
+                .is_some_and(|c| !matches!(c, ColumnClass::Text | ColumnClass::Unknown)),
             _ => false,
         }
     }

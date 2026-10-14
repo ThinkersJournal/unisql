@@ -31,7 +31,14 @@ const ALL: &[Allowance] = &[
 ];
 
 fn main() {
-    let all = ALL.iter().fold(Options::default(), |o, a| o.with(*a));
+    let mut all = ALL.iter().fold(Options::default(), |o, a| o.with(*a));
+    // Optional second argument: a DDL script (migrations) whose column types become a `Schema`.
+    if let Some(path) = std::env::args().nth(2) {
+        let ddl = std::fs::read_to_string(&path).expect("DDL file");
+        let d = unisql::schema_from_ddl(&ddl, "postgres").expect("DDL reads");
+        eprintln!("schema from {path}: {} statements skipped", d.skipped.len());
+        all = all.with_schema(d.schema);
+    }
     let target = std::env::args()
         .nth(1)
         .unwrap_or_else(|| "sqlite".to_string());

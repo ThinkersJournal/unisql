@@ -22,11 +22,10 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    except `current_user` 1, `Extract` 1 and `Array` 1).
    allowance names that MySQL `UUID()` is a v1 UUID.
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
-2. **Schema, next steps.** `Schema` (pure data, in `Options`) is in. Remaining: `Schema::from_ddl(sql,
-   dialect)` to fill it from `CREATE TABLE` text (reading only; Humboldt's types are in
-   `migrations/*.sql`, so no engine is needed), and interpreting the carried collation (a column with a
-   known bytewise collation could make `text_comparison` Exact when the target's collation is read
-   from config). The live-catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6.
+2. **Schema: interpret the collation.** `Schema` and `schema_from_ddl` are in. A column with a known
+   bytewise collation could make `text_comparison` Exact when the target's collation is read from config;
+   a column with **no** stated collation stays unknown, never "the database default" (PersistAnt's ask).
+   The live-catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6.
 
 ## Later
 
