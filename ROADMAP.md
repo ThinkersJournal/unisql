@@ -97,7 +97,7 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
   `fn:utc_timestamp.precision`; on SQLite text with millisecond resolution, allowance
   `timestamp_millisecond_resolution`), `UTC_DATE()`, `CURDATE()` (read as `CURRENT_DATE`),
   `DATEDIFF(a, b)`, `DATE(x)`; a MySQL/MariaDB source passes these through to MySQL/MariaDB unchanged.
-  Auth-framework's two `UTC_TIMESTAMP(6)` statements now translate. **String group done at the next version** (`CONCAT_WS`, `LEFT`, `RIGHT`, `REPEAT`, and on
+  Auth-framework's two `UTC_TIMESTAMP(6)` statements now translate. **String group done at 0.18.2** (`CONCAT_WS`, `LEFT`, `RIGHT`, `REPEAT`, and on
   PostgreSQL `LPAD`/`RPAD`/`REVERSE`; SQLite has no `LPAD`/`RPAD`/`REVERSE`). **Still refused by leaf** (a
   verified mapping would close each): `DATE_FORMAT` (format-string translation),
   `UNIX_TIMESTAMP`/`FROM_UNIXTIME` (session time zone), `TIMESTAMPDIFF`, `YEAR`/`MONTH`/`DAY`/`HOUR`
