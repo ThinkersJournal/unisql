@@ -361,7 +361,11 @@ impl Target for Mysql {
                 "weeks" => ("DAY", Some(7)),
                 other => {
                     return Err(ctx.refuse(
-                        "fn:make_interval",
+                        if matches!(other, "months" | "years") {
+                            "fn:make_interval.month_year"
+                        } else {
+                            "fn:make_interval"
+                        },
                         &format!("make_interval({other} => ..): month/year arithmetic differs between the engines"),
                         &[],
                     ));

@@ -18,6 +18,7 @@ const FROM_OTHER: &[&str] = &[
     "char_length",
     "octet_length",
     "coalesce",
+    "make_interval",
 ];
 
 /// Read exactly one PostgreSQL statement.
@@ -44,6 +45,22 @@ impl Target for Postgres {
                 "no verified mapping for this function on PostgreSQL yet",
                 &[],
             ));
+        }
+        // MySQL's month/year arithmetic clamps at the end of a month by its own rules; PostgreSQL
+        // has the same call but the two are not verified to agree, so only the fixed-length units
+        // cross from another dialect.
+        if n == "make_interval" && ctx.source != "postgres" {
+            for a in &f.args {
+                if let FunctionArg::Named { name, .. } = a
+                    && matches!(name.as_str(), "months" | "years")
+                {
+                    return Err(ctx.refuse(
+                        "fn:make_interval.month_year",
+                        &format!("make_interval({name} => ..): month/year arithmetic differs between the engines"),
+                        &["use secs/mins/hours/days/weeks"],
+                    ));
+                }
+            }
         }
         ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
         let order = ctx.agg_order.take();

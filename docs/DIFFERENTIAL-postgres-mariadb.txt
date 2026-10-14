@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=93
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=99
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -132,6 +132,16 @@ PASS interval_secs                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
 PASS interval_wide                same
        -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (?) SECOND))
+PASS interval_literal_minute      same
+       -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (1) MINUTE))
+PASS interval_literal_minutes     same
+       -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (5) MINUTE))
+PASS interval_literal_hours       same
+       -> SELECT `id` FROM `events` WHERE `at` > ((NOW() - INTERVAL (2) HOUR))
+PASS interval_literal_plus_days   same
+       -> SELECT `id` FROM `events` WHERE `at` < ((NOW() + INTERVAL (7) DAY))
+PASS refuse_interval_literal_month refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
+PASS ir_interval_compound         not in IR `interval`: only a single `<number> <unit>` interval is in the IR
 PASS any_int_array                same
        -> SELECT `id` FROM `users` WHERE JSON_CONTAINS(?, JSON_ARRAY(`id`))
 PASS all_ne_int_array             same
@@ -170,7 +180,7 @@ PASS refuse_update_returning      refused `returning.update`: MariaDB supports R
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 77 passing translated cases:
+MATRIX (construct, tier) from 81 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional

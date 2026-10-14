@@ -28,14 +28,14 @@ construct	fn:length	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;tes
 construct	fn:lower	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::lower_upper_ascii	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding	postgres
 construct	fn:lower.ascii_only_case_folding	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::lower_upper_ascii	allowance=ascii_only_case_folding	postgres
 construct	fn:ltrim	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::string_funcs		postgres
-construct	fn:make_interval	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_interval_months	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
+construct	fn:make_interval.month_year	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
 construct	fn:max	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	postgres
 construct	fn:max.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates	allowance=text_collation	postgres
 construct	fn:md5	sqlite	3.53.2		no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_unmapped_fn	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
 construct	fn:min	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	postgres
 construct	fn:min.text_collation	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates	allowance=text_collation	postgres
-construct	fn:now	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_mins	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
-construct	fn:now.now_as_text	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_mins	allowance=now_as_text	postgres
+construct	fn:now	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
+construct	fn:now.now_as_text	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_literal_hours	allowance=now_as_text	postgres
 construct	fn:nullif	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::coalesce_nullif		postgres
 construct	fn:octet_length	sqlite	3.53.2		yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::octet_length_utf8		postgres
 construct	fn:rank	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_rank_partition		postgres
@@ -52,8 +52,8 @@ construct	fn:upper.ascii_only_case_folding	sqlite	3.53.2		yes		tier=conditional;
 construct	ilike	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,like_case_sensitivity_is_connection_setting	postgres
 construct	ilike.ascii_only_case_folding	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.like_case_sensitivity_is_connection_setting	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::ilike	allowance=like_case_sensitivity_is_connection_setting	postgres
-construct	interval_arithmetic	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_mins	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
-construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_mins	allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_literal_hours	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	postgres
+construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2		yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::interval_literal_hours	allowance=timestamp_arithmetic_as_text	postgres
 construct	join:inner_join	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::cte		postgres
 construct	join:left_join	sqlite	3.53.2		yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::left_join		postgres
 construct	json_get	sqlite	3.53.2		no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::json_nested	diverges from the strict contract unless accepted: allowance=json_representation_as_text	postgres

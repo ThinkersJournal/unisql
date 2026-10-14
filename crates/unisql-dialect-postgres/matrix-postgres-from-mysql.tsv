@@ -14,8 +14,11 @@ construct	fn:char_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysq
 construct	fn:coalesce	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::ifnull_concat_if		mysql
 construct	fn:count	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
 construct	fn:date_format	postgres	16.15	lc_collate=C	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mysql
+construct	fn:make_interval	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
+construct	fn:make_interval.month_year	postgres	16.15	lc_collate=C	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
 construct	fn:max	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
 construct	fn:min	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::aggregates		mysql
+construct	fn:now	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
 construct	fn:octet_length	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::length_is_bytes		mysql
 construct	fn:rank	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::window_rank		mysql
 construct	fn:string_agg	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_default	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	mysql
@@ -27,6 +30,7 @@ construct	join:left_join	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysq
 construct	like	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::like_escape	allowance=like_case_sensitivity_is_connection_setting	mysql
 construct	limit	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::limit_comma		mysql
+construct	named_arg	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql
 construct	null_ordering	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep		mysql
 construct	offset	postgres	16.15	lc_collate=C	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::limit_comma		mysql
 construct	order_by	postgres	16.15	lc_collate=C	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::group_concat_sep	diverges from the strict contract unless accepted: allowance=text_collation	mysql

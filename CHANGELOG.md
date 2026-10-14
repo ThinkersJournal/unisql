@@ -2,6 +2,17 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased (version allocated by the PM at gate)
+
+- **`INTERVAL` literals:** `ts +/- INTERVAL '5 minutes'` (PostgreSQL) and `ts +/- INTERVAL 5 MINUTE`
+  (MySQL) read as `make_interval(mins => 5)`, so every target's interval arithmetic applies (SQLite
+  text arithmetic, MySQL `INTERVAL`, PostgreSQL native). 21 of the 25 `not_in_ir expression` rows of
+  the corpus. Only a single `<number> <unit>` is read; compound and range intervals stay not-in-IR.
+- PostgreSQL as a target now accepts `make_interval` from a MySQL/SQLite source (fixed-length units).
+- Months and years are their own leaf `fn:make_interval.month_year` (refused by all targets from a
+  foreign source), so `fn:make_interval` is no longer both proven and refused in one matrix file.
+- Differential: `events` fixtures in the MySQL-source suites; cases for each spelling.
+
 ## 0.4.1 - 2026-10-14
 
 - ROADMAP corrected from the corpus counts: date/time functions are one statement of the corpus, not
