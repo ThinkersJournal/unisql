@@ -182,6 +182,7 @@ impl Report {
 
 /// Everything a caller may relax, explicitly.
 #[derive(Clone, Debug, Default)]
+#[non_exhaustive]
 pub struct Options {
     pub allow: BTreeSet<Allowance>,
 }
