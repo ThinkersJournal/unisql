@@ -137,6 +137,22 @@ fn interval_literals_are_the_make_interval_form() {
 }
 
 #[test]
+fn a_data_modifying_cte_is_read_and_named() {
+    let sql = "WITH s AS (INSERT INTO schools (name) VALUES ('x') RETURNING id) \
+               INSERT INTO links (school_id) SELECT id FROM s";
+    let a = analyse(sql, "postgres").unwrap();
+    assert!(a.unreadable.is_none(), "{:?}", a.unreadable);
+    for leaf in ["with.insert", "cte.data_modifying", "returning"] {
+        assert!(a.constructs.contains(leaf), "{leaf}: {:?}", a.constructs);
+    }
+    // Only PostgreSQL has it: every other target refuses the CTE (or, first, the WITH).
+    assert!(a.refused.contains("cte.data_modifying") || a.refused.contains("with.insert"));
+    // ... and PostgreSQL writes it back.
+    let t = translate(sql, "postgres", "postgres", &all()).unwrap();
+    assert!(t.sql.to_uppercase().starts_with("WITH "), "{}", t.sql);
+}
+
+#[test]
 fn partial_forms_have_their_own_leaves() {
     let n = |sql: &str, src: &str| analyse(sql, src).unwrap().constructs;
     assert!(
@@ -298,6 +314,14 @@ fn catalogue() -> &'static [(&'static str, &'static str)] {
             "SELECT id FROM users WHERE id = 1 FOR UPDATE NOWAIT",
         ),
         ("postgres", "SELECT md5(name), current_schema() FROM users"),
+        (
+            "postgres",
+            "WITH s AS (SELECT id FROM users WHERE age > 3) UPDATE users SET age = 1 WHERE id IN (SELECT id FROM s)",
+        ),
+        (
+            "postgres",
+            "WITH s AS (INSERT INTO kv (key, value) VALUES ('a', 'b') RETURNING key) DELETE FROM users WHERE name IN (SELECT key FROM s)",
+        ),
     ]
 }
 

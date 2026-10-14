@@ -28,6 +28,10 @@ cast.to_integer	CAST to a 32-bit integer returns the source's value; a malformed
 cast.to_text	CAST to text yields the source's text form of the operand.
 cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
 concat	`a || b` concatenates text; a NULL operand gives NULL.
+cte.data_modifying	WITH x AS (INSERT | UPDATE | DELETE ... RETURNING ...) ...: the modifying statement in the WITH runs once, its RETURNING rows are the CTE. Refused where only SELECT may appear in a WITH.
+with.delete	WITH ... DELETE ...: the common table expressions are visible to the DELETE. Refused where WITH may not precede a DELETE.
+with.insert	WITH ... INSERT ...: the common table expressions are visible to the INSERT. Refused where WITH may not precede an INSERT.
+with.update	WITH ... UPDATE ...: the common table expressions are visible to the UPDATE. Refused where WITH may not precede an UPDATE.
 distinct_on	`SELECT DISTINCT ON (keys) ...` keeps exactly one row per distinct key tuple, the first by ORDER BY; without ORDER BY which row survives is unspecified on both engines.
 distinct_on.star_projection	DISTINCT ON combined with a `*` projection. Refused: the emulation's helper columns would appear in the result.
 division	`/` and `%` on the tested operands give the source's value; division by zero raises an error as at the source.

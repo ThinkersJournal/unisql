@@ -14,58 +14,7 @@ use crate::print::is_numeric;
 /// Every construct id the statement uses.
 pub fn constructs(stmt: &Statement) -> BTreeSet<String> {
     let mut w = Walk::default();
-    match stmt {
-        Statement::Query(q) => w.query(q),
-        Statement::Insert(i) => {
-            match &i.source {
-                InsertSource::Query(q) => w.query(q),
-                InsertSource::Values(rows) => rows.iter().flatten().for_each(|e| w.expr(e)),
-                InsertSource::DefaultValues => {}
-            }
-            if let Some(oc) = &i.on_conflict {
-                match &oc.action {
-                    ConflictAction::DoNothing => w.add("upsert"),
-                    ConflictAction::DoUpdate { set, where_ } => {
-                        w.add(if where_.is_some() {
-                            "upsert_where"
-                        } else {
-                            "upsert"
-                        });
-                        // A target that needs the conflict key refuses this form.
-                        if oc.target.is_empty() {
-                            w.add("upsert.no_conflict_key");
-                        }
-                        set.iter().for_each(|a| w.expr(&a.value));
-                        if let Some(e) = where_ {
-                            w.expr(e);
-                        }
-                    }
-                }
-            }
-            w.returning(&i.returning);
-        }
-        Statement::Update(u) => {
-            u.set.iter().for_each(|a| w.expr(&a.value));
-            if !u.returning.is_empty() {
-                w.add("returning.update");
-            }
-            if !u.from.is_empty() {
-                w.add("update_from");
-                u.from.iter().for_each(|t| w.table(t));
-            }
-            if let Some(e) = &u.where_ {
-                w.expr(e);
-            }
-            w.returning(&u.returning);
-        }
-        Statement::Delete(d) => {
-            d.using.iter().for_each(|t| w.table(t));
-            if let Some(e) = &d.where_ {
-                w.expr(e);
-            }
-            w.returning(&d.returning);
-        }
-    }
+    w.statement(stmt);
     w.out
 }
 
@@ -75,6 +24,81 @@ struct Walk {
 }
 
 impl Walk {
+    fn statement(&mut self, stmt: &Statement) {
+        match stmt {
+            Statement::With(w) => {
+                self.add(match &*w.stmt {
+                    Statement::Insert(_) => "with.insert",
+                    Statement::Update(_) => "with.update",
+                    _ => "with.delete",
+                });
+                if w.recursive {
+                    self.add("recursive_cte");
+                }
+                for c in &w.ctes {
+                    match &c.body {
+                        CteBody::Query(q) => self.query(q),
+                        CteBody::Dml(st) => {
+                            self.add("cte.data_modifying");
+                            self.statement(st);
+                        }
+                    }
+                }
+                self.statement(&w.stmt);
+            }
+            Statement::Query(q) => self.query(q),
+            Statement::Insert(i) => {
+                match &i.source {
+                    InsertSource::Query(q) => self.query(q),
+                    InsertSource::Values(rows) => rows.iter().flatten().for_each(|e| self.expr(e)),
+                    InsertSource::DefaultValues => {}
+                }
+                if let Some(oc) = &i.on_conflict {
+                    match &oc.action {
+                        ConflictAction::DoNothing => self.add("upsert"),
+                        ConflictAction::DoUpdate { set, where_ } => {
+                            self.add(if where_.is_some() {
+                                "upsert_where"
+                            } else {
+                                "upsert"
+                            });
+                            // A target that needs the conflict key refuses this form.
+                            if oc.target.is_empty() {
+                                self.add("upsert.no_conflict_key");
+                            }
+                            set.iter().for_each(|a| self.expr(&a.value));
+                            if let Some(e) = where_ {
+                                self.expr(e);
+                            }
+                        }
+                    }
+                }
+                self.returning(&i.returning);
+            }
+            Statement::Update(u) => {
+                u.set.iter().for_each(|a| self.expr(&a.value));
+                if !u.returning.is_empty() {
+                    self.add("returning.update");
+                }
+                if !u.from.is_empty() {
+                    self.add("update_from");
+                    u.from.iter().for_each(|t| self.table(t));
+                }
+                if let Some(e) = &u.where_ {
+                    self.expr(e);
+                }
+                self.returning(&u.returning);
+            }
+            Statement::Delete(d) => {
+                d.using.iter().for_each(|t| self.table(t));
+                if let Some(e) = &d.where_ {
+                    self.expr(e);
+                }
+                self.returning(&d.returning);
+            }
+        }
+    }
+
     fn add(&mut self, c: impl Into<String>) {
         self.out.insert(c.into());
     }
@@ -111,7 +135,13 @@ impl Walk {
             self.add("recursive_cte");
         }
         for c in &q.with {
-            self.query(&c.query);
+            match &c.body {
+                CteBody::Query(q) => self.query(q),
+                CteBody::Dml(st) => {
+                    self.add("cte.data_modifying");
+                    self.statement(st);
+                }
+            }
         }
         self.set_expr(&q.body);
         if !q.order_by.is_empty() {

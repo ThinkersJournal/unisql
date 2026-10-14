@@ -507,6 +507,51 @@ fn cases() -> Vec<Case> {
             "SELECT DISTINCT ON (city) city, id FROM users WHERE city IS NOT NULL ORDER BY city, id",
             COLL,
         )),
+        // ---- WITH before INSERT / UPDATE / DELETE (probed per engine)
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "with_update",
+                "WITH s AS (SELECT key FROM kv WHERE n = 1) UPDATE kv SET n = n + 10 WHERE key IN (SELECT key FROM s)",
+                &[],
+            )
+        },
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "with_delete",
+                "WITH s AS (SELECT key FROM kv WHERE n = 1) DELETE FROM kv WHERE key IN (SELECT key FROM s)",
+                &[],
+            )
+        },
+        Case {
+            after: Some("SELECT * FROM kv ORDER BY 1"),
+            ..c(
+                "with_insert",
+                "WITH s AS (SELECT 'z' AS key) INSERT INTO kv (key, value, n) SELECT key, 'v', 9 FROM s",
+                &[],
+            )
+        },
+        // PostgreSQL has the form itself: it must read and write back unchanged in meaning.
+        exp(
+            Case {
+                after: Some("SELECT * FROM kv ORDER BY 1"),
+                ..c(
+                    "pg_identity_data_modifying_cte",
+                    "WITH s AS (INSERT INTO kv (key, value, n) VALUES ('w', 'z', 5) RETURNING key) UPDATE kv SET n = n + 1 WHERE key IN (SELECT key FROM s)",
+                    &[],
+                )
+            },
+            Expect::Identity,
+        ),
+        exp(
+            c(
+                "refuse_data_modifying_cte",
+                "WITH s AS (INSERT INTO kv (key, value, n) VALUES ('w', 'z', 5) RETURNING key) SELECT key FROM s",
+                &[],
+            ),
+            Expect::Refused("cte.data_modifying"),
+        ),
         exp(
             c(
                 "refuse_for_update",

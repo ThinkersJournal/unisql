@@ -215,6 +215,19 @@ pub trait Target {
         ctx.note("distinct_on", Tier::Exact, "", None)
     }
 
+    /// `WITH .. INSERT | UPDATE | DELETE ..` (the common table expressions precede the modifying
+    /// statement). The default (PostgreSQL) has all three; each is its own leaf: `with.insert`,
+    /// `with.update`, `with.delete`.
+    fn with_statement(&self, kind: StmtKind, ctx: &mut Ctx) -> R<()> {
+        ctx.note(with_leaf(kind), Tier::Exact, "", None)
+    }
+
+    /// `WITH x AS (INSERT/UPDATE/DELETE .. RETURNING ..) ..`. The default (PostgreSQL) has it; a
+    /// target without it refuses the leaf `cte.data_modifying`.
+    fn data_modifying_cte(&self, ctx: &mut Ctx) -> R<()> {
+        ctx.note("cte.data_modifying", Tier::Exact, "", None)
+    }
+
     /// A row-locking clause. The default (PostgreSQL) gives every form; each form is its own leaf:
     /// `row_lock` (FOR UPDATE), `row_lock.share`, `row_lock.of`, `row_lock.nowait`,
     /// `row_lock.skip_locked`.
@@ -533,4 +546,13 @@ pub fn note_row_lock_leaves(lock: &RowLockClause, ctx: &mut Ctx) -> R<()> {
         LockWait::SkipLocked => ctx.note("row_lock.skip_locked", Tier::Exact, "", None)?,
     }
     Ok(())
+}
+
+/// The leaf of `WITH .. <statement>`.
+pub fn with_leaf(kind: StmtKind) -> &'static str {
+    match kind {
+        StmtKind::Insert => "with.insert",
+        StmtKind::Update => "with.update",
+        StmtKind::Delete => "with.delete",
+    }
 }

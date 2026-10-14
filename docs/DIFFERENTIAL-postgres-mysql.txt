@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=99
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=103
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -176,12 +176,18 @@ PASS refuse_trim_set              refused `trim.multi_char`: PostgreSQL trims a 
 PASS refuse_update_from           refused `update_from`: 
 PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
+PASS refuse_data_modifying_cte    refused `cte.data_modifying`: MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error
+PASS with_update                  same
+       -> WITH `s` AS (SELECT `key` FROM `kv` WHERE `n` = 1) UPDATE `kv` SET `n` = `n` + 10 WHERE `key` IN (SELECT `key` FROM `s`)
+PASS with_delete                  same
+       -> WITH `s` AS (SELECT `key` FROM `kv` WHERE `n` = 1) DELETE FROM `kv` WHERE `key` IN (SELECT `key` FROM `s`)
+PASS with_insert                  refused `with.insert`: MySQL has no WITH before this statement (probed: a syntax error)
 PASS lock_share                   same
        -> SELECT `id` FROM `users` WHERE `id` = 4 FOR SHARE
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 82 passing translated cases:
+MATRIX (construct, tier) from 84 passing translated cases:
   array_param                  conditional
   boolean_literal              conditional
   cast.to_double               conditional
@@ -230,3 +236,5 @@ MATRIX (construct, tier) from 82 passing translated cases:
   trim                         exact
   upsert                       conditional
   window_function              exact
+  with.delete                  exact
+  with.update                  exact

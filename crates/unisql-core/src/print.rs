@@ -82,10 +82,55 @@ impl Printer<'_> {
     fn statement(&self, s: &Statement, c: &mut Ctx) -> R<String> {
         match s {
             Statement::Query(q) => self.query(q, c),
+            Statement::With(w) => {
+                let kind = match &*w.stmt {
+                    Statement::Insert(_) => StmtKind::Insert,
+                    Statement::Update(_) => StmtKind::Update,
+                    _ => StmtKind::Delete,
+                };
+                self.t.with_statement(kind, c)?;
+                let head = self.with_clause(w.recursive, &w.ctes, c)?;
+                Ok(format!("{head}{}", self.statement(&w.stmt, c)?))
+            }
             Statement::Insert(i) => self.insert(i, c),
             Statement::Update(u) => self.update(u, c),
             Statement::Delete(d) => self.delete(d, c),
         }
+    }
+
+    /// `WITH [RECURSIVE] name [(cols)] AS (..), ..` followed by a space.
+    fn with_clause(&self, recursive: bool, ctes: &[Cte], c: &mut Ctx) -> R<String> {
+        let mut out = String::from("WITH ");
+        if recursive {
+            self.t.feature("recursive_cte", c)?;
+            out.push_str("RECURSIVE ");
+        }
+        let mut parts = Vec::new();
+        for cte in ctes {
+            let cols = if cte.columns.is_empty() {
+                String::new()
+            } else {
+                format!(
+                    " ({})",
+                    cte.columns
+                        .iter()
+                        .map(|x| self.id(x))
+                        .collect::<Vec<_>>()
+                        .join(", ")
+                )
+            };
+            let inner = match &cte.body {
+                CteBody::Query(q) => self.query(q, c)?,
+                CteBody::Dml(st) => {
+                    self.t.data_modifying_cte(c)?;
+                    self.statement(st, c)?
+                }
+            };
+            parts.push(format!("{}{} AS ({inner})", self.id(&cte.name), cols));
+        }
+        out.push_str(&parts.join(", "));
+        out.push(' ');
+        Ok(out)
     }
 
     fn query(&self, q: &Query, c: &mut Ctx) -> R<String> {
@@ -94,34 +139,7 @@ impl Printer<'_> {
         }
         let mut out = String::new();
         if !q.with.is_empty() {
-            out.push_str("WITH ");
-            if q.recursive {
-                self.t.feature("recursive_cte", c)?;
-                out.push_str("RECURSIVE ");
-            }
-            let mut parts = Vec::new();
-            for cte in &q.with {
-                let cols = if cte.columns.is_empty() {
-                    String::new()
-                } else {
-                    format!(
-                        " ({})",
-                        cte.columns
-                            .iter()
-                            .map(|x| self.id(x))
-                            .collect::<Vec<_>>()
-                            .join(", ")
-                    )
-                };
-                parts.push(format!(
-                    "{}{} AS ({})",
-                    self.id(&cte.name),
-                    cols,
-                    self.query(&cte.query, c)?
-                ));
-            }
-            out.push_str(&parts.join(", "));
-            out.push(' ');
+            out.push_str(&self.with_clause(q.recursive, &q.with, c)?);
         }
         out.push_str(&self.set_expr(&q.body, c)?);
         if !q.order_by.is_empty() {

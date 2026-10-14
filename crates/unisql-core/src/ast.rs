@@ -25,6 +25,17 @@ pub enum Statement {
     Insert(Insert),
     Update(Update),
     Delete(Delete),
+    /// `WITH .. INSERT | UPDATE | DELETE ..`: the common table expressions precede a data-modifying
+    /// statement (a query's own `WITH` lives on [`Query`]).
+    With(WithStatement),
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct WithStatement {
+    pub recursive: bool,
+    pub ctes: Vec<Cte>,
+    /// An INSERT, UPDATE or DELETE.
+    pub stmt: Box<Statement>,
 }
 
 #[derive(Clone, Debug, PartialEq)]
@@ -42,7 +53,16 @@ pub struct Query {
 pub struct Cte {
     pub name: String,
     pub columns: Vec<String>,
-    pub query: Query,
+    pub body: CteBody,
+}
+
+/// What a common table expression holds.
+#[derive(Clone, Debug, PartialEq)]
+pub enum CteBody {
+    Query(Query),
+    /// PostgreSQL's data-modifying CTE: `WITH s AS (INSERT .. RETURNING id) ..`. The statement is an
+    /// INSERT, UPDATE or DELETE.
+    Dml(Box<Statement>),
 }
 
 #[derive(Clone, Debug, PartialEq)]
