@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate; bump in this PR)
+## 0.13.0 - 2026-10-14
 
 - **Column collation is interpreted** (the `Schema` field was only carried until now). A comparison
   (`=`, `<>`, `<`, `<=`, `>`, `>=`, `BETWEEN`) or an `ORDER BY` on a text column whose stated collation is
