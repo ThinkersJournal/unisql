@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.18.1 - 2026-10-14
+
+- Repository hygiene, no code change: `.github/CODEOWNERS` (`* @ciresnave`), portfolio rule WSP-001.
+
 ## 0.18.0 - 2026-10-14
 
 - **Breaking (IR, `unisql_core::ast`, re-exported as `unisql::ast`):** `TableRef::Join` gains `using: Vec<String>` and
