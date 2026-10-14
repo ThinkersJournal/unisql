@@ -30,6 +30,11 @@ impl Tier {
 
 /// A named, explicit assumption a caller accepts for a Conditional construct.
 /// There is **no** blanket "best effort" switch (DESIGN.md section 3).
+///
+/// **A name and the text above it are a contract.** Matrix files carry `<construct>.<allowance>` as a
+/// leaf id, and `docs/LEAF-CONTRACTS.tsv` says that leaf means "the base leaf, with the divergence
+/// this text describes accepted". Rewording a variant's doc is therefore a change of meaning: mint a
+/// new variant (a new name) and leave the old one alone; ids are append-only.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Allowance {
     /// `now()` yields text (`YYYY-MM-DD HH:MM:SS`, UTC) rather than a timestamptz.

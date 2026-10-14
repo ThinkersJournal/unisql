@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.2.1 - 2026-10-14
+
+- `ROADMAP.md` (unisql had none). The `Allowance` doc comment now says a variant's name and text are a
+  contract: rewording is a new variant, not an edit (PersistAnt request). No behaviour change.
+
 ## 0.2.0 - 2026-10-14
 
 - **Breaking (ids, matrix files, `analyse`):** constructs are now leaf ids. `cast` becomes
