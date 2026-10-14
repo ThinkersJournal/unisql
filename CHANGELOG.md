@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (version allocated by the PM at gate)
+## 0.1.0 - 2026-10-14
 
 - **Breaking (matrix files):** rows follow PersistAnt's merged row schema (DESIGN-KINDS.md section
   2.4 at 4fed258e): `how`/`evidence` are replaced by `config`, `enabled` (yes|no), `reason` and
