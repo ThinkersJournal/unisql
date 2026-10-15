@@ -1,4 +1,4 @@
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=95
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=96
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -22,6 +22,7 @@ PASS locate_instr_position      same
 PASS hex_literal_compare        same
        -> SELECT "id", X'41' = X'41', X'41' < X'42', X'4142' = X'4142', X'41' = X'42' FROM "users"
 PASS refuse_hex_arith           not in IR `hex_literal_numeric`: a hex literal is a byte string; MySQL `0x41 + 1` reads it as the number 65, so arithmetic on it is not mapped
+PASS refuse_bit_literal         not in IR `bit_literal`: B'101' reads differently on each engine
 PASS mod_function               same
        -> SELECT "id", "age" % 7, (-"age") % 7, "age" % 7 FROM "users"
 PASS locate_null                same
