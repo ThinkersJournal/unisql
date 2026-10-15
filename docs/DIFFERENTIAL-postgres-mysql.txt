@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=130
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=131
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -223,6 +223,8 @@ PASS to_timestamp_epoch           same
        -> SELECT CAST(EXTRACT(YEAR FROM FROM_UNIXTIME(1592228730)) AS SIGNED), CAST(EXTRACT(HOUR FROM FROM_UNIXTIME(1592228730)) AS SIGNED), CAST(UNIX_TIMESTAMP(FROM_UNIXTIME(1592228730)) AS SIGNED)
 PASS date_trunc_fields            same
        -> SELECT `id`, CAST(EXTRACT(MINUTE FROM CAST(DATE_FORMAT(`at`, '%Y-%m-%d %H:00:00') AS DATETIME)) AS SIGNED), CAST(EXTRACT(HOUR FROM CAST(DATE_FORMAT(`at`, '%Y-%m-%d 00:00:00') AS DATETIME)) AS SIGNED), CAST(EXTRACT(DAY FROM CAST(DATE_FORMAT(`at`, '%Y-%m-01 00:00:00') AS DATETIME)) AS SIGNED), CAST(EXTRACT(MONTH FROM CAST(DATE_FORMAT(`at`, '%Y-01-01 00:00:00') AS DATETIME)) AS SIGNED), CAST(UNIX_TIMESTAMP(CAST(DATE_FORMAT(`at`, '%Y-%m-%d %H:%i:00') AS DATETIME)) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
+PASS epoch_ms_of_clock            same
+       -> SELECT (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) > 1700000000000) AND (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) < 4102444800000)
 PASS epoch_of_difference          same
        -> SELECT `a`.`id`, `b`.`id`, CAST((TIMESTAMPDIFF(MICROSECOND, `b`.`at`, `a`.`at`) / 1000000) AS SIGNED) FROM `fixed_ts` AS `a` INNER JOIN `fixed_ts` AS `b` ON `a`.`id` < `b`.`id` ORDER BY (`a`.`id` IS NULL), `a`.`id`, (`b`.`id` IS NULL), `b`.`id`
 PASS refuse_date_trunc_week       refused `fn:date_trunc.week`: no verified mapping for date_trunc('week', ..) on MySQL/MariaDB yet
@@ -234,7 +236,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 103 passing translated cases:
+MATRIX (construct, tier) from 104 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -249,6 +251,7 @@ MATRIX (construct, tier) from 103 passing translated cases:
   division_integer             conditional
   extract.day                  exact
   extract.epoch                conditional
+  extract.epoch                exact
   extract.epoch.interval       exact
   extract.hour                 exact
   extract.minute               exact

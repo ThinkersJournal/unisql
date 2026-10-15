@@ -1124,6 +1124,9 @@ impl Printer<'_> {
                 self.t.trim(*side, &e, ch.as_deref(), c)?
             }
             Expr::Extract { field, expr } => {
+                if field == "epoch" && is_clock_call(expr) {
+                    return self.t.epoch_of_clock(c);
+                }
                 if field == "epoch"
                     && let Some((a, b)) = difference_operands(expr)
                 {
@@ -1210,6 +1213,22 @@ fn difference_operands(e: &Expr) -> Option<(&Expr, &Expr)> {
             right,
         } => Some((left, right)),
         _ => None,
+    }
+}
+
+/// `clock_timestamp()`: the wall clock at the call.
+pub(crate) fn is_clock_call(e: &Expr) -> bool {
+    match e {
+        Expr::Nested(x) => is_clock_call(x),
+        Expr::Function(f) => {
+            f.name == "clock_timestamp"
+                && f.args.is_empty()
+                && !f.distinct
+                && !f.star
+                && f.filter.is_none()
+                && f.over.is_none()
+        }
+        _ => false,
     }
 }
 

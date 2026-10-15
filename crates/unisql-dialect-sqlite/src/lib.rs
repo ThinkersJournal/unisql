@@ -729,6 +729,18 @@ impl Target for Sqlite {
         Ok(format!("CAST(strftime('{fmt}', {expr}) AS INTEGER)"))
     }
 
+    /// `unixepoch('now', 'subsec')` (SQLite 3.42+) is the epoch with milliseconds, read once per
+    /// statement.
+    fn epoch_of_clock(&self, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            "extract.epoch",
+            Tier::Conditional,
+            "unixepoch('now','subsec') needs SQLite 3.42 or later and is read once per statement,              where clock_timestamp() is read at every call",
+            Some(Allowance::ClockIsStatementStart),
+        )?;
+        Ok("unixepoch('now', 'subsec')".to_string())
+    }
+
     /// Whole seconds between two timestamp texts.
     fn epoch_of_difference(&self, a: &str, b: &str, ctx: &mut Ctx) -> R<Option<String>> {
         ctx.note(

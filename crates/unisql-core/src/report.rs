@@ -112,6 +112,10 @@ pub enum Allowance {
     /// A logical `XOR` is written as `<>`: exact only when both operands are booleans (or 0/1
     /// comparison results), not arbitrary numbers read by truthiness.
     XorOperandsBoolean,
+    /// `EXTRACT(EPOCH FROM clock_timestamp())` is read once per statement on the target (SQLite's
+    /// `'now'`), not once per call: two calls in one statement give the same instant. It needs
+    /// SQLite 3.42 or later (`unixepoch(.., 'subsec')`).
+    ClockIsStatementStart,
 }
 
 impl Allowance {
@@ -143,6 +147,7 @@ impl Allowance {
         Allowance::RegexpFlavor,
         Allowance::BitwiseNonNegativeIntegers,
         Allowance::XorOperandsBoolean,
+        Allowance::ClockIsStatementStart,
         Allowance::ArrayNullSemantics,
         Allowance::DecimalDivisionAsFloat,
     ];
@@ -179,6 +184,7 @@ impl Allowance {
             Allowance::RegexpFlavor => "regexp_flavor",
             Allowance::BitwiseNonNegativeIntegers => "bitwise_non_negative_integers",
             Allowance::XorOperandsBoolean => "xor_operands_boolean",
+            Allowance::ClockIsStatementStart => "clock_is_statement_start",
         }
     }
 }

@@ -492,6 +492,10 @@ impl Walk<'_> {
                 self.expr(expr);
             }
             Expr::Extract { field, expr } => {
+                if field == "epoch" && crate::print::is_clock_call(expr) {
+                    self.add("extract.epoch");
+                    return;
+                }
                 self.add(crate::target::extract_leaf(
                     field,
                     crate::print::is_difference(expr),

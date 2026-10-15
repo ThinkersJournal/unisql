@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=177
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=178
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -189,6 +189,8 @@ PASS extract_fields               same
        -> SELECT "id", CAST(CAST(strftime('%Y', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%m', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%d', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%H', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%M', "at") AS INTEGER) AS INTEGER) FROM "fixed_ts" ORDER BY "id" NULLS LAST
 PASS extract_epoch                same
        -> SELECT "id", CAST(CAST(strftime('%s', "at") AS INTEGER) AS INTEGER) FROM "fixed_ts" ORDER BY "id" NULLS LAST
+PASS epoch_ms_of_clock            same
+       -> SELECT (CAST(unixepoch('now', 'subsec') * 1000 AS INTEGER) > 1700000000000) AND (CAST(unixepoch('now', 'subsec') * 1000 AS INTEGER) < 4102444800000)
 PASS to_timestamp_epoch           same
        -> SELECT CAST(CAST(strftime('%Y', datetime(1592228730, 'unixepoch')) AS INTEGER) AS INTEGER), CAST(CAST(strftime('%H', datetime(1592228730, 'unixepoch')) AS INTEGER) AS INTEGER), CAST(CAST(strftime('%s', datetime(1592228730, 'unixepoch')) AS INTEGER) AS INTEGER)
 PASS date_trunc_fields            same
@@ -307,7 +309,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 129 passing translated cases:
+MATRIX (construct, tier) from 130 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional

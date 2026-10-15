@@ -292,6 +292,16 @@ pub trait Target {
         Ok(None)
     }
 
+    /// `EXTRACT(EPOCH FROM clock_timestamp())`: the wall clock at the call, in seconds since the epoch
+    /// with the fraction. The default refuses; each target states how it reads its clock.
+    fn epoch_of_clock(&self, ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            "extract.epoch",
+            "no mapping for the per-call wall clock",
+            &["bind the time as a parameter"],
+        ))
+    }
+
     /// `ARRAY[..]`, elements printed. Default (PostgreSQL): exact; a target without an array type
     /// refuses the leaf `array_literal`.
     fn array_literal(&self, items: &[String], ctx: &mut Ctx) -> R<String> {

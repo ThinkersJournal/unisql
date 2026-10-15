@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.4 - 2026-10-15
+
+- **`EXTRACT(EPOCH FROM clock_timestamp())`** (PostgreSQL source) is mapped to the database server clock with
+  its fraction: `UNIX_TIMESTAMP(SYSDATE(3))` on MySQL/MariaDB (exact: read at the call), and
+  `unixepoch('now', 'subsec')` on SQLite behind the new allowance `clock_is_statement_start` (SQLite
+  reads the clock once per statement and needs 3.42+). Multiply by 1000 and cast for epoch milliseconds.
+  Differential cases against the real engines. No AST change.
+
 ## 0.24.3 - 2026-10-15
 
 - **`ORDER BY` a column the schema says is not text** (bytes, numbers, dates) no longer needs the
