@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.24.2 - 2026-10-15
 
 - **`ADDDATE(x, n)` / `SUBDATE(x, n)` with a plain number** (MySQL/MariaDB source) are read as
   `x +/- INTERVAL n DAY`, so the existing interval arithmetic applies on every target. Differential cases
