@@ -1,4 +1,4 @@
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=109
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=111
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -139,6 +139,10 @@ PASS date_add_interval          same
        -> SELECT "id" FROM "events" WHERE "at" < (datetime(CURRENT_TIMESTAMP, printf('%+f hours', (2))))
 PASS date_sub_interval          same
        -> SELECT "id" FROM "events" WHERE "at" > (datetime(CURRENT_TIMESTAMP, printf('%+f minutes', (-(5)))))
+PASS adddate_days               same
+       -> SELECT "id" FROM "events" WHERE "at" < (datetime(CURRENT_TIMESTAMP, printf('%+f days', (7))))
+PASS subdate_days               same
+       -> SELECT "id" FROM "events" WHERE "at" > (datetime(CURRENT_TIMESTAMP, printf('%+f days', (-(3)))))
 PASS refuse_date_add_month      refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
 PASS refuse_interval_month      refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
 PASS join_using                 same
@@ -192,7 +196,7 @@ PASS refuse_rollup              refused `group_by.rollup`: SQLite has no ROLLUP
 PASS refuse_bitxor              refused `bitwise.xor`: SQLite has no bitwise XOR operator (it would need the operands written twice)
 PASS refuse_regexp              refused `regexp`: SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)
 
-MATRIX (construct, tier) from 83 passing translated cases:
+MATRIX (construct, tier) from 85 passing translated cases:
   bitwise                      conditional
   cast.to_bigint               conditional
   cast.to_double               conditional
