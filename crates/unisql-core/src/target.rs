@@ -25,6 +25,9 @@ pub struct Ctx<'a> {
     /// Printed `ORDER BY` of the aggregate call being printed, for the function hook to consume.
     /// A hook that does not `take()` it cannot honour the order, and the printer then refuses.
     pub agg_order: Option<String>,
+    /// True while the ORDER BY item being printed is a column the schema says is not text (bytes,
+    /// numbers, dates): its ordering involves no text collation, so the target hook notes it `Exact`.
+    pub order_non_text: bool,
     /// True while a `make_interval(unit => n)` call is printed as the right side of `ts +/- ..`: the
     /// named notation is then only how PostgreSQL spells the interval, not a `named_arg` need.
     pub interval_notation: bool,
@@ -47,6 +50,7 @@ impl<'a> Ctx<'a> {
             in_upsert: false,
             upsert_table: None,
             agg_order: None,
+            order_non_text: false,
             interval_notation: false,
             array_params: Default::default(),
             scalar_params: Default::default(),

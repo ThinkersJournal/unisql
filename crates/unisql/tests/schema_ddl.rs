@@ -306,3 +306,25 @@ fn upsert_set_columns_are_qualified_with_the_table_but_a_subquerys_are_not() {
         t.sql
     );
 }
+
+#[test]
+fn ordering_a_bytes_column_needs_no_text_collation() {
+    use unisql::translate;
+    let d = schema_from_ddl(
+        "CREATE TABLE kv (k BYTEA PRIMARY KEY, v BYTEA NOT NULL, name TEXT)",
+        "postgres",
+    )
+    .unwrap();
+    let opts = Options::default().with_schema(d.schema);
+    let range = "SELECT k FROM kv WHERE k >= $1 AND k < $2 ORDER BY k LIMIT $3";
+    for target in ["sqlite", "mysql"] {
+        translate(range, "postgres", target, &opts).unwrap_or_else(|e| panic!("{target}: {e}"));
+        // a text column still orders by the target's collation
+        let err =
+            translate("SELECT k FROM kv ORDER BY name", "postgres", target, &opts).unwrap_err();
+        assert!(
+            err.to_string().contains("text_collation"),
+            "{target}: {err}"
+        );
+    }
+}

@@ -945,12 +945,16 @@ impl Target for Sqlite {
     }
 
     fn nulls_order(&self, desc: bool, nulls_first: bool, ctx: &mut Ctx) -> R<String> {
-        ctx.note(
-            "order_by",
-            Tier::Conditional,
-            "text ordering follows the target's collation (BINARY by default)",
-            Some(Allowance::TextCollation),
-        )?;
+        if ctx.order_non_text {
+            ctx.note("order_by", Tier::Exact, "non-text column", None)?;
+        } else {
+            ctx.note(
+                "order_by",
+                Tier::Conditional,
+                "text ordering follows the target's collation (BINARY by default)",
+                Some(Allowance::TextCollation),
+            )?;
+        }
         // SQLite default: NULLs sort as the smallest value (first ascending, last descending).
         let default_first = !desc;
         if nulls_first == default_first {
