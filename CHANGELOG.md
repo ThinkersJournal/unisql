@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.24.0 - 2026-10-15
 
 - **Breaking (`Target` trait):** `update_from_tier` is replaced by `dml_sources` (`DmlSources::FromClause`,
   `Join`, `UpdateFromOnly`). **Multi-table `UPDATE .. JOIN` and `DELETE t FROM .. JOIN`** (MySQL/MariaDB
