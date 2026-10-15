@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.23.0 - 2026-10-15
 
 - **Breaking (AST):** `UPDATE|DELETE .. ORDER BY .. LIMIT n` (MySQL/MariaDB source) is read into the IR
   (`Update` and `Delete` gain `order_by` and `limit`). Written natively on MySQL/MariaDB and as
