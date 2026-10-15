@@ -408,6 +408,13 @@ impl Target for Sqlite {
             _ => {}
         }
         match n {
+            // Math functions are a compile-time option of SQLite (the bundled build used by the
+            // differential suites has none), so a mapping cannot be verified.
+            "ceil" | "floor" => Err(ctx.refuse(
+                &format!("fn:{n}"),
+                "SQLite's ceil/floor exist only when it is built with its math functions",
+                &["round in the application"],
+            )),
             "strpos" if args.len() == 2 => {
                 ctx.note("fn:strpos", Tier::Exact, "-> instr(s, sub)", None)?;
                 Ok(format!("instr({}, {})", args[0], args[1]))

@@ -1399,6 +1399,24 @@ fn boxed(e: sp::Expr) -> R<Box<Expr>> {
     Ok(Box::new(expr(e)?))
 }
 
+fn ceil_floor(name: &str, x: sp::Expr, field: sp::CeilFloorKind) -> R<Expr> {
+    if !matches!(
+        field,
+        sp::CeilFloorKind::DateTimeField(sp::DateTimeField::NoDateTime)
+    ) {
+        return no("ceil_form", "CEIL/FLOOR(x TO unit) and the scale form");
+    }
+    Ok(Expr::Function(Function {
+        name: name.to_string(),
+        args: vec![FunctionArg::Expr(expr(x)?)],
+        distinct: false,
+        star: false,
+        filter: None,
+        over: None,
+        order_by: vec![],
+    }))
+}
+
 fn is_bool(x: sp::Expr, value: bool, negated: bool) -> R<Expr> {
     Ok(Expr::IsBool {
         expr: boxed(x)?,
@@ -1663,6 +1681,9 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 "CONVERT(.. USING charset), TRY_CONVERT and the target-first (MSSQL) form",
             );
         }
+        // `CEIL(x)` / `FLOOR(x)` of a number. `CEIL(x TO unit)` and the scale form are not mapped.
+        E::Ceil { expr: x, field } => ceil_floor("ceil", *x, field)?,
+        E::Floor { expr: x, field } => ceil_floor("floor", *x, field)?,
         // `POSITION(sub IN str)` is `strpos(str, sub)`.
         E::Position { expr: sub, r#in } => Expr::Function(Function {
             name: "strpos".to_string(),
@@ -2111,6 +2132,22 @@ fn function(f: sp::Function) -> R<Expr> {
     let mut name = base;
     if name == "current_timestamp" {
         name = "now".to_string();
+    }
+    // CEILING is CEIL; MOD(a, b) is `a % b`.
+    if name == "ceiling" {
+        name = "ceil".to_string();
+    }
+    if name == "mod" && out.len() == 2 {
+        let mut it = out.into_iter().map(|a| match a {
+            FunctionArg::Expr(e) => e,
+            FunctionArg::Named { value, .. } => value,
+        });
+        let (l, r) = (it.next().unwrap(), it.next().unwrap());
+        return Ok(Expr::Binary {
+            op: BinaryOp::Modulo,
+            left: Box::new(l),
+            right: Box::new(r),
+        });
     }
     if rules().name == "mysql" {
         match name.as_str() {

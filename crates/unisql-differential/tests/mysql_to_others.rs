@@ -188,6 +188,10 @@ fn cases(dir: Dir) -> Vec<Case> {
             "SELECT id, LOCATE('a', name), INSTR(name, 'a'), POSITION('a' IN name), LOCATE('zzz', name), INSTR(name, '') FROM users",
         ),
         c(
+            "mod_function",
+            "SELECT id, MOD(age, 7), MOD(-age, 7), age % 7 FROM users",
+        ),
+        c(
             "locate_null",
             "SELECT LOCATE(NULL, name), INSTR(NULL, 'a') FROM users WHERE id = 1",
         ),
@@ -560,6 +564,14 @@ fn cases(dir: Dir) -> Vec<Case> {
     ];
     if matches!(dir, Dir::MysqlToSqlite) {
         v.push(exp(
+            c("refuse_ceil", "SELECT CEIL(score) FROM users"),
+            Expect::Refused("fn:ceil"),
+        ));
+        v.push(exp(
+            c("refuse_floor", "SELECT FLOOR(score) FROM users"),
+            Expect::Refused("fn:floor"),
+        ));
+        v.push(exp(
             c("refuse_bitxor", "SELECT id ^ 1 FROM users"),
             Expect::Refused("bitwise.xor"),
         ));
@@ -583,6 +595,10 @@ fn cases(dir: Dir) -> Vec<Case> {
             "SELECT id, REVERSE(name) FROM users ORDER BY id",
         ));
         v.push(c("bitxor", "SELECT id, id ^ 1 FROM users ORDER BY id"));
+        v.push(c(
+            "ceil_floor",
+            "SELECT id, CEIL(score), CEILING(score), FLOOR(score), FLOOR(-score) FROM users",
+        ));
         v.push(c(
             "regexp",
             "SELECT id FROM users WHERE city REGEXP '^O.l' OR name RLIKE 'a$'",

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=129
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=131
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -17,6 +17,10 @@ PASS regexp_match                 same
        -> SELECT `id` FROM `users` WHERE (`city` REGEXP '^O.l') OR (`name` NOT REGEXP 'a$')
 PASS bitwise_ops                  same
        -> SELECT `id`, `id` & 3, `id` | 4, `id` ^ 1, `id` << 1, `id` >> 1 FROM `users` ORDER BY (`id` IS NULL), `id`
+PASS ceil_floor                   same
+       -> SELECT `id`, CEIL(`score`), CEIL(`score`), FLOOR(`score`), FLOOR(-`score`) FROM `users`
+PASS mod_function                 same
+       -> SELECT `id`, `age` % 7, (-`age`) % 7 FROM `users`
 PASS strpos_position              same
        -> SELECT `id`, INSTR(`name`, 'a'), INSTR(`name`, 'a'), INSTR(`name`, 'zzz'), INSTR(`name`, '') FROM `users`
 PASS in_list                      same
@@ -227,7 +231,7 @@ PASS refuse_table_function        refused `table_function.generate_series`: MySQ
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 97 passing translated cases:
+MATRIX (construct, tier) from 99 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -248,6 +252,7 @@ MATRIX (construct, tier) from 97 passing translated cases:
   extract.year                 exact
   fn:avg                       exact
   fn:btrim                     emulated
+  fn:ceil                      exact
   fn:char_length               emulated
   fn:coalesce                  exact
   fn:count                     exact
@@ -257,6 +262,7 @@ MATRIX (construct, tier) from 97 passing translated cases:
   fn:date_trunc.minute         exact
   fn:date_trunc.month          exact
   fn:date_trunc.year           exact
+  fn:floor                     exact
   fn:gen_random_uuid           emulated
   fn:length                    emulated
   fn:ltrim                     exact

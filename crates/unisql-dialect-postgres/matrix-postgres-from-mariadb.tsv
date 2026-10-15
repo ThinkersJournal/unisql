@@ -13,6 +13,7 @@ construct	division.decimal_division_as_float	postgres	16.15	lc_collate=C;schema=
 construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=division_by_zero_is_null	mariadb
 construct	division_integer	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=integer_division_assumed	mariadb
 construct	division_integer.integer_division_assumed	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	allowance=integer_division_assumed	mariadb
+construct	fn:ceil	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ceil_floor		mariadb
 construct	fn:char_length	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::length_is_bytes		mariadb
 construct	fn:coalesce	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ifnull_concat_if		mariadb
 construct	fn:concat_ws	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::concat_ws_skips_null		mariadb
@@ -23,6 +24,7 @@ construct	fn:date.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier
 construct	fn:date_format	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_date_format	no verified mapping for this function on PostgreSQL yet	mariadb
 construct	fn:datediff	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::datediff_literals	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
 construct	fn:datediff.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::datediff_literals	allowance=lenient_cast	mariadb
+construct	fn:floor	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::ceil_floor		mariadb
 construct	fn:left	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::left_right_literal		mariadb
 construct	fn:left.length	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_left_column	LEFT(s, n) with a negative n differs between the engines; only a literal n >= 0 is mapped	mariadb
 construct	fn:locate	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_locate_start	no verified mapping for this function on PostgreSQL yet	mariadb
