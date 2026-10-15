@@ -184,6 +184,21 @@ fn cases(dir: Dir) -> Vec<Case> {
             "SELECT id FROM users WHERE (age > 30) IS NOT FALSE",
         ),
         c(
+            "locate_instr_position",
+            "SELECT id, LOCATE('a', name), INSTR(name, 'a'), POSITION('a' IN name), LOCATE('zzz', name), INSTR(name, '') FROM users",
+        ),
+        c(
+            "locate_null",
+            "SELECT LOCATE(NULL, name), INSTR(NULL, 'a') FROM users WHERE id = 1",
+        ),
+        exp(
+            c(
+                "refuse_locate_start",
+                "SELECT LOCATE('a', name, 2) FROM users",
+            ),
+            Expect::Refused("fn:locate"),
+        ),
+        c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
         ),

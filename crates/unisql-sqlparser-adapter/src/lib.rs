@@ -1663,6 +1663,19 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 "CONVERT(.. USING charset), TRY_CONVERT and the target-first (MSSQL) form",
             );
         }
+        // `POSITION(sub IN str)` is `strpos(str, sub)`.
+        E::Position { expr: sub, r#in } => Expr::Function(Function {
+            name: "strpos".to_string(),
+            args: vec![
+                FunctionArg::Expr(expr(*r#in)?),
+                FunctionArg::Expr(expr(*sub)?),
+            ],
+            distinct: false,
+            star: false,
+            filter: None,
+            over: None,
+            order_by: vec![],
+        }),
         E::Trim {
             trim_where,
             trim_what,
@@ -2116,6 +2129,19 @@ fn function(f: sp::Function) -> R<Expr> {
             }
             // MySQL LENGTH() counts bytes.
             "length" => name = "octet_length".to_string(),
+            // `LOCATE(sub, str)` and `INSTR(str, sub)` are `strpos(str, sub)`: 1-based, 0 when absent,
+            // NULL when either is NULL. The three-argument LOCATE (start position) is not mapped.
+            "locate" | "instr" if out.len() == 2 => {
+                if name == "locate" {
+                    out.swap(0, 1);
+                }
+                name = "strpos".to_string();
+                add_note(
+                    "fn:strpos",
+                    "the source LOCATE/INSTR compare by the column collation (case-insensitive unless binary)",
+                    Allowance::TextCollation,
+                );
+            }
             "concat" if out.len() >= 2 => {
                 let mut it = out.into_iter().map(|a| match a {
                     FunctionArg::Expr(e) => e,
@@ -2147,6 +2173,7 @@ fn function(f: sp::Function) -> R<Expr> {
     if rules().name == "sqlite" {
         match name.as_str() {
             "ifnull" => name = "coalesce".to_string(),
+            "instr" if out.len() == 2 => name = "strpos".to_string(),
             "group_concat" => {
                 name = "string_agg".to_string();
                 if out.len() == 1 {

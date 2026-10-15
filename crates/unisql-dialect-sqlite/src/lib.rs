@@ -230,6 +230,11 @@ impl Target for Sqlite {
                 ctx.note("fn:now", Tier::Exact, "", None)?;
                 return Ok("CURRENT_TIMESTAMP".to_string());
             }
+            // The reader normalised `instr` to `strpos`; SQLite spells it back.
+            if n == "strpos" && args.len() == 2 {
+                ctx.note("fn:strpos", Tier::Exact, "", None)?;
+                return Ok(format!("instr({}, {})", args[0], args[1]));
+            }
             // Same dialect in and out: the reader accepted the name, so this is the identity.
             ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
             let order = ctx.agg_order.take();
@@ -403,6 +408,10 @@ impl Target for Sqlite {
             _ => {}
         }
         match n {
+            "strpos" if args.len() == 2 => {
+                ctx.note("fn:strpos", Tier::Exact, "-> instr(s, sub)", None)?;
+                Ok(format!("instr({}, {})", args[0], args[1]))
+            }
             "min" | "max" => {
                 ctx.note(
                     format!("fn:{n}"),

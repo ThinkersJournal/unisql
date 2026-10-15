@@ -2,6 +2,16 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased
+
+- **String search with verified mappings** (differential cases against the real engines): MySQL/MariaDB
+  `LOCATE(sub, str)` and `INSTR(str, sub)`, standard `POSITION(sub IN str)` and PostgreSQL
+  `strpos(str, sub)` are read as one IR call, `strpos`, and written as `strpos` (PostgreSQL),
+  `instr` (SQLite) and `INSTR` (MySQL/MariaDB). From a MySQL/MariaDB source the translation is
+  conditional on `text_collation` (their comparison follows the column collation). The
+  three-argument `LOCATE` (start position) is refused (`fn:locate`). SQLite `instr` now translates
+  (it was refused). No AST change.
+
 ## 0.20.3 - 2026-10-15
 
 - Docs only: `docs/DESIGN.md` is restated as a plain design rationale (decisions with their reasons;

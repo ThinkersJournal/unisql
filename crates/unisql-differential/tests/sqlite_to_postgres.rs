@@ -151,6 +151,11 @@ fn cases() -> Vec<Case> {
             &[A::BitwiseNonNegativeIntegers],
         ),
         c(
+            "instr",
+            "SELECT id, instr(name, 'a'), instr(name, 'zzz'), instr(name, '') FROM users",
+            &[],
+        ),
+        c(
             "in_between",
             "SELECT id FROM users WHERE id IN (1,3,5) AND age BETWEEN 25 AND 41",
             COLL,
@@ -404,10 +409,6 @@ fn cases() -> Vec<Case> {
         exp(
             c("refuse_strftime", "SELECT strftime('%Y', 'now')", &[]),
             Expect::Refused("fn:strftime"),
-        ),
-        exp(
-            c("refuse_instr", "SELECT instr(name, 'a') FROM users", &[]),
-            Expect::Refused("fn:instr"),
         ),
         // ---- not in the IR
         exp(

@@ -547,6 +547,9 @@ pub const PORTABLE_FUNCTIONS: &[&str] = &[
     "first_value",
     "last_value",
     "nth_value",
+    // `strpos(haystack, needle)`: the IR name for MySQL `LOCATE`/`INSTR`, `POSITION(.. IN ..)` and
+    // SQLite `instr`; each writer spells it natively or refuses.
+    "strpos",
 ];
 
 pub fn generic_call(name: &str, args: &[String], distinct: bool, star: bool) -> String {

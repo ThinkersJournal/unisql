@@ -13,7 +13,6 @@ construct	fn:coalesce	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;s
 construct	fn:count	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite
 construct	fn:current_date	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	diverges from the strict contract unless accepted: allowance=date_as_text	sqlite
 construct	fn:current_date.date_as_text	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::current_date_text	allowance=date_as_text	sqlite
-construct	fn:instr	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_instr	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:length	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
 construct	fn:lower	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
 construct	fn:ltrim	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
@@ -27,6 +26,7 @@ construct	fn:replace	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;su
 construct	fn:strftime	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_strftime	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:string_agg	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_default		sqlite
 construct	fn:string_agg.order_by	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::group_concat_ordered		sqlite
+construct	fn:strpos	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::instr		sqlite
 construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::aggregates		sqlite
 construct	fn:typeof	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_typeof	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:upper	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
