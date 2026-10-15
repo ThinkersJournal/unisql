@@ -151,6 +151,12 @@ pub trait Target {
         format!("'{}'", s.replace('\'', "''"))
     }
 
+    /// A byte-string literal. PostgreSQL has no hex literal of this type, so it casts an escape string.
+    fn bytes_literal(&self, b: &[u8]) -> String {
+        let hex: String = b.iter().map(|x| format!("{x:02x}")).collect();
+        format!("'\\x{hex}'::bytea")
+    }
+
     /// Placeholder text for the 1-based parameter `n`.
     fn placeholder(&self, n: u32) -> String {
         format!("${n}")

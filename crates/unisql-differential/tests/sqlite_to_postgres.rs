@@ -80,6 +80,11 @@ fn cases() -> Vec<Case> {
     let like = [A::LikeCaseSensitivityIsConnectionSetting];
     let kvs = "SELECT key, value, n FROM kv ORDER BY key";
     vec![
+        c(
+            "hex_literal_compare",
+            "SELECT id, X'41' = X'41', x'41' = x'42', X'4142' = x'4142' FROM users",
+            &[],
+        ),
         // ---- placeholders in every SQLite form
         p(
             c(

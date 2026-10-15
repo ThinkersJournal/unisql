@@ -184,6 +184,10 @@ fn cases() -> Vec<Case> {
             c("refuse_floor", "SELECT floor(score) FROM users", &[]),
             Expect::Refused("fn:floor"),
         ),
+        exp(
+            c("refuse_bit_string", "SELECT X'41' FROM users", &[]),
+            Expect::NotInIr("hex_literal"),
+        ),
         c(
             "mod_function",
             "SELECT id, mod(age, 7), mod(-age, 7) FROM users",

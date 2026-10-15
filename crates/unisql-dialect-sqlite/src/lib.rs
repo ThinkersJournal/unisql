@@ -26,6 +26,11 @@ impl Target for Sqlite {
         "sqlite"
     }
 
+    fn bytes_literal(&self, b: &[u8]) -> String {
+        let hex: String = b.iter().map(|x| format!("{x:02X}")).collect();
+        format!("X'{hex}'")
+    }
+
     fn placeholder(&self, n: u32) -> String {
         // Numbered, so a source `$2, $1` or a reused `$1` binds without reordering.
         format!("?{n}")

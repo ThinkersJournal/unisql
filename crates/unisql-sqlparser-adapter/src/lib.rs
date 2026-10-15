@@ -1601,6 +1601,27 @@ fn expr(e: sp::Expr) -> R<Expr> {
                     );
                 }
             };
+            let is_hex = |e: &E| matches!(e, E::Value(v) if matches!(v.value, sp::Value::HexStringLiteral(_)));
+            if (is_hex(&left) || is_hex(&right))
+                && !matches!(
+                    op,
+                    BinaryOp::Eq
+                        | BinaryOp::NotEq
+                        | BinaryOp::Lt
+                        | BinaryOp::LtEq
+                        | BinaryOp::Gt
+                        | BinaryOp::GtEq
+                        | BinaryOp::NullSafeEq
+                        | BinaryOp::And
+                        | BinaryOp::Or
+                        | BinaryOp::Xor
+                )
+            {
+                return no(
+                    "hex_literal_numeric",
+                    "a hex literal is a byte string; MySQL `0x41 + 1` reads it as the number 65, so arithmetic on it is not mapped",
+                );
+            }
             if op == BinaryOp::Divide && rules().name == "mysql" {
                 add_note(
                     "division",
@@ -1934,6 +1955,27 @@ fn value(v: sp::Value) -> R<Expr> {
         sp::Value::SingleQuotedString(s) => Expr::Literal(Literal::String(s)),
         // The tokenizer has already resolved the backslash escapes of `E'..'`.
         sp::Value::EscapedStringLiteral(s) => Expr::Literal(Literal::String(s)),
+        // PostgreSQL's `X'..'` is a bit string, not bytes; MySQL and SQLite read it as a byte string.
+        sp::Value::HexStringLiteral(h) if rules().name == "postgres" => {
+            return no(
+                "hex_literal",
+                &format!("X'{h}' is a bit string on PostgreSQL; write '\\x{h}'::bytea"),
+            );
+        }
+        sp::Value::HexStringLiteral(h) => {
+            if h.is_empty() || h.len() % 2 != 0 || !h.bytes().all(|c| c.is_ascii_hexdigit()) {
+                return no(
+                    "hex_literal",
+                    &format!("`{h}` is not an even-length run of hex digits"),
+                );
+            }
+            let bytes = (0..h.len())
+                .step_by(2)
+                .map(|i| u8::from_str_radix(&h[i..i + 2], 16))
+                .collect::<Result<Vec<u8>, _>>()
+                .or_else(|_| no("hex_literal", "invalid hex digits"))?;
+            Expr::Literal(Literal::Bytes(bytes))
+        }
         sp::Value::Boolean(b) if rules().name == "mysql" => {
             // MySQL TRUE/FALSE are the integers 1 and 0.
             Expr::Literal(Literal::Number(if b { "1" } else { "0" }.into()))

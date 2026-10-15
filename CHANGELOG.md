@@ -2,6 +2,15 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased
+
+- **Breaking:** hex string literals are read into the IR (`Literal::Bytes`, an AST break: `Literal` gains a
+  variant). `X'41'` and MySQL `0x41` on MySQL/MariaDB, `X'41'` on SQLite. Written as `X'41'` on
+  MySQL/MariaDB and SQLite and as `'A'::bytea` on PostgreSQL. PostgreSQL's `X'..'` is a bit string and
+  is refused (`hex_literal`), as is an odd-length or non-hex body. Arithmetic or bitwise use
+  (`0x41 + 1`, which MySQL reads as the number 65) is refused (`hex_literal_numeric`). Bit literals
+  (`b'101'`) remain unread.
+
 ## 0.21.0 - 2026-10-15
 
 - **Breaking:** MySQL/MariaDB `GROUP BY a, b WITH ROLLUP` is read into the IR (`Select.group_by_rollup`, an AST
