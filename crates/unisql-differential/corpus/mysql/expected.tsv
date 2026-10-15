@@ -38,7 +38,7 @@ last_insert_id	function	curated	ok	ok	refused:fn:last_insert_id	refused:fn:last_
 found_rows	function	curated	ok	ok	not_in_ir:select_clause	not_in_ir:select_clause	not_in_ir:select_clause
 row_count	function	curated	ok	ok	refused:fn:row_count	refused:fn:row_count	refused:fn:row_count
 cast_signed	function	curated	ok	ok	conditional:lenient_cast	conditional:lenient_cast	conditional:lenient_cast
-cast_char	function	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
+cast_char	function	curated	ok	ok	conditional:lenient_cast	conditional:lenient_cast	conditional:lenient_cast
 cast_decimal	function	curated	ok	ok	conditional:lenient_cast	conditional:lenient_cast	conditional:lenient_cast
 cast_date	function	curated	ok	ok	conditional:lenient_cast	refused:cast.to_date	conditional:lenient_cast
 coalesce	function	curated	ok	ok	translated	translated	translated

@@ -1644,6 +1644,25 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 ty: data_type_to_ir(&data_type)?,
             }
         }
+        // MySQL `CONVERT(expr, type)` is `CAST(expr AS type)`; `CONVERT(expr USING cs)` converts the
+        // character set, which is not a cast.
+        E::Convert {
+            is_try: false,
+            expr: x,
+            data_type: Some(data_type),
+            charset: None,
+            target_before_value: false,
+            styles,
+        } if styles.is_empty() => Expr::Cast {
+            expr: boxed(*x)?,
+            ty: data_type_to_ir(&data_type)?,
+        },
+        E::Convert { .. } => {
+            return no(
+                "convert_form",
+                "CONVERT(.. USING charset), TRY_CONVERT and the target-first (MSSQL) form",
+            );
+        }
         E::Trim {
             trim_where,
             trim_what,
