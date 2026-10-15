@@ -301,7 +301,11 @@ impl Printer<'_> {
                 .iter()
                 .map(|e| self.expr(e, c))
                 .collect::<R<Vec<_>>>()?;
-            out.push_str(&format!(" GROUP BY {}", g.join(", ")));
+            if s.group_by_rollup {
+                out.push_str(&format!(" GROUP BY {}", self.t.group_by_rollup(&g, c)?));
+            } else {
+                out.push_str(&format!(" GROUP BY {}", g.join(", ")));
+            }
         }
         if let Some(h) = &s.having {
             out.push_str(&format!(" HAVING {}", self.expr(h, c)?));

@@ -98,6 +98,9 @@ pub struct Select {
     pub from: Vec<TableRef>,
     pub where_: Option<Expr>,
     pub group_by: Vec<Expr>,
+    /// MySQL `GROUP BY a, b WITH ROLLUP` / PostgreSQL `GROUP BY ROLLUP (a, b)`: `group_by` holds the
+    /// keys, and the grouping also yields one subtotal row per key prefix and a grand total.
+    pub group_by_rollup: bool,
     pub having: Option<Expr>,
     pub lock: Option<RowLockClause>,
 }

@@ -564,12 +564,20 @@ fn cases(dir: Dir) -> Vec<Case> {
     ];
     if matches!(dir, Dir::MysqlToSqlite) {
         v.push(exp(
+<<<<<<< HEAD
             c("refuse_ceil", "SELECT CEIL(score) FROM users"),
             Expect::Refused("fn:ceil"),
         ));
         v.push(exp(
             c("refuse_floor", "SELECT FLOOR(score) FROM users"),
             Expect::Refused("fn:floor"),
+=======
+            c(
+                "refuse_rollup",
+                "SELECT user_id, SUM(amount) FROM orders GROUP BY user_id WITH ROLLUP",
+            ),
+            Expect::Refused("group_by.rollup"),
+>>>>>>> f283287 (Read MySQL GROUP BY .. WITH ROLLUP (Select.group_by_rollup, AST break))
         ));
         v.push(exp(
             c("refuse_bitxor", "SELECT id ^ 1 FROM users"),
@@ -596,8 +604,13 @@ fn cases(dir: Dir) -> Vec<Case> {
         ));
         v.push(c("bitxor", "SELECT id, id ^ 1 FROM users ORDER BY id"));
         v.push(c(
+<<<<<<< HEAD
             "ceil_floor",
             "SELECT id, CEIL(score), CEILING(score), FLOOR(score), FLOOR(-score) FROM users",
+=======
+            "rollup",
+            "SELECT user_id, status, SUM(amount), COUNT(*) FROM orders GROUP BY user_id, status WITH ROLLUP",
+>>>>>>> f283287 (Read MySQL GROUP BY .. WITH ROLLUP (Select.group_by_rollup, AST break))
         ));
         v.push(c(
             "regexp",

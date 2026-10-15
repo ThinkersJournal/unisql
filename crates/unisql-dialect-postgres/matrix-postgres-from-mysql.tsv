@@ -53,6 +53,7 @@ construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=
 construct	fn:utc_date	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::utc_date_text		mysql
 construct	fn:utc_timestamp	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::utc_timestamp6_window		mysql
 construct	fn:utc_timestamp.precision	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_utc_timestamp_precision	only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified (whole seconds, microseconds)	mysql
+construct	group_by.rollup	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::rollup		mysql
 construct	insert_ignore	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
 construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
 construct	interval_arithmetic	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::interval_hours_plus		mysql

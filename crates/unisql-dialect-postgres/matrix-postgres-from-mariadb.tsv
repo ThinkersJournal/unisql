@@ -53,6 +53,7 @@ construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=
 construct	fn:utc_date	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::utc_date_text		mariadb
 construct	fn:utc_timestamp	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::utc_timestamp6_window		mariadb
 construct	fn:utc_timestamp.precision	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_utc_timestamp_precision	only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified (whole seconds, microseconds)	mariadb
+construct	group_by.rollup	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::rollup		mariadb
 construct	insert_ignore	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mariadb
 construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mariadb
 construct	interval_arithmetic	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::interval_hours_plus		mariadb

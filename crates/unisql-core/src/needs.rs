@@ -235,6 +235,9 @@ impl Walk<'_> {
         if let Some(e) = &s.where_ {
             self.expr(e);
         }
+        if s.group_by_rollup {
+            self.add("group_by.rollup");
+        }
         s.group_by.iter().for_each(|e| self.expr(e));
         if let Some(e) = &s.having {
             self.expr(e);

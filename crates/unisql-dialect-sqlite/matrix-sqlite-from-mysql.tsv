@@ -57,6 +57,7 @@ construct	fn:utc_timestamp	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sql
 construct	fn:utc_timestamp.precision	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_utc_timestamp_precision	only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified	mysql
 construct	fn:utc_timestamp.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_timestamp6_window	allowance=timestamp_as_text	mysql
 construct	fn:utc_timestamp.timestamp_millisecond_resolution	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::utc_timestamp6_window	allowance=timestamp_millisecond_resolution	mysql
+construct	group_by.rollup	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_rollup	SQLite has no ROLLUP	mysql
 construct	insert_ignore	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
 construct	insert_ignore.ignore_covers_only_unique_conflicts	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
 construct	interval_arithmetic	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql

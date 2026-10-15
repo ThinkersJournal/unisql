@@ -235,6 +235,13 @@ pub trait Target {
         ctx.note("distinct_on", Tier::Exact, "", None)
     }
 
+    /// The body of a `GROUP BY` with `WITH ROLLUP`, keys printed. Default (PostgreSQL):
+    /// `ROLLUP (a, b)`, exact.
+    fn group_by_rollup(&self, keys: &[String], ctx: &mut Ctx) -> R<String> {
+        ctx.note("group_by.rollup", Tier::Exact, "", None)?;
+        Ok(format!("ROLLUP ({})", keys.join(", ")))
+    }
+
     /// `a <=> b` (null-safe equality), operands printed. Default (PostgreSQL): `IS NOT DISTINCT FROM`.
     fn null_safe_eq(&self, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
         ctx.note("null_safe_eq", Tier::Exact, "", None)?;
