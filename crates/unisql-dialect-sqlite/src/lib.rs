@@ -591,6 +591,16 @@ impl Target for Sqlite {
     }
 
     fn cast(&self, expr: &str, ty: &SqlType, ctx: &mut Ctx) -> R<String> {
+        // `CAST(x AS VARCHAR(n))` truncates to n characters; SQLite's TEXT affinity does not.
+        if let SqlType::Varchar(Some(n)) = ty {
+            ctx.note(
+                "cast.to_text",
+                Tier::Emulated,
+                "substr(CAST(x AS TEXT), 1, n): SQLite has no length-limited cast",
+                None,
+            )?;
+            return Ok(format!("SUBSTR(CAST({expr} AS TEXT), 1, {n})"));
+        }
         let name = match ty {
             SqlType::SmallInt | SqlType::Integer | SqlType::BigInt => "INTEGER",
             SqlType::Real | SqlType::Double => "REAL",

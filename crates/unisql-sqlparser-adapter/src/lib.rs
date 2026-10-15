@@ -2575,6 +2575,14 @@ fn data_type_to_ir(t: &sp::DataType) -> R<SqlType> {
         D::Text => SqlType::Text,
         D::Signed | D::SignedInteger | D::Unsigned | D::UnsignedInteger => SqlType::BigInt,
         D::Char(None) | D::Character(None) => SqlType::Text,
+        // MySQL `CAST(x AS CHAR(n))` truncates to n characters without padding: a varchar(n) cast.
+        // PostgreSQL's `char(n)` pads, so it stays refused there.
+        D::Char(Some(sp::CharacterLength::IntegerLength { length, unit: None }))
+        | D::Character(Some(sp::CharacterLength::IntegerLength { length, unit: None }))
+            if rules().name == "mysql" =>
+        {
+            SqlType::Varchar(Some(*length as u32))
+        }
         D::Datetime(None) => SqlType::Timestamp { with_tz: false },
         D::Varchar(None) | D::CharVarying(None) => SqlType::Varchar(None),
         D::Varchar(Some(sp::CharacterLength::IntegerLength { length, unit: None }))

@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.1 - 2026-10-15
+
+- MySQL/MariaDB `CAST(x AS CHAR(n))` is read as a varchar(n) cast (truncates, no padding). Written as
+  `CHAR(n)` on MySQL/MariaDB, `VARCHAR(n)` on PostgreSQL and `SUBSTR(CAST(x AS TEXT), 1, n)` on SQLite.
+  `CONVERT(.. USING charset)` stays refused (`convert_form`). Differential cases against the real engines.
+
 ## 0.24.0 - 2026-10-15
 
 - **Breaking (`Target` trait):** `update_from_tier` is replaced by `dml_sources` (`DmlSources::FromClause`,

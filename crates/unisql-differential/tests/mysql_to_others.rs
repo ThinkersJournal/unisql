@@ -308,6 +308,17 @@ fn cases(dir: Dir) -> Vec<Case> {
             "cast_forms",
             "SELECT CAST(id AS SIGNED), CAST(id AS CHAR) FROM users WHERE id = 1",
         ),
+        c(
+            "cast_char_length",
+            "SELECT CAST(name AS CHAR(3)), CAST(name AS CHAR(64)), CAST(id AS CHAR(1)) FROM users WHERE id = 1",
+        ),
+        exp(
+            c(
+                "refuse_convert_using",
+                "SELECT CONVERT(name USING utf8mb4) FROM users",
+            ),
+            Expect::NotInIr("convert_form"),
+        ),
         // ---- LIKE (default escape is a backslash, as in PostgreSQL)
         c("like_prefix", "SELECT name FROM users WHERE name LIKE 'a%'"),
         c(

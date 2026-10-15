@@ -5,8 +5,8 @@ construct	cast.to_bigint	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=
 construct	cast.to_bigint.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cast_forms	allowance=lenient_cast	mysql
 construct	cast.to_double	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
 construct	cast.to_double.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=lenient_cast	mysql
-construct	cast.to_text	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
-construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cast_forms	allowance=lenient_cast	mysql
+construct	cast.to_text	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::cast_char_length	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
+construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cast_char_length	allowance=lenient_cast	mysql
 construct	concat	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::ifnull_concat_if		mysql
 construct	delete_limit	postgres	16.15	lc_collate=C;schema=none	yes		tier=emulated;suite=mysql-to-postgres;test=mysql-to-postgres::delete_order_limit		mysql
 construct	delete_using	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::delete_join		mysql
