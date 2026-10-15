@@ -4,6 +4,11 @@ One version number for every crate in the workspace. Pre-1.0, the second number 
 
 ## 0.20.4 - 2026-10-15
 
+- **`CEIL`/`CEILING`/`FLOOR` and `MOD(a, b)`** (differential cases against the real engines):
+  `CEIL(x)`, `CEILING(x)` and `FLOOR(x)` are one IR call each (`ceil`, `floor`), written natively on
+  PostgreSQL and MySQL/MariaDB and refused on SQLite (`fn:ceil`, `fn:floor`: its math functions are a
+  compile-time option, so a mapping cannot be verified). `MOD(a, b)` is read as `a % b`. The unit and
+  scale forms (`CEIL(x TO DAY)`) are refused by the reader (`ceil_form`). No AST change.
 - **String search with verified mappings** (differential cases against the real engines): MySQL/MariaDB
   `LOCATE(sub, str)` and `INSTR(str, sub)`, standard `POSITION(sub IN str)` and PostgreSQL
   `strpos(str, sub)` are read as one IR call, `strpos`, and written as `strpos` (PostgreSQL),

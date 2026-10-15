@@ -550,6 +550,9 @@ pub const PORTABLE_FUNCTIONS: &[&str] = &[
     // `strpos(haystack, needle)`: the IR name for MySQL `LOCATE`/`INSTR`, `POSITION(.. IN ..)` and
     // SQLite `instr`; each writer spells it natively or refuses.
     "strpos",
+    // `ceil` / `floor` of a number (the reader normalises CEILING).
+    "ceil",
+    "floor",
 ];
 
 pub fn generic_call(name: &str, args: &[String], distinct: bool, star: bool) -> String {

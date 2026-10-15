@@ -281,6 +281,10 @@ impl Target for Mysql {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
                 Ok(call(n, args))
             }
+            "ceil" | "floor" if args.len() == 1 => {
+                ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+                Ok(format!("{}({})", n.to_uppercase(), args[0]))
+            }
             "strpos" if args.len() == 2 => {
                 ctx.note(
                     "fn:strpos",

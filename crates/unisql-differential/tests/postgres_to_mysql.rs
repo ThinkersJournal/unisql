@@ -160,6 +160,14 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id, id & 3, id | 4, id # 1, id << 1, id >> 1 FROM users ORDER BY id",
         ),
         c(
+            "ceil_floor",
+            "SELECT id, ceil(score), ceiling(score), floor(score), floor(-score) FROM users",
+        ),
+        c(
+            "mod_function",
+            "SELECT id, mod(age, 7), mod(-age, 7) FROM users",
+        ),
+        c(
             "strpos_position",
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
         ),

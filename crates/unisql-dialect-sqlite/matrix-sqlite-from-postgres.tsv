@@ -47,6 +47,7 @@ construct	extract.year.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=con
 construct	filter_clause	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	fn:avg	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast		postgres
 construct	fn:btrim	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::btrim_forms		postgres
+construct	fn:ceil	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_ceil	SQLite's ceil/floor exist only when it is built with its math functions	postgres
 construct	fn:char_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::char_length		postgres
 construct	fn:coalesce	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::coalesce_nullif		postgres
 construct	fn:convert_to	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_sha256	SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume	postgres
@@ -66,6 +67,7 @@ construct	fn:date_trunc.month.timestamp_as_text	sqlite	3.53.2	schema=none	yes		t
 construct	fn:date_trunc.week	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_date_trunc_week	no verified mapping for date_trunc('week', ..) on SQLite yet	postgres
 construct	fn:date_trunc.year	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
 construct	fn:date_trunc.year.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	allowance=timestamp_as_text	postgres
+construct	fn:floor	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_floor	SQLite's ceil/floor exist only when it is built with its math functions	postgres
 construct	fn:gen_random_uuid	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::gen_random_uuid_v4		postgres
 construct	fn:lag	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres
 construct	fn:lead	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::win_lag_lead		postgres

@@ -96,7 +96,7 @@ upper_lower	string	curated	ok	ok	translated	conditional:ascii_only_case_folding	
 replace_func	string	curated	ok	ok	translated	translated	translated
 md5_sha	string	curated	ok	ok	refused:fn:md5	refused:fn:md5	refused:fn:sha1
 uuid_func	function	curated	ok	ok	refused:fn:uuid	refused:fn:uuid	refused:fn:uuid
-math_funcs	function	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
+math_funcs	function	curated	ok	ok	refused:fn:round	refused:fn:ceil	refused:fn:round
 sleep_func	function	curated	ok	ok	refused:fn:sleep	refused:fn:sleep	refused:fn:sleep
 version_func	function	curated	ok	ok	refused:fn:version	refused:fn:version	refused:fn:version
 set_variable	session	curated	ok	ok	not_in_ir:statement	not_in_ir:statement	not_in_ir:statement

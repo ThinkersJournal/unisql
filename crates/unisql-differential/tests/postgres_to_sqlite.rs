@@ -176,6 +176,19 @@ fn cases() -> Vec<Case> {
             ),
             Expect::Refused("bitwise.xor"),
         ),
+        exp(
+            c("refuse_ceil", "SELECT ceil(score) FROM users", &[]),
+            Expect::Refused("fn:ceil"),
+        ),
+        exp(
+            c("refuse_floor", "SELECT floor(score) FROM users", &[]),
+            Expect::Refused("fn:floor"),
+        ),
+        c(
+            "mod_function",
+            "SELECT id, mod(age, 7), mod(-age, 7) FROM users",
+            &[A::DivisionByZeroIsNull],
+        ),
         c(
             "strpos_position",
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",

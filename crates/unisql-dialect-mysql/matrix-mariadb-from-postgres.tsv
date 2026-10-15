@@ -36,6 +36,7 @@ construct	extract.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		ti
 construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
 construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::btrim_default		postgres
+construct	fn:ceil	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
 construct	fn:char_length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::escape_string_literal		postgres
 construct	fn:coalesce	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
 construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
@@ -48,6 +49,7 @@ construct	fn:date_trunc.minute	mariadb	11.4.13	collation=utf8mb4_bin;schema=none
 construct	fn:date_trunc.month	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	fn:date_trunc.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_date_trunc_week	no verified mapping for date_trunc('week', ..) on MySQL/MariaDB yet	postgres
 construct	fn:date_trunc.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:floor	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
 construct	fn:gen_random_uuid	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::gen_random_uuid_v4		postgres
 construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
