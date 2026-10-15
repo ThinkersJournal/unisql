@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=92
-=======
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=87
->>>>>>> f283287 (Read MySQL GROUP BY .. WITH ROLLUP (Select.group_by_rollup, AST break))
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=93
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -167,12 +163,9 @@ PASS refuse_left_negative       refused `fn:left.length`: LEFT(s, n) is mapped o
 PASS refuse_left_column         refused `fn:left.length`: LEFT(s, n) is mapped only for a literal n >= 0
 PASS refuse_utc_timestamp_precision refused `fn:utc_timestamp.precision`: only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on SQLite yet
-<<<<<<< HEAD
 PASS refuse_ceil                refused `fn:ceil`: SQLite's ceil/floor exist only when it is built with its math functions
 PASS refuse_floor               refused `fn:floor`: SQLite's ceil/floor exist only when it is built with its math functions
-=======
 PASS refuse_rollup              refused `group_by.rollup`: SQLite has no ROLLUP
->>>>>>> f283287 (Read MySQL GROUP BY .. WITH ROLLUP (Select.group_by_rollup, AST break))
 PASS refuse_bitxor              refused `bitwise.xor`: SQLite has no bitwise XOR operator (it would need the operands written twice)
 PASS refuse_regexp              refused `regexp`: SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)
 
