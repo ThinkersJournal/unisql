@@ -46,7 +46,7 @@ nullif	function	curated	ok	ok	translated	translated	translated
 case_expr	expression	curated	ok	ok	translated	translated	translated
 mod_div	expression	curated	ok	ok	syntax	syntax	syntax
 xor	expression	curated	ok	ok	conditional:xor_operands_boolean	conditional:xor_operands_boolean	translated
-bit_ops	expression	curated	ok	ok	not_in_ir:unary_operator	not_in_ir:unary_operator	not_in_ir:unary_operator
+bit_ops	expression	curated	ok	ok	not_in_ir:bitwise_not	not_in_ir:bitwise_not	not_in_ir:bitwise_not
 regexp	expression	curated	ok	ok	conditional:regexp_flavor	refused:regexp	conditional:regexp_flavor
 rlike	expression	curated	ok	ok	conditional:regexp_flavor	refused:regexp	conditional:regexp_flavor
 like_binary	expression	curated	ok	ok	not_in_ir:data_type	not_in_ir:data_type	not_in_ir:data_type

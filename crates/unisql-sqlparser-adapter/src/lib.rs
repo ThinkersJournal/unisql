@@ -1536,6 +1536,13 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 sp::UnaryOperator::Not => UnaryOp::Not,
                 sp::UnaryOperator::Minus => UnaryOp::Minus,
                 sp::UnaryOperator::Plus => UnaryOp::Plus,
+                // `~x` is bitwise NOT on PostgreSQL and SQLite; MySQL makes it a 64-bit unsigned result.
+                sp::UnaryOperator::BitwiseNot => {
+                    return no(
+                        "bitwise_not",
+                        "`~x` differs in width and signedness per engine",
+                    );
+                }
                 other => return no("unary_operator", &head(&other)),
             };
             Expr::Unary {
