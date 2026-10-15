@@ -349,7 +349,8 @@ impl Target for Mysql {
                 precision: Some(p),
                 scale,
             } => format!("DECIMAL({p}, {})", scale.unwrap_or(0)),
-            SqlType::Text | SqlType::Varchar(_) => "CHAR".to_string(),
+            SqlType::Varchar(Some(n)) => format!("CHAR({n})"),
+            SqlType::Text | SqlType::Varchar(None) => "CHAR".to_string(),
             SqlType::Date => "DATE".to_string(),
             SqlType::Timestamp { with_tz: false } => "DATETIME".to_string(),
             other => {

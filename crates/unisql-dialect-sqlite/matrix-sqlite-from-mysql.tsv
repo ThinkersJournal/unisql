@@ -6,8 +6,8 @@ construct	cast.to_bigint	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlit
 construct	cast.to_bigint.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
 construct	cast.to_double	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
 construct	cast.to_double.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=lenient_cast	mysql
-construct	cast.to_text	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
-construct	cast.to_text.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
+construct	cast.to_text	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_char_length	diverges from the strict contract unless accepted: allowance=lenient_cast	mysql
+construct	cast.to_text.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_char_length	allowance=lenient_cast	mysql
 construct	concat	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
 construct	delete_limit	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::delete_order_limit		mysql
 construct	delete_using	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::delete_join	this target has no multi-table DELETE	mysql
