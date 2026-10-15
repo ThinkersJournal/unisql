@@ -466,6 +466,21 @@ fn cases(dir: Dir) -> Vec<Case> {
             "interval_hours_plus",
             "SELECT id FROM events WHERE at < NOW() + INTERVAL 2 HOUR",
         ),
+        c(
+            "date_add_interval",
+            "SELECT id FROM events WHERE at < DATE_ADD(NOW(), INTERVAL 2 HOUR)",
+        ),
+        c(
+            "date_sub_interval",
+            "SELECT id FROM events WHERE at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)",
+        ),
+        exp(
+            c(
+                "refuse_date_add_month",
+                "SELECT DATE_ADD(NOW(), INTERVAL 1 MONTH)",
+            ),
+            Expect::Refused("fn:make_interval.month_year"),
+        ),
         exp(
             c("refuse_interval_month", "SELECT NOW() - INTERVAL 1 MONTH"),
             Expect::Refused("fn:make_interval.month_year"),

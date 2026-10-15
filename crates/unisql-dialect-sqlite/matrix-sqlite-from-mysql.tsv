@@ -30,14 +30,14 @@ construct	fn:floor	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;te
 construct	fn:left	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::left_right_literal		mysql
 construct	fn:left.length	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_left_column	LEFT(s, n) is mapped only for a literal n >= 0	mysql
 construct	fn:locate	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_locate_start	no verified mapping for this function on SQLite yet	mysql
-construct	fn:make_interval	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus		mysql
-construct	fn:make_interval.month_year	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_interval_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
+construct	fn:make_interval	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::date_add_interval		mysql
+construct	fn:make_interval.month_year	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_date_add_month	make_interval(months => ..): month/year arithmetic differs between the engines	mysql
 construct	fn:max	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	fn:max.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
 construct	fn:min	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	fn:min.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::aggregates	allowance=text_collation	mysql
-construct	fn:now	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=now_as_text	mysql
-construct	fn:now.now_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=now_as_text	mysql
+construct	fn:now	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::date_add_interval	diverges from the strict contract unless accepted: allowance=now_as_text	mysql
+construct	fn:now.now_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::date_add_interval	allowance=now_as_text	mysql
 construct	fn:octet_length	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::length_is_bytes		mysql
 construct	fn:rank	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::window_rank		mysql
 construct	fn:repeat	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::repeat_literal		mysql
@@ -60,8 +60,8 @@ construct	fn:utc_timestamp.timestamp_millisecond_resolution	sqlite	3.53.2	schema
 construct	group_by.rollup	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_rollup	SQLite has no ROLLUP	mysql
 construct	insert_ignore	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	mysql
 construct	insert_ignore.ignore_covers_only_unique_conflicts	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	mysql
-construct	interval_arithmetic	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql
-construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::interval_hours_plus	allowance=timestamp_arithmetic_as_text	mysql
+construct	interval_arithmetic	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::date_add_interval	diverges from the strict contract unless accepted: allowance=timestamp_arithmetic_as_text	mysql
+construct	interval_arithmetic.timestamp_arithmetic_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::date_add_interval	allowance=timestamp_arithmetic_as_text	mysql
 construct	join.natural	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::natural_join		mysql
 construct	join.using	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::join_using		mysql
 construct	join:inner_join	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte		mysql

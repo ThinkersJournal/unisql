@@ -27,7 +27,7 @@ group_concat	function	curated	ok	ok	conditional:aggregate_string_truncation+text
 group_concat_distinct	function	curated	ok	ok	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation
 now	function	curated	ok	ok	translated	conditional:date_as_text+now_as_text	conditional:now_as_text
 utc_timestamp	function	curated	ok	ok	translated	conditional:date_as_text+timestamp_as_text	translated
-date_add	function	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
+date_add	function	curated	ok	ok	translated	conditional:now_as_text+timestamp_arithmetic_as_text	conditional:now_as_text+timestamp_arithmetic_as_text
 interval_arith	function	curated	ok	ok	translated	conditional:now_as_text+timestamp_arithmetic_as_text	conditional:now_as_text+timestamp_arithmetic_as_text
 date_format	function	curated	ok	ok	refused:fn:date_format	refused:fn:date_format	refused:fn:date_format
 unix_timestamp	function	curated	ok	ok	refused:fn:unix_timestamp	refused:fn:unix_timestamp	refused:fn:unix_timestamp
