@@ -13,11 +13,11 @@ insert_select	insert	curated	ok	ok	translated	translated	translated
 insert_multi	insert	curated	ok	ok	translated	translated	translated
 insert_default	insert	curated	ok	ok	not_in_ir:default_value	not_in_ir:default_value	not_in_ir:default_value
 update_limit	update	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
-update_join	update	curated	ok	ok	not_in_ir:dml_target_join	not_in_ir:dml_target_join	not_in_ir:dml_target_join
+update_join	update	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
 update_low_priority	update	curated	ok	ok	not_in_ir:update_option	not_in_ir:update_option	not_in_ir:update_option
 delete_limit	delete	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
-delete_join	delete	curated	ok	ok	not_in_ir:delete_option	not_in_ir:delete_option	not_in_ir:delete_option
-delete_quick	delete	curated	ok	ok	not_in_ir:delete_option	not_in_ir:delete_option	not_in_ir:delete_option
+delete_join	delete	curated	ok	ok	translated	refused:delete_using	translated
+delete_quick	delete	curated	ok	ok	not_in_ir:delete_target	not_in_ir:delete_target	not_in_ir:delete_target
 truncate	delete	curated	ok	ok	not_in_ir:statement	not_in_ir:statement	not_in_ir:statement
 ifnull	function	curated	ok	ok	translated	translated	translated
 if_function	function	curated	ok	ok	translated	translated	translated

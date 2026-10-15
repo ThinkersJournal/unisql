@@ -151,7 +151,8 @@ row_lock.skip_locked	FOR UPDATE/SHARE ... SKIP LOCKED leaves rows locked by anot
 text_comparison	`=` and `<>` on text compare bytewise (the C locale).
 trim	trim(chars FROM s) removes the single character chars (or spaces) from the stated side(s).
 trim.multi_char	trim with a set of several characters. Refused where the target trims a repeated string instead of a set.
-update_from	UPDATE ... FROM joins other tables into the update. Refused where unsupported.
+update_from	UPDATE ... FROM joins other tables into the update, which changes each target row the joined condition selects. Written as FROM on PostgreSQL/SQLite and as a comma join on MySQL/MariaDB; refused with ORDER BY/LIMIT.
+delete_using	DELETE ... USING joins other tables into the delete, which removes each target row the joined condition selects. Written as USING on PostgreSQL and as DELETE t FROM t, .. on MySQL/MariaDB; refused on SQLite.
 upsert	INSERT ... ON CONFLICT (key) DO UPDATE/NOTHING resolves a conflict on the stated key.
 upsert.no_conflict_key	An upsert that states no conflict key. Refused where the target needs the key columns.
 group_by.rollup	A GROUP BY with WITH ROLLUP (MySQL) or ROLLUP (a, b) (PostgreSQL) returns the grouped rows plus one subtotal row per key prefix and a grand total, with NULL in the rolled-up key columns. Written as ROLLUP (..) on PostgreSQL and as WITH ROLLUP on MySQL/MariaDB; refused on SQLite.

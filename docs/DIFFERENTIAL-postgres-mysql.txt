@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=129
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=130
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -191,7 +191,10 @@ PASS refuse_json                  refused `json_get_text`: MySQL JSON access use
 PASS refuse_substr                refused `fn:substr`: start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')
 PASS refuse_concat_fn             refused `fn:concat`: PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL
 PASS refuse_trim_set              refused `trim.multi_char`: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character
-PASS refuse_update_from           refused `update_from`: 
+PASS update_from                  same
+       -> UPDATE `orders`, `users` SET `orders`.`status` = 'x' WHERE (`users`.`id` = `orders`.`user_id`) AND (`users`.`city` = 'Bergen')
+PASS delete_using                 same
+       -> DELETE `orders` FROM `orders`, `users` WHERE (`users`.`id` = `orders`.`user_id`) AND (`users`.`city` = 'Bergen')
 PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no MySQL equivalent that preserves meaning
 PASS refuse_returning             refused `returning`: MySQL has no RETURNING clause
 PASS refuse_data_modifying_cte    refused `cte.data_modifying`: MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error
@@ -231,7 +234,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 101 passing translated cases:
+MATRIX (construct, tier) from 103 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -240,6 +243,7 @@ MATRIX (construct, tier) from 101 passing translated cases:
   cast.to_integer              conditional
   cast.to_text                 conditional
   concat                       exact
+  delete_using                 exact
   distinct_on                  emulated
   division                     conditional
   division_integer             conditional
@@ -299,6 +303,7 @@ MATRIX (construct, tier) from 101 passing translated cases:
   row_lock.skip_locked         exact
   text_comparison              conditional
   trim                         exact
+  update_from                  exact
   upsert                       conditional
   window_function              exact
   with.delete                  exact

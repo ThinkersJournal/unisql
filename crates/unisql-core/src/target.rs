@@ -149,6 +149,17 @@ pub enum DmlLimit {
     RowIdSubquery(&'static str),
 }
 
+/// A target's way of writing the extra tables of a multi-table `UPDATE` or `DELETE`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DmlSources {
+    /// `UPDATE t SET .. FROM f WHERE ..` and `DELETE FROM t USING f WHERE ..` (PostgreSQL).
+    FromClause,
+    /// `UPDATE t, f SET .. WHERE ..` and `DELETE t FROM t, f WHERE ..` (MySQL).
+    Join,
+    /// `UPDATE .. FROM` only; no `DELETE .. USING` (SQLite).
+    UpdateFromOnly,
+}
+
 pub trait Target {
     fn name(&self) -> &'static str;
 
@@ -346,9 +357,9 @@ pub trait Target {
         Tier::Exact
     }
 
-    /// Tier of `UPDATE .. FROM`.
-    fn update_from_tier(&self) -> Tier {
-        Tier::Exact
+    /// How the extra tables of a multi-table `UPDATE` or `DELETE` are written.
+    fn dml_sources(&self) -> DmlSources {
+        DmlSources::FromClause
     }
 
     /// How `UPDATE|DELETE .. ORDER BY .. LIMIT n` is written. The default (PostgreSQL) has no
