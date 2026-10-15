@@ -68,7 +68,8 @@ fn:convert_to	convert_to(s, enc) returns the bytes of s in encoding enc. Refused
 fn:count	count(x) counts non-NULL x; count(*) counts rows.
 fn:current_schema	current_schema() names the session's current schema. Refused where there is no such catalog.
 fn:date_format	date_format(ts, fmt) formats a timestamp by a MySQL format string. Refused: no verified mapping.
-fn:instr	instr(s, t) is the 1-based position of t in s, 0 if absent. Refused: no verified mapping.
+fn:strpos	strpos(s, t) (MySQL INSTR(s, t) / LOCATE(t, s), POSITION(t IN s), SQLite instr(s, t)) is the 1-based position of the first occurrence of t in s, 0 if t is absent, 1 if t is empty, NULL if either is NULL. Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
+fn:locate	LOCATE(t, s, pos) with a start position is not mapped (the engines differ on a start beyond the end and on a negative start).
 fn:current_date	CURRENT_DATE is the date of the current day in the session time zone.
 fn:lag	lag(x) OVER (...) is x of the previous row in the window.
 fn:lead	lead(x) OVER (...) is x of the next row in the window.

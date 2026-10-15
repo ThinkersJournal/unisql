@@ -91,6 +91,7 @@ construct	fn:replace	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-t
 construct	fn:row_number	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_basic		postgres
 construct	fn:string_agg	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_order_default_nulls		postgres
 construct	fn:string_agg.order_by	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_order_default_nulls		postgres
+construct	fn:strpos	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::strpos_position		postgres
 construct	fn:sum	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates		postgres
 construct	fn:sum.order_by	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
 construct	fn:to_regclass	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_to_regclass	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres

@@ -177,6 +177,11 @@ fn cases() -> Vec<Case> {
             Expect::Refused("bitwise.xor"),
         ),
         c(
+            "strpos_position",
+            "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
+            &[],
+        ),
+        c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
             &[],

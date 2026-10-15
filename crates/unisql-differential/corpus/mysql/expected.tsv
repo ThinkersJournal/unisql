@@ -88,7 +88,7 @@ select_distinct_row_count	aggregate	curated	ok	ok	translated	conditional:text_co
 order_by_field	ordering	curated	ok	ok	refused:fn:field	refused:fn:field	refused:fn:field
 order_by_null	ordering	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
 rand	ordering	curated	ok	ok	refused:fn:rand	refused:fn:rand	refused:fn:rand
-locate	string	curated	ok	ok	not_in_ir:expression	not_in_ir:expression	not_in_ir:expression
+locate	string	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
 substring_forms	string	curated	ok	ok	translated	translated	translated
 string_misc	string	curated	ok	ok	translated	refused:fn:lpad	translated
 trim_forms	string	curated	ok	ok	translated	translated	translated
