@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.22.1
 
 - Bit literals (`b'101'`, `B'101'`) are refused with an explicit `bit_literal` reading error instead of the
   generic `literal` one: PostgreSQL reads them as `bit(n)`, MySQL as a byte string, SQLite not at all.
