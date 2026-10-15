@@ -1,8 +1,7 @@
 # Publishing checklist and record (0.16.3 is published; later versions follow the same path)
 
-Written 2026-10-14 by the unisql lane at origin/main 2b663a0 (0.16.0), for the PM. **Publishing is the
-PM's and CireSnave's call**; the manifests are ready (`publish = true` on the six crates,
-`publish = false` on `unisql-differential`) and the six crates were published by the PM at 0.16.3 on 2026-10-14 from a clean archive of f95d207 (crates.io
+Written 2026-10-14 at origin/main 2b663a0 (0.16.0). The manifests are ready (`publish = true` on the six crates,
+`publish = false` on `unisql-differential`) and the six crates were published at 0.16.3 on 2026-10-14 from a clean archive of f95d207 (crates.io
 read back: all six at 0.16.3, `yanked = false`). This file is the list of what must
 be true first, what was checked, and what was found.
 
@@ -25,7 +24,7 @@ Nothing to claim. A real release publishes `0.x.y` over the placeholder from the
 1. In `[workspace.package]` set `publish = true` (do **not** just delete the key: the six crates say
    `publish.workspace = true`, and an undefined key fails manifest loading) and keep `publish = false`
    written out in `unisql-differential`.
-2. Set the release version (one number for all crates; the PM allocates) in `[workspace.package]`, the
+2. Set the release version (one number for all crates) in `[workspace.package]`, the
    `[workspace.dependencies]` pins, the two member pins in `unisql-dialect-postgres` and
    `unisql-dialect-sqlite`, `Cargo.lock` and the `CHANGELOG.md` heading.
 3. Update the status paragraph of `README.md` (it must say what is true at that tag).
@@ -106,11 +105,10 @@ same text): re-check it by hand on release.
 - The logo (`assets/Unicycle.svg`) is Openclipart "Unicycle" by GDJ, public domain; the PNG copies
   are unverified and not part of any package.
 
-## 7. Open points for the PM / CireSnave
+## 7. Open points
 
-- **Public flip first**: the repository link in every package points at a private repository.
-- **Branch protection** (six contexts) is set at the flip (the PM).
-- **Consumers**: PersistAnt (and Humboldt) cannot depend on `unisql` until it is published (the
+- **Branch protection** requires the six CI contexts.
+- **Consumers**: PersistAnt and other projects cannot depend on `unisql` until it is published (the
   crates.io-only rule); `0.x` releases are breaking by their second number, so they should pin
   `=0.16` style or a tilde requirement.
 - **Yank policy**: a release with a wrong mapping is yanked and replaced; the CHANGELOG states the

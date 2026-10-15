@@ -1,6 +1,6 @@
 # UniSQL corpus measurement (design phase, section 7 of DESIGN.md)
 
-Measured 2026-10-12 by the unisql lane. **No emitter exists; nothing was translated or executed.**
+Measured 2026-10-12, in the design phase. **No emitter exists; nothing was translated or executed.**
 Every count below is "how many statements contain which constructs, by a rule table", not "how many
 translate correctly". Tiers are a **proposal** (DESIGN.md section 3.1) until the differential layer runs.
 
@@ -8,9 +8,9 @@ translate correctly". Tiers are a **proposal** (DESIGN.md section 3.1) until the
 
 | Corpus | Repo | `origin/main` SHA | Paths read |
 |---|---|---|---|
-| auth-framework | `C:\Projects\auth-framework` | `4582a64fddbb5a687fbe04381f913e87b29a8b06` | `src/storage/`, `auth-storage-sqlite/`, `src/migrations/` |
-| lightbulb | `C:\Projects\lightbulb` | `34e5432bda04e1726aaa5e1077b60bb2d7740d4d` | whole tree (`.rs`, `migrations/*.sql`) |
-| Humboldt | `C:\Projects\HumboldtUnifiedKidTracker` | `b7cd95e72a1269ad2abf0a9a2cf5725d39eb69fb` | whole tree (`backend/src`, `backend/tests`, `backend/migrations`) |
+| auth-framework | `auth-framework` | `4582a64fddbb5a687fbe04381f913e87b29a8b06` | `src/storage/`, `auth-storage-sqlite/`, `src/migrations/` |
+| small-app (a Postgres service) | private repository | `34e5432bda04e1726aaa5e1077b60bb2d7740d4d` | whole tree (`.rs`, `migrations/*.sql`) |
+| large-app (a Postgres application) | private repository | `b7cd95e72a1269ad2abf0a9a2cf5725d39eb69fb` | whole tree (`backend/src`, `backend/tests`, `backend/migrations`) |
 
 Each repo was `git fetch`ed first; the SHA is `git rev-parse origin/main` after that fetch.
 
@@ -44,11 +44,11 @@ rule table is right about SQLite.
 | auth-framework `postgres.rs` (Postgres source) | 19 | 8 | 3 | 8 | 0 | 0 | 0 |
 | auth-framework `sqlite.rs` (SQLite source, oracle) | 18 | 15 | 3 | 0 | 0 | 0 | 0 |
 | auth-framework `auth-storage-sqlite` (SQLite source) | 21 | 18 | 3 | 0 | 0 | 0 | 0 |
-| lightbulb Rust | 8 | 2 | 1 | 4 | 1 | 0 | 0 |
-| Humboldt `backend/src` | 339 | 213 | 28 | 34 | 44 | 20 | 0 |
-| Humboldt `backend/tests` (fixtures) | 970 | 569 | 342 | 37 | 20 | 2 | 0 |
+| small-app Rust | 8 | 2 | 1 | 4 | 1 | 0 | 0 |
+| large-app `backend/src` | 339 | 213 | 28 | 34 | 44 | 20 | 0 |
+| large-app `backend/tests` (fixtures) | 970 | 569 | 342 | 37 | 20 | 2 | 0 |
 
-Humboldt `src`: 275 of 339 (81%) are exact, emulated or conditional; 20 (5.9%) are refused by design;
+large-app `src`: 275 of 339 (81%) are exact, emulated or conditional; 20 (5.9%) are refused by design;
 44 (13%) are unmapped: of those 44 statements, 17 use `current_schema()` and 9 use
 `make_interval` (a statement can name several), concentrated in `dbtools.rs` 9, `security.rs` 9,
 `transfer.rs` 7, `wipe.rs` 7. These are rule-table gaps, not findings about SQLite. Tests are fixtures
@@ -65,14 +65,14 @@ Refused by design, DML statements, distinct statements each: `pg_advisory_xact_l
 | Group | n | exact | emulated | conditional | unmapped | refused | unparsed |
 |---|---|---|---|---|---|---|---|
 | DDL, auth-framework (all files) | 31 | 0 | 19 | 11 | 1 | 0 | 0 |
-| DDL, lightbulb `migrations/*.sql` | 5 | 0 | 2 | 3 | 0 | 0 | 0 |
-| DDL, Humboldt migrations + src + tests | 43 | 0 | 31 | 6 | 1 | 5 | 0 |
+| DDL, small-app `migrations/*.sql` | 5 | 0 | 2 | 3 | 0 | 0 | 0 |
+| DDL, large-app migrations + src + tests | 43 | 0 | 31 | 6 | 1 | 5 | 0 |
 | Other (triggers, functions, DO, SHOW, COPY, SET), all corpora | 42 | 6 | 0 | 0 | 1 | 29 | 6 |
 
 DDL is never "exact" by construction in the rule table (types and defaults differ per engine), so
 "emulated" there means "needs a per-engine migration, as section 3.3 says". Triggers and
-functions: 11 `trigger` and 16 `function/procedure` statements across auth-framework and Humboldt
-`.sql` files combined (not comparable to `DESIGN-KINDS`' Humboldt-only 11 triggers and 14 functions,
+functions: 11 `trigger` and 16 `function/procedure` statements across auth-framework and large-app
+`.sql` files combined (not comparable to `DESIGN-KINDS`' large-app-only 11 triggers and 14 functions,
 which I did not recount separately); all refused, as designed.
 
 ## Untranslatable statements, by tier
@@ -85,11 +85,11 @@ function/procedure 16, `SHOW` 8, advisory lock 6, row lock 6, array operand 5, `
 `DROP DATABASE .. WITH (FORCE)` (1), `CREATE EVENT TRIGGER` (2, would be refused anyway), an `UPDATE`
 with a `format!` fragment in the SET list (1), adjacent string literals across lines in a
 `COMMENT ON` (1, `0004_oauth_identity_claim_type.sql`), and one prose literal that matched the SQL
-filter (`set LIGHTBULB_BPE_UNVERIFIED_GGUF to ...`, lightbulb `tests/gguf_bpe_tokenizer_fidelity.rs:450`).
+filter (`set <ENV_VAR> to ...`, small-app `tests/gguf_bpe_tokenizer_fidelity.rs:450`).
 
 ## The oracle finding: statement translation alone does not reproduce the SQLite backend
 
-The PM asked whether auth-framework's hand-written SQLite SQL matches what UniSQL would emit from the
+The question was whether auth-framework's hand-written SQLite SQL matches what UniSQL would emit from the
 Postgres SQL. By reading both at `4582a64f`: **it does not, and the difference is schema and value
 representation, which a statement translator cannot supply.**
 
@@ -120,5 +120,5 @@ text*; whether auth-framework should share one schema across backends is the pro
   was run); that `unmapped` functions are untranslatable; that the prose filter missed nothing outside
   the 51 read; the 119 runtime vs 243 compile-time split (my `src` count of 339 is by literal, not by
   `query!` vs `query(`; it neither confirms nor refutes `DESIGN-KINDS` 362).
-- The rule table was written by the same lane that wrote the tiers in DESIGN.md 3.1. **A shared author
-  defeats agreement as evidence** (CLAUDE.md section 7); the differential layer is the independent check.
+- The rule table was written by the same author as the tiers in DESIGN.md 3.1. **A shared author
+  defeats agreement as evidence**; the differential layer is the independent check.

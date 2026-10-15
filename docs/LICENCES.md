@@ -1,6 +1,6 @@
-# Third-party licence record (provenance, EXPECTATIONS §6.4a)
+# Third-party licence record (provenance)
 
-Read 2026-10-12 by the unisql lane **from the files themselves** (GitHub git-blob API, raw bytes; each
+Read 2026-10-12 **from the files themselves** (GitHub git-blob API, raw bytes; each
 blob's `git hash-object` equals the tree entry's SHA), not from a summariser. Copies of the files read
 are in `measure/licences/`. A licence file read at one SHA says nothing about another; re-read before
 relying on a later release.
