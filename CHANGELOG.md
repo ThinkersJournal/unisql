@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased
+## 0.22.0
 
 - **Breaking:** hex string literals are read into the IR (`Literal::Bytes`, an AST break: `Literal` gains a
   variant). `X'41'` and MySQL `0x41` on MySQL/MariaDB, `X'41'` on SQLite. Written as `X'41'` on
