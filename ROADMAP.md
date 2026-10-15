@@ -1,8 +1,8 @@
 # UniSQL roadmap
 
-Written 2026-10-14 by the unisql lane at origin/main 0844289 (0.2.0); updated at e68dc8f (0.3.0) and again after row locks. It records what is *not* done,
-in the order the lane intends to take it, with the reason and how each item would be verified. It is
-not a promise of dates, and the PM may reorder it. Direction comes from `docs/DESIGN.md` (sections
+Written 2026-10-14 at origin/main 0844289 (0.2.0); updated at e68dc8f (0.3.0) and again after row locks. It records what is *not* done,
+in the order the maintainers intend to take it, with the reason and how each item would be verified. It is
+not a promise of dates, and the order may change. Direction comes from `docs/DESIGN.md` (sections
 0.1, 2.1, 2.2, 5 carry the user's words verbatim): comprehensive dialect coverage rather than
 consumer-driven, dialects modular, the parser replaceable, SQLGlot the primary reference.
 
@@ -48,8 +48,8 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 
 - **DDL translation.** Decided with PersistAnt (D6): schema management stays with the migration tool.
 - **Executing statements.** UniSQL returns text and bindings; drivers are the caller's.
-- **Publishing is the PM's call**: 0.16.3 is on crates.io; each later version is an ordinary bump
-  (`docs/PUBLISHING.md`). The repository's public flip is CireSnave's.
+- **Publishing**: 0.16.3 is on crates.io; each later version is an ordinary bump
+  (`docs/PUBLISHING.md`).
 
 ## MySQL-source corpus: the gap list
 
@@ -160,7 +160,7 @@ when a `Schema` read from their migrations says which columns are not text.
 5. **Their tests do the proof.** Their existing storage tests run against both engines; the
    `unisql-differential` pattern (run the source text on one engine, the translation on the other,
    compare rows) is the model if they want the proof for each statement rather than a spot check.
-6. **Dependencies and versions.** `unisql = "0.18"` from crates.io once the PM has published it
+6. **Dependencies and versions.** `unisql = "0.18"` from crates.io once it is published
    (0.x: the second number is the breaking one, so pin the minor); its MSRV (1.94) is below theirs
    (1.95). No driver is pulled in.
 

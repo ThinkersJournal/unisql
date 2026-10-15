@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.20.2 - 2026-10-15
+
+- Docs only: wording in this changelog and the ROADMAP no longer refers to the project's internal
+  working arrangements. No code change.
+
 ## 0.20.1 - 2026-10-15
 
 - MySQL/MariaDB `CONVERT(expr, type)` is read as `CAST(expr AS type)` (so it translates wherever the
@@ -50,7 +55,7 @@ One version number for every crate in the workspace. Pre-1.0, the second number 
 
 ## 0.18.1 - 2026-10-14
 
-- Repository hygiene, no code change: `.github/CODEOWNERS` (`* @ciresnave`), portfolio rule WSP-001.
+- Repository hygiene, no code change: `.github/CODEOWNERS` (`* @ciresnave`).
 
 ## 0.18.0 - 2026-10-14
 
@@ -172,8 +177,8 @@ Packaging only; no code or behaviour change.
 
 ## 0.16.0 - 2026-10-14
 
-PM task part (b): sweep the statements of auth-framework (`origin/main` 1b31e902) and lightbulb
-(`origin/main` c5b7fd77) for gaps, read through `git show`, never a working tree.
+Gap sweep over the statements of auth-framework (`origin/main` 1b31e902) and lightbulb
+(`origin/main` c5b7fd77), read from those commits, never a working tree.
 
 - **Sweep result** (the PostgreSQL-source DML literals of both repos: 36 + 12 statements, all allowances
   granted): the `?`-placeholder statements of `auth-framework/src/authorization_enhanced/storage.rs` were
@@ -202,7 +207,7 @@ PM task part (b): sweep the statements of auth-framework (`origin/main` 1b31e902
 
 ## 0.15.0 - 2026-10-14
 
-PM task: verify and enable one mapping per refused leaf, largest first. Each mapping below was run
+Verify and enable one mapping per refused leaf, largest first. Each mapping below was run
 against the real engines in the differential suites; one that could not be verified stays refused.
 
 - **`gen_random_uuid()` on MySQL, MariaDB and SQLite** (the largest refused leaf of the corpus, 12
@@ -456,11 +461,11 @@ against the real engines in the differential suites; one that could not be verif
 
 - `unisql::analyse(sql, source)`: target-free needs extraction (`constructs`, `refused`, `unreadable`),
   backed by a new IR walker in `unisql-core` (`needs::constructs`) and `Allowance::ALL`. Requested by
-  the PersistAnt lane for deriving a program's needs from its statement catalogue.
+  PersistAnt for deriving a program's needs from its statement catalogue.
 
 ## 0.0.2
 
-- Lane `HANDOFF.md` is no longer tracked and is ignored (hygiene; no code change).
+- A local working-notes file is no longer tracked and is ignored (hygiene; no code change).
 
 ## 0.0.1
 
