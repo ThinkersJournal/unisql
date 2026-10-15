@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.20.3 - 2026-10-15
+
+- Docs only: `docs/DESIGN.md` is restated as a plain design rationale (decisions with their reasons;
+  the working-arrangement text and quoted instructions are removed), and `docs/MEASUREMENT.md`,
+  `docs/LICENCES.md`, `docs/PUBLISHING.md` and a few file comments no longer refer to internal
+  working arrangements or local paths. The two private corpora are named `large-app` and `small-app`.
+  No code change.
+
 ## 0.20.2 - 2026-10-15
 
 - Docs only: wording in this changelog and the ROADMAP no longer refers to the project's internal

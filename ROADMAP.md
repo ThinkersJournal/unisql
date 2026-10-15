@@ -3,7 +3,7 @@
 Written 2026-10-14 at origin/main 0844289 (0.2.0); updated at e68dc8f (0.3.0) and again after row locks. It records what is *not* done,
 in the order the maintainers intend to take it, with the reason and how each item would be verified. It is
 not a promise of dates, and the order may change. Direction comes from `docs/DESIGN.md` (sections
-0.1, 2.1, 2.2, 5 carry the user's words verbatim): comprehensive dialect coverage rather than
+0.1, 2.1, 2.2, 5): comprehensive dialect coverage rather than
 consumer-driven, dialects modular, the parser replaceable, SQLGlot the primary reference.
 
 Every item ships with a differential test against the real engines (digest-pinned in

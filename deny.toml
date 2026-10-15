@@ -1,4 +1,4 @@
-# cargo-deny configuration. Read the job log: an advisory acknowledgement is the PM's call at gate.
+# cargo-deny configuration. Read the job log: an advisory acknowledgement is a maintainer's call at review.
 [graph]
 all-features = true
 
