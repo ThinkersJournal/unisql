@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (PM allocates the number at gate)
+## 0.20.1 - 2026-10-15
 
 - MySQL/MariaDB `CONVERT(expr, type)` is read as `CAST(expr AS type)` (so it translates wherever the
   cast does, under `lenient_cast`). `CONVERT(expr USING charset)`, `TRY_CONVERT` and the MSSQL
