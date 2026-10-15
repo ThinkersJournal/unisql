@@ -232,7 +232,10 @@ impl Printer<'_> {
             // The reader fills in the source default, so `nulls_first` is always `Some` here; a
             // hand-built IR with `None` is treated as the PostgreSQL default.
             let nf = it.nulls_first.unwrap_or(it.desc);
-            parts.push(self.t.order_item(&e, it.desc, nf, c)?);
+            c.order_non_text = c.scopes.is_non_text_column(&it.expr);
+            let item = self.t.order_item(&e, it.desc, nf, c);
+            c.order_non_text = false;
+            parts.push(item?);
         }
         Ok(parts.join(", "))
     }

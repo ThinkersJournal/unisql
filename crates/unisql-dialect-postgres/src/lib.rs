@@ -269,7 +269,7 @@ impl Target for Postgres {
     }
 
     fn nulls_order(&self, desc: bool, nulls_first: bool, ctx: &mut Ctx) -> R<String> {
-        if ctx.lenient_source() {
+        if ctx.lenient_source() && !ctx.order_non_text {
             ctx.note(
                 "order_by",
                 Tier::Conditional,

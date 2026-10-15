@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.3 - 2026-10-15
+
+- **`ORDER BY` a column the schema says is not text** (bytes, numbers, dates) no longer needs the
+  `text_collation` allowance: its ordering involves no collation, as for ordered comparison. A text
+  column still needs it. No AST change.
+
 ## 0.24.2 - 2026-10-15
 
 - **`ADDDATE(x, n)` / `SUBDATE(x, n)` with a plain number** (MySQL/MariaDB source) are read as

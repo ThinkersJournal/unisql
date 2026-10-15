@@ -1,9 +1,9 @@
 id	group	origin	mysql	mariadb	postgres	sqlite	mariadb_target
 q_backtick	quoting	curated	ok	ok	translated	translated	translated
 q_double_quoted_string	quoting	curated	ok	ok	not_in_ir:literal	not_in_ir:literal	not_in_ir:literal
-limit_offset_comma	paging	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
-limit_offset_keyword	paging	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
-limit_param	paging	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
+limit_offset_comma	paging	curated	ok	ok	translated	translated	translated
+limit_offset_keyword	paging	curated	ok	ok	translated	translated	translated
+limit_param	paging	curated	ok	ok	translated	translated	translated
 upsert_values	upsert	curated	ok	ok	translated	translated	conditional:upsert_any_unique_key
 upsert_alias	upsert	curated	ok	rejected	not_in_ir:insert_option	not_in_ir:insert_option	not_in_ir:insert_option
 insert_ignore	upsert	curated	ok	ok	conditional:ignore_covers_only_unique_conflicts	conditional:ignore_covers_only_unique_conflicts	conditional:ignore_covers_only_unique_conflicts+upsert_any_unique_key
@@ -12,7 +12,7 @@ replace_into	upsert	curated	ok	ok	conditional:replace_is_upsert	translated	trans
 insert_select	insert	curated	ok	ok	translated	translated	translated
 insert_multi	insert	curated	ok	ok	translated	translated	translated
 insert_default	insert	curated	ok	ok	not_in_ir:default_value	not_in_ir:default_value	not_in_ir:default_value
-update_limit	update	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
+update_limit	update	curated	ok	ok	translated	translated	translated
 update_join	update	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
 update_low_priority	update	curated	ok	ok	not_in_ir:update_option	not_in_ir:update_option	not_in_ir:update_option
 delete_limit	delete	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
@@ -23,7 +23,7 @@ ifnull	function	curated	ok	ok	translated	translated	translated
 if_function	function	curated	ok	ok	translated	translated	translated
 concat	function	curated	ok	ok	translated	translated	translated
 concat_ws	function	curated	ok	ok	translated	translated	translated
-group_concat	function	curated	ok	ok	conditional:aggregate_string_truncation+text_collation	conditional:aggregate_string_truncation+text_collation	conditional:aggregate_string_truncation+text_collation
+group_concat	function	curated	ok	ok	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation
 group_concat_distinct	function	curated	ok	ok	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation	conditional:aggregate_string_truncation
 now	function	curated	ok	ok	translated	conditional:date_as_text+now_as_text	conditional:now_as_text
 utc_timestamp	function	curated	ok	ok	translated	conditional:date_as_text+timestamp_as_text	translated
@@ -72,8 +72,8 @@ cross_join	join	curated	ok	ok	translated	translated	translated
 derived_table	subquery	curated	ok	ok	translated	translated	translated
 cte	cte	curated	ok	ok	translated	translated	translated
 cte_recursive	cte	curated	ok	ok	translated	translated	translated
-window_row_number	window	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
-window_sum	window	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
+window_row_number	window	curated	ok	ok	translated	translated	translated
+window_sum	window	curated	ok	ok	translated	translated	translated
 group_with_rollup	aggregate	curated	ok	ok	translated	refused:group_by.rollup	translated
 group_by_alias	aggregate	curated	ok	ok	translated	translated	translated
 union_all	setop	curated	ok	ok	translated	translated	translated

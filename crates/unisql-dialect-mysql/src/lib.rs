@@ -739,12 +739,16 @@ impl Target for Mysql {
     }
 
     fn order_item(&self, expr: &str, desc: bool, nulls_first: bool, ctx: &mut Ctx) -> R<String> {
-        ctx.note(
-            "order_by",
-            Tier::Conditional,
-            "text ordering follows the column collation",
-            Some(Allowance::TextCollation),
-        )?;
+        if ctx.order_non_text {
+            ctx.note("order_by", Tier::Exact, "non-text column", None)?;
+        } else {
+            ctx.note(
+                "order_by",
+                Tier::Conditional,
+                "text ordering follows the column collation",
+                Some(Allowance::TextCollation),
+            )?;
+        }
         let dir = if desc { " DESC" } else { "" };
         // MySQL: NULL is the smallest value (first ascending, last descending).
         if nulls_first == !desc {
