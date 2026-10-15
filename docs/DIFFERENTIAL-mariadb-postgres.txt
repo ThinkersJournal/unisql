@@ -1,4 +1,4 @@
-mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=105
+mariadb 11.4.13-MariaDB-ubu2404 -> postgres (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=107
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = $1
 PASS ph_two                     same
@@ -87,6 +87,10 @@ PASS delete_where               same
        -> DELETE FROM "orders" WHERE "amount" < 100
 PASS update_where               same
        -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo'
+PASS update_order_limit         same
+       -> UPDATE "users" SET "age" = "age" + 100 WHERE ctid IN (SELECT ctid FROM "users" WHERE "active" = 1 ORDER BY "id" DESC NULLS LAST LIMIT 2)
+PASS delete_order_limit         same
+       -> DELETE FROM "orders" WHERE ctid IN (SELECT ctid FROM "orders" WHERE "amount" > 50 ORDER BY "amount" DESC NULLS LAST, "id" NULLS FIRST LIMIT 2)
 PASS gate_div_decimal           refused without allowance: conditional: needs allowance `decimal_division_as_float`: the source `/` is exact (DECIMAL) division; the target divides as double precision
 PASS refuse_odku                refused `upsert.no_conflict_key`: the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns, and the schema does not state exactly one unique key for the table
 PASS odku_key_from_schema_duplicate same
@@ -192,12 +196,13 @@ PASS not_regexp                 same
 PASS refuse_lpad_empty_pad      refused `fn:lpad.args`: LPAD/RPAD differ for a negative length or an empty pad; only a literal length >= 0 and a literal non-empty pad are mapped
 PASS refuse_replace_no_schema   refused `replace_into`: REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key
 
-MATRIX (construct, tier) from 87 passing translated cases:
+MATRIX (construct, tier) from 89 passing translated cases:
   bitwise                      conditional
   cast.to_bigint               conditional
   cast.to_double               conditional
   cast.to_text                 conditional
   concat                       exact
+  delete_limit                 emulated
   division                     conditional
   division_integer             conditional
   division_integer             exact
@@ -253,6 +258,7 @@ MATRIX (construct, tier) from 87 passing translated cases:
   regexp                       conditional
   text_comparison              conditional
   text_comparison              exact
+  update_limit                 emulated
   upsert                       exact
   window_function              exact
   xor                          conditional

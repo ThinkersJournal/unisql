@@ -336,6 +336,20 @@ fn cases(dir: Dir) -> Vec<Case> {
             ),
             "SELECT id, age FROM users ORDER BY id",
         ),
+        after(
+            c(
+                "update_order_limit",
+                "UPDATE users SET age = age + 100 WHERE active = 1 ORDER BY id DESC LIMIT 2",
+            ),
+            "SELECT id, age FROM users ORDER BY id",
+        ),
+        after(
+            c(
+                "delete_order_limit",
+                "DELETE FROM orders WHERE amount > 50 ORDER BY amount DESC, id LIMIT 2",
+            ),
+            "SELECT id FROM orders ORDER BY id",
+        ),
         // ---- the gate, source side
         exp(
             only(c("gate_div_decimal", "SELECT 7 / 2"), &[A::TextCollation]),
