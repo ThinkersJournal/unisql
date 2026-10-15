@@ -1111,11 +1111,25 @@ fn returning(r: Option<Vec<sp::SelectItem>>) -> R<Vec<SelectItem>> {
     r.unwrap_or_default().into_iter().map(select_item).collect()
 }
 
-fn assignments(a: Vec<sp::Assignment>) -> R<Vec<Assignment>> {
+/// `SET` assignments. A column qualified with the target's own name or alias (`SET u.score = ..`,
+/// written in MySQL's multi-table form) is the target's column; any other qualifier is refused.
+fn assignments(a: Vec<sp::Assignment>, target_name: Option<&str>) -> R<Vec<Assignment>> {
     let mut out = Vec::new();
     for sp::Assignment { target, value } in a {
         let column = match target {
-            sp::AssignmentTarget::ColumnName(n) => single_name(&n)?,
+            sp::AssignmentTarget::ColumnName(n) => {
+                let nm = object_name(&n)?;
+                match nm.0.as_slice() {
+                    [c] => c.clone(),
+                    [q, c] if Some(q.as_str()) == target_name => c.clone(),
+                    _ => {
+                        return no(
+                            "qualified_column_target",
+                            "SET column qualified with a table other than the target",
+                        );
+                    }
+                }
+            }
             sp::AssignmentTarget::Tuple(_) => return no("tuple_assignment", "SET (a, b) = ..."),
         };
         out.push(Assignment {
@@ -1188,7 +1202,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
             None,
         )
     } else {
-        let set = assignments(asg)?;
+        let set = assignments(asg, None)?;
         let (cols, vals): (Vec<_>, Vec<_>) = set.into_iter().map(|a| (a.column, a.value)).unzip();
         (cols, Some(InsertSource::Values(vec![vals])))
     };
@@ -1248,7 +1262,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
                     assignments: a,
                     selection,
                 }) => ConflictAction::DoUpdate {
-                    set: assignments(a)?,
+                    set: assignments(a, None)?,
                     where_: selection.map(expr).transpose()?,
                 },
             };
@@ -1256,7 +1270,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
         }
         Some(sp::OnInsert::DuplicateKeyUpdate(a)) => {
             // No conflict target: MySQL fires on ANY unique key. `VALUES(c)` is `excluded.c`.
-            let set = assignments(a)?
+            let set = assignments(a, None)?
                 .into_iter()
                 .map(|asg| Assignment {
                     column: asg.column,
@@ -1302,6 +1316,49 @@ fn insert(i: sp::Insert) -> R<Statement> {
     }))
 }
 
+/// The tables of a MySQL multi-table `UPDATE`/`DELETE` source, in order, with the `ON` conditions of
+/// its inner and cross joins pushed onto `on` (moving them into `WHERE` is equivalent for those
+/// joins only; any outer join is refused).
+fn flatten_inner(t: sp::TableWithJoins, on: &mut Vec<Expr>) -> R<Vec<TableRef>> {
+    let sp::TableWithJoins { relation, joins } = t;
+    let mut out = vec![table_factor(relation)?];
+    for j in joins {
+        if j.global {
+            return no("global_join", "GLOBAL JOIN");
+        }
+        let c = match j.join_operator {
+            sp::JoinOperator::Join(c)
+            | sp::JoinOperator::Inner(c)
+            | sp::JoinOperator::CrossJoin(c) => c,
+            other => return no("dml_outer_join", &head(&other)),
+        };
+        match c {
+            sp::JoinConstraint::On(e) => on.push(expr(e)?),
+            sp::JoinConstraint::None => {}
+            _ => return no("dml_join_using", "USING/NATURAL join in a DML statement"),
+        }
+        out.push(table_factor(j.relation)?);
+    }
+    Ok(out)
+}
+
+/// `where_` with the moved join conditions in front, joined by AND.
+fn with_conditions(on: Vec<Expr>, where_: Option<Expr>) -> Option<Expr> {
+    on.into_iter().chain(where_).reduce(|l, r| Expr::Binary {
+        op: BinaryOp::And,
+        left: Box::new(l),
+        right: Box::new(r),
+    })
+}
+
+/// The name a table is referred to by in its statement: its alias, else its own name.
+fn ref_name(t: &TableRef) -> Option<&str> {
+    match t {
+        TableRef::Table { name, alias } => alias.as_deref().or(name.0.last().map(String::as_str)),
+        _ => None,
+    }
+}
+
 fn update(u: sp::Update) -> R<Statement> {
     let sp::Update {
         update_token: _,
@@ -1319,7 +1376,13 @@ fn update(u: sp::Update) -> R<Statement> {
     if !optimizer_hints.is_empty() || output.is_some() || or.is_some() {
         return no("update_option", "UPDATE with hints/OUTPUT/OR");
     }
-    let (table, alias) = simple_table(table)?;
+    let mut on = Vec::new();
+    let mut sources = flatten_inner(table, &mut on)?.into_iter();
+    let (table, alias) = match sources.next() {
+        Some(TableRef::Table { name, alias }) => (name, alias),
+        _ => return no("dml_target", "DML target is not a plain table"),
+    };
+    let joined: Vec<TableRef> = sources.collect();
     // The parser does not know MySQL's `UPDATE LOW_PRIORITY|IGNORE t ...` and reads the modifier as
     // the table name and `t` as its alias: refuse rather than write another table's name.
     if alias.is_some()
@@ -1336,12 +1399,14 @@ fn update(u: sp::Update) -> R<Statement> {
             .collect::<R<Vec<_>>>()?,
         Some(other) => return no("update_from_position", &head(&other)),
     };
+    let from: Vec<TableRef> = joined.into_iter().chain(from).collect();
+    let target = alias.as_deref().or(table.0.last().map(String::as_str));
     Ok(Statement::Update(Update {
+        set: assignments(asg, target)?,
+        from,
+        where_: with_conditions(on, selection.map(expr).transpose()?),
         table,
         alias,
-        set: assignments(asg)?,
-        from,
-        where_: selection.map(expr).transpose()?,
         order_by: order_by.into_iter().map(order_item).collect::<R<_>>()?,
         limit: limit.map(expr).transpose()?,
         returning: returning(ret)?,
@@ -1361,16 +1426,54 @@ fn delete(d: sp::Delete) -> R<Statement> {
         order_by,
         limit,
     } = d;
-    if !optimizer_hints.is_empty() || !tables.is_empty() || output.is_some() {
-        return no("delete_option", "DELETE with hints/multi-table/OUTPUT");
+    if !optimizer_hints.is_empty() || output.is_some() {
+        return no("delete_option", "DELETE with hints/OUTPUT");
     }
     let ts = match from {
         sp::FromTable::WithFromKeyword(ts) | sp::FromTable::WithoutKeyword(ts) => ts,
     };
+    // MySQL's `DELETE o FROM orders o JOIN users u ON .. WHERE ..`: the named table is the target and
+    // the other tables of the source become `USING` tables.
+    if !tables.is_empty() {
+        if tables.len() != 1 || using.is_some() {
+            return no("delete_multi_target", "DELETE a, b FROM ..");
+        }
+        let target = object_name(&tables[0])?;
+        let mut on = Vec::new();
+        let mut sources = Vec::new();
+        for t in ts {
+            sources.extend(flatten_inner(t, &mut on)?);
+        }
+        let at = match target.0.as_slice() {
+            [n] => sources.iter().position(|t| ref_name(t) == Some(n.as_str())),
+            _ => None,
+        };
+        let Some(at) = at else {
+            return no("delete_target", "DELETE target is not a table of its FROM");
+        };
+        let (name, alias) = match sources.remove(at) {
+            TableRef::Table { name, alias } => (name, alias),
+            _ => return no("dml_target", "DML target is not a plain table"),
+        };
+        return Ok(Statement::Delete(Delete {
+            table: name,
+            alias,
+            using: sources,
+            where_: with_conditions(on, selection.map(expr).transpose()?),
+            order_by: order_by.into_iter().map(order_item).collect::<R<_>>()?,
+            limit: limit.map(expr).transpose()?,
+            returning: returning(ret)?,
+        }));
+    }
     if ts.len() != 1 {
         return no("delete_multi_target", "DELETE FROM a, b");
     }
     let (table, alias) = simple_table(ts.into_iter().next().unwrap())?;
+    // MySQL's `DELETE FROM t USING <joined source>` names the target by its alias in the source, the
+    // opposite of PostgreSQL's `USING`: not read as PostgreSQL's.
+    if rules().name == "mysql" && using.is_some() {
+        return no("delete_using_form", "MySQL DELETE FROM .. USING source");
+    }
     let using = using
         .unwrap_or_default()
         .into_iter()

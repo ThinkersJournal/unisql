@@ -19,6 +19,7 @@ construct	cast.to_text.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=no
 construct	cast.to_uuid	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres
 construct	concat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::concat_op		postgres
 construct	cte.data_modifying	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_data_modifying_cte	MySQL/MariaDB has no data-modifying CTE (WITH x AS (INSERT/UPDATE/DELETE ..)): probed, a syntax error	postgres
+construct	delete_using	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::delete_using		postgres
 construct	distinct_on	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
 construct	division	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	division.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=division_by_zero_is_null	postgres
@@ -109,7 +110,7 @@ construct	text_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		ti
 construct	text_comparison.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	allowance=text_collation	postgres
 construct	trim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trim_both_char		postgres
 construct	trim.multi_char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_trim_set	PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character	postgres
-construct	update_from	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_update_from		postgres
+construct	update_from	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::update_from		postgres
 construct	upsert	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	diverges from the strict contract unless accepted: allowance=upsert_any_unique_key	postgres
 construct	upsert.upsert_any_unique_key	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::upsert_do_nothing	allowance=upsert_any_unique_key	postgres
 construct	upsert_where	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_upsert_where	ON DUPLICATE KEY UPDATE has no WHERE clause	postgres

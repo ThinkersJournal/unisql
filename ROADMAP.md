@@ -81,7 +81,11 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
 - **Reader, done (IR fields `order_by`/`limit` on `Update`/`Delete`, an AST break):** `UPDATE/DELETE ..
   ORDER BY .. LIMIT` (`update_limit`, `delete_limit`; native on MySQL/MariaDB, a `ctid`/`rowid` subquery
   on PostgreSQL/SQLite).
-- **Reader (not in the IR), would be mappable:** multi-table `UPDATE .. JOIN` / `DELETE t FROM .. JOIN` (`update_join`, `delete_join`);
+- **Reader, done:** multi-table `UPDATE t JOIN u ON .. SET ..` / `DELETE t FROM t JOIN u ON ..` (inner and
+  cross joins; the ON conditions move into WHERE). Written as `FROM`/`USING` on PostgreSQL, `UPDATE .. FROM` on
+  SQLite (no multi-table DELETE there), a comma join on MySQL/MariaDB. Outer joins, `SET` on a joined table and
+  `DELETE a, b FROM ..` are refused; the comma form `UPDATE a, b SET ..` is parser-bound.
+- **Reader (not in the IR), would be mappable:**
   `DEFAULT` as a value (`insert_default`); `INSERT .. AS alias ON DUPLICATE KEY UPDATE a = alias.x`
   (`upsert_alias`, MySQL 8.0.19+ only); `LIKE BINARY` (sqlparser reads it as a cast to BINARY,
   `not_in_ir:data_type`), unary `~` (unsigned on

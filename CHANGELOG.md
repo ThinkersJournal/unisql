@@ -2,6 +2,18 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## Unreleased
+
+- **Breaking (`Target` trait):** `update_from_tier` is replaced by `dml_sources` (`DmlSources::FromClause`,
+  `Join`, `UpdateFromOnly`). **Multi-table `UPDATE .. JOIN` and `DELETE t FROM .. JOIN`** (MySQL/MariaDB
+  source) are read into `Update.from` / `Delete.using` with the inner-join conditions moved into `WHERE`;
+  `SET u.col` qualified with the target is read as `col`. Written as `FROM`/`USING` on PostgreSQL, `UPDATE ..
+  FROM` on SQLite (`DELETE .. USING` refused there, leaf `delete_using`) and a comma join on MySQL/MariaDB,
+  so PostgreSQL `UPDATE .. FROM` and `DELETE .. USING` now also translate to MySQL/MariaDB. Outer joins,
+  `USING`/`NATURAL` joins, `SET` on a joined table and `DELETE a, b FROM ..` are refused; `ORDER BY`/`LIMIT`
+  with joined tables is refused on every target. MySQL's `DELETE FROM t USING <joined source>` form is
+  refused (`delete_using_form`) instead of read as PostgreSQL's. Differential cases against the real engines.
+
 ## 0.23.0 - 2026-10-15
 
 - **Breaking (AST):** `UPDATE|DELETE .. ORDER BY .. LIMIT n` (MySQL/MariaDB source) is read into the IR

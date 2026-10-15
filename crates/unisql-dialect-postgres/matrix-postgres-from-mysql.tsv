@@ -9,6 +9,7 @@ construct	cast.to_text	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=my
 construct	cast.to_text.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cast_forms	allowance=lenient_cast	mysql
 construct	concat	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::ifnull_concat_if		mysql
 construct	delete_limit	postgres	16.15	lc_collate=C;schema=none	yes		tier=emulated;suite=mysql-to-postgres;test=mysql-to-postgres::delete_order_limit		mysql
+construct	delete_using	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::delete_join		mysql
 construct	division	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mysql
 construct	division.decimal_division_as_float	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=decimal_division_as_float	mysql
 construct	division.division_by_zero_is_null	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::div_decimal	allowance=division_by_zero_is_null	mysql
@@ -80,6 +81,7 @@ construct	regexp.regexp_flavor	postgres	16.15	lc_collate=C;schema=none	yes		tier
 construct	replace_into	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_replace_no_schema	REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key	mysql
 construct	text_comparison	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mysql-to-postgres;test=mysql-to-postgres::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	text_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mysql-to-postgres;test=mysql-to-postgres::cte	allowance=text_collation	mysql
+construct	update_from	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::update_join		mysql
 construct	update_limit	postgres	16.15	lc_collate=C;schema=none	yes		tier=emulated;suite=mysql-to-postgres;test=mysql-to-postgres::update_order_limit		mysql
 construct	upsert	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mysql-to-postgres;test=mysql-to-postgres::insert_ignore_duplicate		mysql
 construct	upsert.no_conflict_key	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mysql-to-postgres;test=mysql-to-postgres::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns, and the schema does not state exactly one unique key for the table	mysql

@@ -350,6 +350,34 @@ fn cases(dir: Dir) -> Vec<Case> {
             ),
             "SELECT id FROM orders ORDER BY id",
         ),
+        after(
+            c(
+                "update_join",
+                "UPDATE users u JOIN orders o ON o.user_id = u.id SET u.age = u.age + 1 WHERE o.status = 'paid'",
+            ),
+            "SELECT id, age FROM users ORDER BY id",
+        ),
+        exp(
+            c(
+                "refuse_update_set_joined",
+                "UPDATE users u JOIN orders o ON o.user_id = u.id SET o.amount = 0",
+            ),
+            Expect::NotInIr("qualified_column_target"),
+        ),
+        exp(
+            c(
+                "refuse_update_left_join",
+                "UPDATE users u LEFT JOIN orders o ON o.user_id = u.id SET u.age = 0 WHERE o.id IS NULL",
+            ),
+            Expect::NotInIr("dml_outer_join"),
+        ),
+        exp(
+            c(
+                "refuse_delete_multi_target",
+                "DELETE o, u FROM orders o JOIN users u ON u.id = o.user_id",
+            ),
+            Expect::NotInIr("delete_multi_target"),
+        ),
         // ---- the gate, source side
         exp(
             only(c("gate_div_decimal", "SELECT 7 / 2"), &[A::TextCollation]),
@@ -607,6 +635,15 @@ fn cases(dir: Dir) -> Vec<Case> {
             Expect::Refused("fn:date_format"),
         ),
     ];
+    let delete_join = c(
+        "delete_join",
+        "DELETE o FROM orders o JOIN users u ON u.id = o.user_id WHERE u.active = 0",
+    );
+    if matches!(dir, Dir::MysqlToSqlite) {
+        v.push(exp(delete_join, Expect::Refused("delete_using")));
+    } else {
+        v.push(after(delete_join, "SELECT id FROM orders ORDER BY id"));
+    }
     if matches!(dir, Dir::MysqlToSqlite) {
         v.push(exp(
             c("refuse_ceil", "SELECT CEIL(score) FROM users"),

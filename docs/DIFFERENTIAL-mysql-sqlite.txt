@@ -1,4 +1,4 @@
-mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=102
+mysql 8.4.11 -> sqlite (pg 16.15 (Debian 16.15-1.pgdg13+2), sqlite 3.53.2); cases=107
 PASS ph_question                same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS ph_two                     same
@@ -91,6 +91,11 @@ PASS update_order_limit         same
        -> UPDATE "users" SET "age" = "age" + 100 WHERE rowid IN (SELECT rowid FROM "users" WHERE "active" = 1 ORDER BY "id" DESC LIMIT 2)
 PASS delete_order_limit         same
        -> DELETE FROM "orders" WHERE rowid IN (SELECT rowid FROM "orders" WHERE "amount" > 50 ORDER BY "amount" DESC, "id" LIMIT 2)
+PASS update_join                same
+       -> UPDATE "users" AS "u" SET "age" = "u"."age" + 1 FROM "orders" AS "o" WHERE ("o"."user_id" = "u"."id") AND ("o"."status" = 'paid')
+PASS refuse_update_set_joined   not in IR `qualified_column_target`: SET column qualified with a table other than the target
+PASS refuse_update_left_join    not in IR `dml_outer_join`: Left
+PASS refuse_delete_multi_target not in IR `delete_multi_target`: DELETE a, b FROM ..
 PASS gate_div_decimal           refused without allowance: conditional: needs allowance `decimal_division_as_float`: the source `/` is exact (DECIMAL) division; the target divides as double precision
 PASS refuse_odku                refused `upsert.no_conflict_key`: the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns, and the schema does not state exactly one unique key for the table
 PASS odku_key_from_schema_duplicate same
@@ -177,13 +182,14 @@ PASS refuse_left_negative       refused `fn:left.length`: LEFT(s, n) is mapped o
 PASS refuse_left_column         refused `fn:left.length`: LEFT(s, n) is mapped only for a literal n >= 0
 PASS refuse_utc_timestamp_precision refused `fn:utc_timestamp.precision`: only UTC_TIMESTAMP() and UTC_TIMESTAMP(6) are verified
 PASS refuse_date_format         refused `fn:date_format`: no verified mapping for this function on SQLite yet
+PASS delete_join                refused `delete_using`: this target has no multi-table DELETE
 PASS refuse_ceil                refused `fn:ceil`: SQLite's ceil/floor exist only when it is built with its math functions
 PASS refuse_floor               refused `fn:floor`: SQLite's ceil/floor exist only when it is built with its math functions
 PASS refuse_rollup              refused `group_by.rollup`: SQLite has no ROLLUP
 PASS refuse_bitxor              refused `bitwise.xor`: SQLite has no bitwise XOR operator (it would need the operands written twice)
 PASS refuse_regexp              refused `regexp`: SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)
 
-MATRIX (construct, tier) from 81 passing translated cases:
+MATRIX (construct, tier) from 82 passing translated cases:
   bitwise                      conditional
   cast.to_bigint               conditional
   cast.to_double               conditional
@@ -237,6 +243,7 @@ MATRIX (construct, tier) from 81 passing translated cases:
   recursive_cte                exact
   text_comparison              conditional
   text_comparison              exact
+  update_from                  exact
   update_limit                 emulated
   upsert                       exact
   window_function              exact

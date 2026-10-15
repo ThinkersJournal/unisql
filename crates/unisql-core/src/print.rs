@@ -3,7 +3,7 @@
 
 use crate::ast::*;
 use crate::report::{Allowance, Options, ParamBinding, Tier, Translation, Untranslatable};
-use crate::target::{Ctx, DmlLimit, Escape, StmtKind, Target};
+use crate::target::{Ctx, DmlLimit, DmlSources, Escape, StmtKind, Target};
 
 type R<T> = Result<T, Untranslatable>;
 
@@ -511,7 +511,7 @@ impl Printer<'_> {
                 ConflictAction::DoUpdate { set, where_ } => {
                     c.in_upsert = true;
                     c.upsert_table = Some(self.id(i.table.last()));
-                    let s = self.assignments(set, c);
+                    let s = self.assignments(set, None, c);
                     let w = where_.as_ref().map(|w| self.expr(w, c)).transpose();
                     c.in_upsert = false;
                     c.upsert_table = None;
@@ -531,14 +531,16 @@ impl Printer<'_> {
         Ok(out)
     }
 
-    fn assignments(&self, set: &[Assignment], c: &mut Ctx) -> R<String> {
+    /// `SET` assignments; `qualifier` is written before each column where the statement has more
+    /// than one table in scope (MySQL's multi-table form), since an unqualified column is ambiguous.
+    fn assignments(&self, set: &[Assignment], qualifier: Option<&str>, c: &mut Ctx) -> R<String> {
         let mut parts = Vec::new();
         for a in set {
-            parts.push(format!(
-                "{} = {}",
-                self.id(&a.column),
-                self.expr(&a.value, c)?
-            ));
+            let col = match qualifier {
+                Some(q) => format!("{}.{}", self.id(q), self.id(&a.column)),
+                None => self.id(&a.column),
+            };
+            parts.push(format!("{col} = {}", self.expr(&a.value, c)?));
         }
         Ok(parts.join(", "))
     }
@@ -555,15 +557,27 @@ impl Printer<'_> {
         if let Some(a) = &u.alias {
             out.push_str(&format!(" AS {}", self.id(a)));
         }
-        out.push_str(&format!(" SET {}", self.assignments(&u.set, c)?));
-        if !u.from.is_empty() {
-            c.note("update_from", self.t.update_from_tier(), "", None)?;
-            let f = u
-                .from
+        let join_form = !u.from.is_empty() && self.t.dml_sources() == DmlSources::Join;
+        let sources = if u.from.is_empty() {
+            Vec::new()
+        } else {
+            c.note("update_from", Tier::Exact, "", None)?;
+            u.from
                 .iter()
                 .map(|t| self.table_ref(t, c))
-                .collect::<R<Vec<_>>>()?;
-            out.push_str(&format!(" FROM {}", f.join(", ")));
+                .collect::<R<Vec<_>>>()?
+        };
+        if join_form {
+            out.push_str(&format!(", {}", sources.join(", ")));
+        }
+        let qualifier = if join_form {
+            u.alias.as_deref().or(u.table.0.last().map(String::as_str))
+        } else {
+            None
+        };
+        out.push_str(&format!(" SET {}", self.assignments(&u.set, qualifier, c)?));
+        if !sources.is_empty() && !join_form {
+            out.push_str(&format!(" FROM {}", sources.join(", ")));
         }
         out.push_str(&self.dml_filter(
             "update_limit",
@@ -587,22 +601,54 @@ impl Printer<'_> {
     }
 
     fn delete_in_scope(&self, d: &Delete, c: &mut Ctx) -> R<String> {
-        let mut out = format!("DELETE FROM {}", self.name(&d.table));
-        if let Some(a) = &d.alias {
-            out.push_str(&format!(" AS {}", self.id(a)));
-        }
-        if !d.using.is_empty() {
-            return Err(c.refuse(
-                "delete_using",
-                "DELETE .. USING is not represented in the first slice's writers",
-                &["rewrite with a subquery: DELETE FROM t WHERE id IN (SELECT ..)"],
-            ));
+        let mut out = String::new();
+        if d.using.is_empty() {
+            out.push_str(&format!("DELETE FROM {}", self.name(&d.table)));
+            if let Some(a) = &d.alias {
+                out.push_str(&format!(" AS {}", self.id(a)));
+            }
+        } else {
+            let sources = d
+                .using
+                .iter()
+                .map(|t| self.table_ref(t, c))
+                .collect::<R<Vec<_>>>()?;
+            match self.t.dml_sources() {
+                DmlSources::UpdateFromOnly => {
+                    return Err(c.refuse(
+                        "delete_using",
+                        "this target has no multi-table DELETE",
+                        &["rewrite with a subquery: DELETE FROM t WHERE id IN (SELECT ..)"],
+                    ));
+                }
+                DmlSources::FromClause => {
+                    c.note("delete_using", Tier::Exact, "", None)?;
+                    out.push_str(&format!("DELETE FROM {}", self.name(&d.table)));
+                    if let Some(a) = &d.alias {
+                        out.push_str(&format!(" AS {}", self.id(a)));
+                    }
+                    out.push_str(&format!(" USING {}", sources.join(", ")));
+                }
+                DmlSources::Join => {
+                    c.note("delete_using", Tier::Exact, "", None)?;
+                    let target = d.alias.as_deref().or(d.table.0.last().map(String::as_str));
+                    out.push_str(&format!(
+                        "DELETE {} FROM {}",
+                        self.id(target.unwrap_or_default()),
+                        self.name(&d.table)
+                    ));
+                    if let Some(a) = &d.alias {
+                        out.push_str(&format!(" AS {}", self.id(a)));
+                    }
+                    out.push_str(&format!(", {}", sources.join(", ")));
+                }
+            }
         }
         out.push_str(&self.dml_filter(
             "delete_limit",
             &d.table,
             d.alias.as_deref(),
-            true,
+            d.using.is_empty(),
             d.where_.as_ref(),
             &d.order_by,
             d.limit.as_ref(),
@@ -642,6 +688,13 @@ impl Printer<'_> {
         let wh = w.map(|w| format!(" WHERE {w}")).unwrap_or_default();
         match self.t.dml_limit() {
             DmlLimit::Native => {
+                if !single_table {
+                    return Err(c.refuse(
+                        leaf,
+                        "ORDER BY/LIMIT on a statement with FROM/USING tables",
+                        &["pick the rows in a subquery: WHERE id IN (SELECT id FROM .. ORDER BY .. LIMIT n)"],
+                    ));
+                }
                 c.note(leaf, Tier::Exact, "", None)?;
                 Ok(format!("{wh}{order}{lim}"))
             }

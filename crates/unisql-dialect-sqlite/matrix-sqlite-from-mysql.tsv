@@ -10,6 +10,7 @@ construct	cast.to_text	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;
 construct	cast.to_text.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cast_forms	allowance=lenient_cast	mysql
 construct	concat	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::ifnull_concat_if		mysql
 construct	delete_limit	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::delete_order_limit		mysql
+construct	delete_using	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::delete_join	this target has no multi-table DELETE	mysql
 construct	division	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	diverges from the strict contract unless accepted: allowance=decimal_division_as_float,division_by_zero_is_null	mysql
 construct	division.decimal_division_as_float	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=decimal_division_as_float	mysql
 construct	division.division_by_zero_is_null	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::div_decimal	allowance=division_by_zero_is_null	mysql
@@ -83,6 +84,7 @@ construct	recursive_cte	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-t
 construct	regexp	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_regexp	SQLite has no built-in regular-expression matcher (REGEXP needs an application-defined function)	mysql
 construct	text_comparison	sqlite	3.53.2	schema=none	no	wrong	suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	diverges from the strict contract unless accepted: allowance=text_collation	mysql
 construct	text_comparison.text_collation	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=mysql-to-sqlite;test=mysql-to-sqlite::cte	allowance=text_collation	mysql
+construct	update_from	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::update_join		mysql
 construct	update_limit	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=mysql-to-sqlite;test=mysql-to-sqlite::update_order_limit		mysql
 construct	upsert	sqlite	3.53.2	schema=none	yes		tier=native;suite=mysql-to-sqlite;test=mysql-to-sqlite::insert_ignore_duplicate		mysql
 construct	upsert.no_conflict_key	sqlite	3.53.2	schema=none	no	missing	suite=mysql-to-sqlite;test=mysql-to-sqlite::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); SQLite needs the key columns, and the schema does not state exactly one unique key for the table	mysql

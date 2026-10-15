@@ -621,12 +621,19 @@ fn cases(maria: bool) -> Vec<Case> {
             c("refuse_trim_set", "SELECT trim(both 'xy' from 'xyxhi')"),
             Expect::Refused("trim.multi_char"),
         ),
-        exp(
+        after(
             c(
-                "refuse_update_from",
-                "UPDATE orders SET status = 'x' FROM users WHERE users.id = orders.user_id",
+                "update_from",
+                "UPDATE orders SET status = 'x' FROM users WHERE users.id = orders.user_id AND users.city = 'Bergen'",
             ),
-            Expect::Refused("update_from"),
+            "SELECT id, status FROM orders ORDER BY id",
+        ),
+        after(
+            c(
+                "delete_using",
+                "DELETE FROM orders USING users WHERE users.id = orders.user_id AND users.city = 'Bergen'",
+            ),
+            "SELECT id FROM orders ORDER BY id",
         ),
         exp(
             c("refuse_cast_uuid", "SELECT CAST(name AS UUID) FROM users"),
