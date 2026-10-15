@@ -490,6 +490,11 @@ impl Target for Mysql {
         ))
     }
 
+    fn group_by_rollup(&self, keys: &[String], ctx: &mut Ctx) -> R<String> {
+        ctx.note("group_by.rollup", Tier::Exact, "", None)?;
+        Ok(format!("{} WITH ROLLUP", keys.join(", ")))
+    }
+
     fn distinct_on(&self, ctx: &mut Ctx) -> R<()> {
         // Reached only if a DISTINCT ON survived rewrite_query, which it cannot.
         Err(ctx.refuse("distinct_on", "unexpected DISTINCT ON", &[]))

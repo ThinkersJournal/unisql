@@ -624,6 +624,14 @@ impl Target for Sqlite {
         Ok(format!("CAST({expr} AS {name})"))
     }
 
+    fn group_by_rollup(&self, _keys: &[String], ctx: &mut Ctx) -> R<String> {
+        Err(ctx.refuse(
+            "group_by.rollup",
+            "SQLite has no ROLLUP",
+            &["UNION ALL one GROUP BY per key prefix (not emulated)"],
+        ))
+    }
+
     fn distinct_on(&self, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             "distinct_on",

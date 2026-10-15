@@ -862,10 +862,13 @@ fn select(s: sp::Select) -> R<Select> {
         Some(sp::Distinct::Distinct) => Distinct::Yes,
         Some(sp::Distinct::On(es)) => Distinct::On(es.into_iter().map(expr).collect::<R<_>>()?),
     };
+    let mut group_by_rollup = false;
     let group_by = match group_by {
         sp::GroupByExpr::Expressions(es, mods) => {
-            if !mods.is_empty() {
-                return no("group_by_modifier", "ROLLUP/CUBE/TOTALS modifiers");
+            match mods.as_slice() {
+                [] => {}
+                [sp::GroupByWithModifier::Rollup] if !es.is_empty() => group_by_rollup = true,
+                _ => return no("group_by_modifier", "CUBE/TOTALS/GROUPING SETS modifiers"),
             }
             es.into_iter().map(expr).collect::<R<Vec<_>>>()?
         }
@@ -885,6 +888,7 @@ fn select(s: sp::Select) -> R<Select> {
         from: from_refs,
         where_: selection.map(expr).transpose()?,
         group_by,
+        group_by_rollup,
         having: having.map(expr).transpose()?,
         lock: None,
     })

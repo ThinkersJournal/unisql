@@ -119,6 +119,7 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, Cannot> {
             from: sel.from.clone(),
             where_: sel.where_.clone(),
             group_by: sel.group_by.clone(),
+            group_by_rollup: sel.group_by_rollup,
             having: sel.having.clone(),
             lock: None,
         })),
@@ -140,6 +141,7 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, Cannot> {
             right: Box::new(Expr::Literal(Literal::Number("1".into()))),
         }),
         group_by: vec![],
+        group_by_rollup: false,
         having: None,
         lock: None,
     };

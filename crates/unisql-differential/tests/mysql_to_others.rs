@@ -572,6 +572,13 @@ fn cases(dir: Dir) -> Vec<Case> {
             Expect::Refused("fn:floor"),
         ));
         v.push(exp(
+            c(
+                "refuse_rollup",
+                "SELECT user_id, SUM(amount) FROM orders GROUP BY user_id WITH ROLLUP",
+            ),
+            Expect::Refused("group_by.rollup"),
+        ));
+        v.push(exp(
             c("refuse_bitxor", "SELECT id ^ 1 FROM users"),
             Expect::Refused("bitwise.xor"),
         ));
@@ -598,6 +605,10 @@ fn cases(dir: Dir) -> Vec<Case> {
         v.push(c(
             "ceil_floor",
             "SELECT id, CEIL(score), CEILING(score), FLOOR(score), FLOOR(-score) FROM users",
+        ));
+        v.push(c(
+            "rollup",
+            "SELECT user_id, status, SUM(amount), COUNT(*) FROM orders GROUP BY user_id, status WITH ROLLUP",
         ));
         v.push(c(
             "regexp",

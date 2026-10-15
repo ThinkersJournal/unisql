@@ -74,7 +74,7 @@ cte	cte	curated	ok	ok	translated	translated	translated
 cte_recursive	cte	curated	ok	ok	translated	translated	translated
 window_row_number	window	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
 window_sum	window	curated	ok	ok	conditional:text_collation	conditional:text_collation	conditional:text_collation
-group_with_rollup	aggregate	curated	ok	ok	not_in_ir:group_by_modifier	not_in_ir:group_by_modifier	not_in_ir:group_by_modifier
+group_with_rollup	aggregate	curated	ok	ok	translated	refused:group_by.rollup	translated
 group_by_alias	aggregate	curated	ok	ok	translated	translated	translated
 union_all	setop	curated	ok	ok	translated	translated	translated
 intersect	setop	curated	ok	ok	translated	translated	translated

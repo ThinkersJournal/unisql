@@ -2,6 +2,13 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.21.0 - 2026-10-15
+
+- **Breaking:** MySQL/MariaDB `GROUP BY a, b WITH ROLLUP` is read into the IR (`Select.group_by_rollup`, an AST
+  break: `Select` gains a field). Written as `ROLLUP (a, b)` on PostgreSQL and `WITH ROLLUP` on
+  MySQL/MariaDB; refused on SQLite (`group_by.rollup`). `CUBE`, `TOTALS` and `GROUPING SETS` stay
+  refused (`group_by_modifier`).
+
 ## 0.20.5 - 2026-10-15
 
 - **`CEIL`/`CEILING`/`FLOOR` and `MOD(a, b)`** (differential cases against the real engines):

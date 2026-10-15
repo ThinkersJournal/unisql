@@ -30,6 +30,7 @@ fn any_param_query(negated: bool) -> Statement {
                 negated,
             }),
             group_by: vec![],
+            group_by_rollup: false,
             having: None,
             lock: None,
         })),
