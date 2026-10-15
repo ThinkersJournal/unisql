@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.2 - 2026-10-15
+
+- **`ADDDATE(x, n)` / `SUBDATE(x, n)` with a plain number** (MySQL/MariaDB source) are read as
+  `x +/- INTERVAL n DAY`, so the existing interval arithmetic applies on every target. Differential cases
+  against the real engines. No AST change.
+
 ## 0.24.1 - 2026-10-15
 
 - MySQL/MariaDB `CAST(x AS CHAR(n))` is read as a varchar(n) cast (truncates, no padding). Written as

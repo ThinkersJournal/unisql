@@ -2255,7 +2255,7 @@ fn function(f: sp::Function) -> R<Expr> {
     };
     // MySQL `DATE_ADD(x, INTERVAL n unit)` / `ADDDATE(..)` and `DATE_SUB` / `SUBDATE(..)` are
     // `x +/- INTERVAL n unit`: the same IR form as the operator, so the targets' interval
-    // arithmetic (and its refusal of months/years) applies unchanged. `ADDDATE(x, 7)` (days) is not read.
+    // arithmetic (and its refusal of months/years) applies unchanged.
     if rules().name == "mysql"
         && !distinct
         && agg_order.is_empty()
@@ -2288,6 +2288,40 @@ fn function(f: sp::Function) -> R<Expr> {
             op,
             left: Box::new(expr(l)?),
             right: Box::new(interval_call(iv)?),
+        });
+    }
+    // `ADDDATE(x, 7)` / `SUBDATE(x, 7)` with a plain number are `x +/- INTERVAL 7 DAY`.
+    if rules().name == "mysql"
+        && !distinct
+        && agg_order.is_empty()
+        && matches!(base.as_str(), "adddate" | "subdate")
+        && args.len() == 2
+        && matches!(
+            &args[1],
+            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(sp::Expr::Value(v)))
+                if matches!(v.value, sp::Value::Number(..))
+        )
+    {
+        let op = if base == "adddate" {
+            BinaryOp::Plus
+        } else {
+            BinaryOp::Minus
+        };
+        let mut it = args.into_iter();
+        let (
+            Some(sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(l))),
+            Some(sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(sp::Expr::Value(v)))),
+        ) = (it.next(), it.next())
+        else {
+            return no("function_argument", "argument of a date function");
+        };
+        let sp::Value::Number(n, _) = v.value else {
+            unreachable!("matched above")
+        };
+        return Ok(Expr::Binary {
+            op,
+            left: Box::new(expr(l)?),
+            right: Box::new(make_interval("days", n)),
         });
     }
     let mut out = Vec::new();
@@ -2490,7 +2524,11 @@ fn interval_call(iv: sp::Interval) -> R<Expr> {
         "year" => "years",
         other => return no("interval", &format!("unit `{other}` is not in the IR")),
     };
-    Ok(Expr::Function(Function {
+    Ok(make_interval(unit, amount))
+}
+
+fn make_interval(unit: &str, amount: String) -> Expr {
+    Expr::Function(Function {
         name: "make_interval".to_string(),
         args: vec![FunctionArg::Named {
             name: unit.to_string(),
@@ -2501,7 +2539,7 @@ fn interval_call(iv: sp::Interval) -> R<Expr> {
         filter: None,
         over: None,
         order_by: vec![],
-    }))
+    })
 }
 
 fn window_spec(w: sp::WindowSpec) -> R<Window> {

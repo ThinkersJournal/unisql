@@ -527,6 +527,14 @@ fn cases(dir: Dir) -> Vec<Case> {
             "date_sub_interval",
             "SELECT id FROM events WHERE at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)",
         ),
+        c(
+            "adddate_days",
+            "SELECT id FROM events WHERE at < ADDDATE(NOW(), 7)",
+        ),
+        c(
+            "subdate_days",
+            "SELECT id FROM events WHERE at > SUBDATE(NOW(), 3)",
+        ),
         exp(
             c(
                 "refuse_date_add_month",
