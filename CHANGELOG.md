@@ -2,7 +2,7 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## Unreleased (PM allocates the number at gate; breaking, so 0.20.0)
+## 0.20.0 - 2026-10-14
 
 - **Breaking (AST):** new `Expr::Regexp { expr, pattern, negated }` for MySQL/MariaDB `REGEXP` and
   `RLIKE` and PostgreSQL `~` / `!~`. Written as `~` / `!~` on PostgreSQL and `REGEXP` / `NOT REGEXP` on
@@ -10,6 +10,13 @@ One version number for every crate in the workspace. Pre-1.0, the second number 
   case sensitivity differ beyond the common subset). SQLite is refused (`regexp`): it has no built-in
   matcher. The case-insensitive `~*` / `!~*` are still not read. Code that matches `Expr` or
   `Allowance` exhaustively must add the arm. `LIKE BINARY` is unchanged (sqlparser reads it as a cast).
+- **Breaking (AST):** new `BinaryOp` variants `BitAnd`, `BitOr`, `BitXor`, `ShiftLeft`, `ShiftRight`
+  and `Xor`, read from MySQL/MariaDB (`& | ^ << >> XOR`) and PostgreSQL (`& | # << >>`). Bitwise
+  operators are written natively and gated by the new `Allowance::BitwiseNonNegativeIntegers` (MySQL
+  computes on unsigned 64-bit integers); XOR becomes `<>` on PostgreSQL and SQLite under the new
+  `Allowance::XorOperandsBoolean`; bitwise XOR is refused on SQLite (`bitwise.xor`). Not read yet:
+  unary `~` (unsigned on MySQL), and `<<`/`>>` from a SQLite source (sqlparser rejects them there).
+  `Allowance` is exhaustive, so a `match` on it needs the two arms.
 
 ## 0.19.0 - 2026-10-14
 

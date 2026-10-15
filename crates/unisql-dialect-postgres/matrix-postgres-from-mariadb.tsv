@@ -1,4 +1,6 @@
 subject_kind	subject	backend	version	config	enabled	reason	metadata	note	from
+construct	bitwise	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::bitwise_ops	diverges from the strict contract unless accepted: allowance=bitwise_non_negative_integers	mariadb
+construct	bitwise.bitwise_non_negative_integers	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::bitwise_ops	allowance=bitwise_non_negative_integers	mariadb
 construct	cast.to_bigint	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
 construct	cast.to_bigint.lenient_cast	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::cast_forms	allowance=lenient_cast	mariadb
 construct	cast.to_double	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::div_decimal	diverges from the strict contract unless accepted: allowance=lenient_cast	mariadb
@@ -56,11 +58,11 @@ construct	join:left_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=nativ
 construct	like	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::like_escape	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	mariadb
 construct	like.like_case_sensitivity_is_connection_setting	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::like_escape	allowance=like_case_sensitivity_is_connection_setting	mariadb
 construct	limit	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::limit_comma		mariadb
-construct	null_ordering	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::concat_ws_skips_null		mariadb
+construct	null_ordering	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::bitwise_ops		mariadb
 construct	null_safe_eq	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::null_safe_eq_null		mariadb
 construct	offset	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::limit_comma		mariadb
-construct	order_by	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::concat_ws_skips_null	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
-construct	order_by.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::concat_ws_skips_null	allowance=text_collation	mariadb
+construct	order_by	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::bitwise_ops	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
+construct	order_by.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::bitwise_ops	allowance=text_collation	mariadb
 construct	ordered_comparison	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::backticks	diverges from the strict contract unless accepted: allowance=text_collation	mariadb
 construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::backticks	allowance=text_collation	mariadb
 construct	pipes_as_or	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::pipes_as_or	diverges from the strict contract unless accepted: allowance=pipes_as_logical_or	mariadb
@@ -74,3 +76,5 @@ construct	text_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none
 construct	upsert	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::insert_ignore_duplicate		mariadb
 construct	upsert.no_conflict_key	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=mariadb-to-postgres;test=mariadb-to-postgres::refuse_odku	the source upsert names no conflict key (MySQL ON DUPLICATE KEY UPDATE fires on any unique key); this target needs the key columns, and the schema does not state exactly one unique key for the table	mariadb
 construct	window_function	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=mariadb-to-postgres;test=mariadb-to-postgres::window_rank		mariadb
+construct	xor	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=mariadb-to-postgres;test=mariadb-to-postgres::xor	diverges from the strict contract unless accepted: allowance=xor_operands_boolean	mariadb
+construct	xor.xor_operands_boolean	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=mariadb-to-postgres;test=mariadb-to-postgres::xor	allowance=xor_operands_boolean	mariadb

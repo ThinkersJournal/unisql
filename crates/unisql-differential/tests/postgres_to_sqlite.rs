@@ -164,6 +164,19 @@ fn cases() -> Vec<Case> {
             Expect::Refused("regexp"),
         ),
         c(
+            "bitwise_ops",
+            "SELECT id, id & 3, id | 4, id << 1, id >> 1 FROM users",
+            &[A::BitwiseNonNegativeIntegers],
+        ),
+        exp(
+            c(
+                "refuse_bitxor",
+                "SELECT id # 1 FROM users",
+                &[A::BitwiseNonNegativeIntegers],
+            ),
+            Expect::Refused("bitwise.xor"),
+        ),
+        c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
             &[],

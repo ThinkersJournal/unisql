@@ -83,8 +83,8 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
   option); multi-table `UPDATE .. JOIN` / `DELETE t FROM .. JOIN` (`update_join`, `delete_join`);
   `DEFAULT` as a value (`insert_default`); `INSERT .. AS alias ON DUPLICATE KEY UPDATE a = alias.x`
   (`upsert_alias`, MySQL 8.0.19+ only); `LIKE BINARY` (sqlparser reads it as a cast to BINARY,
-  `not_in_ir:data_type`), `XOR`, bitwise
-  operators, `CAST(x AS CHAR)`/`CONVERT`, `WITH ROLLUP`, `LOCATE`/`INSTR`/`POSITION`, `CEIL`, hex and
+  `not_in_ir:data_type`), unary `~` (unsigned on
+  MySQL), `CAST(x AS CHAR)`/`CONVERT`, `WITH ROLLUP`, `LOCATE`/`INSTR`/`POSITION`, `CEIL`, hex and
   bit literals, `DATE_ADD(x, INTERVAL n unit)` (read via the `+ INTERVAL` path only).
 - **Reader, parser-bound (sqlparser 0.63.0 rejects the text):** `7 DIV 2`, `LOCK IN SHARE MODE`,
   `SELECT .. INTO OUTFILE`, `TABLE t`. Upstream issues to file if a consumer needs them.

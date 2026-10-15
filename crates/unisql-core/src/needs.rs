@@ -356,6 +356,12 @@ impl Walk<'_> {
                         self.compare(numeric, true)
                     }
                     BinaryOp::NullSafeEq => self.add("null_safe_eq"),
+                    BinaryOp::BitAnd
+                    | BinaryOp::BitOr
+                    | BinaryOp::BitXor
+                    | BinaryOp::ShiftLeft
+                    | BinaryOp::ShiftRight => self.add("bitwise"),
+                    BinaryOp::Xor => self.add("xor"),
                     BinaryOp::JsonGet => self.add("json_get"),
                     BinaryOp::JsonGetText => self.add("json_get_text"),
                     _ => {}

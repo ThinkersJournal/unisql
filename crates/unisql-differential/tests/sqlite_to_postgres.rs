@@ -146,6 +146,11 @@ fn cases() -> Vec<Case> {
             &[],
         ),
         c(
+            "bitwise_ops",
+            "SELECT id, id & 3, id | 4 FROM users",
+            &[A::BitwiseNonNegativeIntegers],
+        ),
+        c(
             "in_between",
             "SELECT id FROM users WHERE id IN (1,3,5) AND age BETWEEN 25 AND 41",
             COLL,

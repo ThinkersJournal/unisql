@@ -1561,6 +1561,12 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 B::StringConcat => BinaryOp::Concat,
                 B::MyIntegerDivide => BinaryOp::IntDivide,
                 B::Spaceship => BinaryOp::NullSafeEq,
+                B::BitwiseAnd => BinaryOp::BitAnd,
+                B::BitwiseOr => BinaryOp::BitOr,
+                B::BitwiseXor | B::PGBitwiseXor => BinaryOp::BitXor,
+                B::PGBitwiseShiftLeft => BinaryOp::ShiftLeft,
+                B::PGBitwiseShiftRight => BinaryOp::ShiftRight,
+                B::Xor => BinaryOp::Xor,
                 B::Arrow => BinaryOp::JsonGet,
                 B::LongArrow => BinaryOp::JsonGetText,
                 other => {

@@ -450,6 +450,18 @@ pub enum BinaryOp {
     JsonGet,
     /// JSON `->>` (returns text)
     JsonGetText,
+    /// `a & b`
+    BitAnd,
+    /// `a | b`
+    BitOr,
+    /// Bitwise exclusive or: MySQL `a ^ b`, PostgreSQL `a # b`.
+    BitXor,
+    /// `a << b`
+    ShiftLeft,
+    /// `a >> b`
+    ShiftRight,
+    /// Logical `a XOR b` (MySQL): true when exactly one operand is true, NULL if either is NULL.
+    Xor,
 }
 
 /// Types, as the IR sees them. Precision/length arguments are kept; engines differ in what they do
