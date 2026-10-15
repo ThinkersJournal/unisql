@@ -2162,6 +2162,43 @@ fn function(f: sp::Function) -> R<Expr> {
         None | Some(sp::DuplicateTreatment::All) => false,
         Some(sp::DuplicateTreatment::Distinct) => true,
     };
+    // MySQL `DATE_ADD(x, INTERVAL n unit)` / `ADDDATE(..)` and `DATE_SUB` / `SUBDATE(..)` are
+    // `x +/- INTERVAL n unit`: the same IR form as the operator, so the targets' interval
+    // arithmetic (and its refusal of months/years) applies unchanged. `ADDDATE(x, 7)` (days) is not read.
+    if rules().name == "mysql"
+        && !distinct
+        && agg_order.is_empty()
+        && matches!(
+            base.as_str(),
+            "date_add" | "adddate" | "date_sub" | "subdate"
+        )
+        && args.len() == 2
+        && matches!(
+            args[1],
+            sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(sp::Expr::Interval(_)))
+        )
+    {
+        let op = if matches!(base.as_str(), "date_add" | "adddate") {
+            BinaryOp::Plus
+        } else {
+            BinaryOp::Minus
+        };
+        let mut it = args.into_iter();
+        let (Some(sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(l))), Some(second)) =
+            (it.next(), it.next())
+        else {
+            return no("function_argument", "first argument of a date function");
+        };
+        let sp::FunctionArg::Unnamed(sp::FunctionArgExpr::Expr(sp::Expr::Interval(iv))) = second
+        else {
+            unreachable!("matched above")
+        };
+        return Ok(Expr::Binary {
+            op,
+            left: Box::new(expr(l)?),
+            right: Box::new(interval_call(iv)?),
+        });
+    }
     let mut out = Vec::new();
     let mut star = false;
     for a in args {
