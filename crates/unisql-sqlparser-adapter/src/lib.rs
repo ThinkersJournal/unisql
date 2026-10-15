@@ -1976,6 +1976,14 @@ fn value(v: sp::Value) -> R<Expr> {
                 .or_else(|_| no("hex_literal", "invalid hex digits"))?;
             Expr::Literal(Literal::Bytes(bytes))
         }
+        // A bit string is `bit(n)` on PostgreSQL and a byte string on MySQL; the two disagree on width.
+        sp::Value::SingleQuotedByteStringLiteral(b)
+        | sp::Value::DoubleQuotedByteStringLiteral(b) => {
+            return no(
+                "bit_literal",
+                &format!("B'{b}' reads differently on each engine"),
+            );
+        }
         sp::Value::Boolean(b) if rules().name == "mysql" => {
             // MySQL TRUE/FALSE are the integers 1 and 0.
             Expr::Literal(Literal::Number(if b { "1" } else { "0" }.into()))

@@ -51,7 +51,7 @@ regexp	expression	curated	ok	ok	conditional:regexp_flavor	refused:regexp	conditi
 rlike	expression	curated	ok	ok	conditional:regexp_flavor	refused:regexp	conditional:regexp_flavor
 like_binary	expression	curated	ok	ok	not_in_ir:data_type	not_in_ir:data_type	not_in_ir:data_type
 like_escape	expression	curated	ok	ok	conditional:like_case_sensitivity_is_connection_setting	conditional:like_case_sensitivity_is_connection_setting	conditional:like_case_sensitivity_is_connection_setting+text_collation
-hex_literal	expression	curated	ok	ok	not_in_ir:literal	not_in_ir:literal	not_in_ir:literal
+hex_literal	expression	curated	ok	ok	not_in_ir:bit_literal	not_in_ir:bit_literal	not_in_ir:bit_literal
 user_variable	expression	curated	ok	ok	not_in_ir:binary_operator	not_in_ir:binary_operator	not_in_ir:binary_operator
 null_safe	expression	curated	ok	ok	translated	translated	translated
 is_true	expression	curated	ok	ok	translated	translated	translated
