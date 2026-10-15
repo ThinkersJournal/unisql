@@ -418,6 +418,8 @@ pub enum Literal {
     /// Integer or decimal literal kept as source text so no precision is lost in the IR.
     Number(String),
     String(String),
+    /// A byte string written as a hex literal (`X'41'`, MySQL `0x41`).
+    Bytes(Vec<u8>),
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

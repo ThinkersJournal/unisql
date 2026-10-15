@@ -188,6 +188,14 @@ fn cases(dir: Dir) -> Vec<Case> {
             "SELECT id, LOCATE('a', name), INSTR(name, 'a'), POSITION('a' IN name), LOCATE('zzz', name), INSTR(name, '') FROM users",
         ),
         c(
+            "hex_literal_compare",
+            "SELECT id, X'41' = X'41', X'41' < X'42', 0x4142 = X'4142', X'41' = X'42' FROM users",
+        ),
+        exp(
+            c("refuse_hex_arith", "SELECT 0x41 + 1 FROM users"),
+            Expect::NotInIr("hex_literal_numeric"),
+        ),
+        c(
             "mod_function",
             "SELECT id, MOD(age, 7), MOD(-age, 7), age % 7 FROM users",
         ),

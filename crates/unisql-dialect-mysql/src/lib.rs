@@ -82,6 +82,11 @@ impl Target for Mysql {
         format!("'{}'", s.replace('\\', "\\\\").replace('\'', "''"))
     }
 
+    fn bytes_literal(&self, b: &[u8]) -> String {
+        let hex: String = b.iter().map(|x| format!("{x:02X}")).collect();
+        format!("X'{hex}'")
+    }
+
     fn placeholder(&self, _n: u32) -> String {
         // Positional: the caller binds in `Translation::param_order`.
         "?".to_string()

@@ -678,6 +678,7 @@ impl Printer<'_> {
                 Literal::Bool(b) => self.t.bool_literal(*b, c)?,
                 Literal::Number(n) => n.clone(),
                 Literal::String(s) => self.t.string_literal(s),
+                Literal::Bytes(b) => self.t.bytes_literal(b),
             },
             Expr::Param(n) => {
                 c.max_param = c.max_param.max(*n);
