@@ -266,6 +266,10 @@ fn cases(dir: Dir) -> Vec<Case> {
             "SELECT group_concat(name) FROM users WHERE id = 1",
         ),
         c(
+            "convert_function",
+            "SELECT CONVERT(id, SIGNED), CONVERT(id, CHAR) FROM users WHERE id = 1",
+        ),
+        c(
             "cast_forms",
             "SELECT CAST(id AS SIGNED), CAST(id AS CHAR) FROM users WHERE id = 1",
         ),

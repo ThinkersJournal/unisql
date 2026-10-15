@@ -84,7 +84,7 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
   `DEFAULT` as a value (`insert_default`); `INSERT .. AS alias ON DUPLICATE KEY UPDATE a = alias.x`
   (`upsert_alias`, MySQL 8.0.19+ only); `LIKE BINARY` (sqlparser reads it as a cast to BINARY,
   `not_in_ir:data_type`), unary `~` (unsigned on
-  MySQL), `CAST(x AS CHAR)`/`CONVERT`, `WITH ROLLUP`, `LOCATE`/`INSTR`/`POSITION`, `CEIL`, hex and
+  MySQL), `CONVERT(x USING cs)` and `CAST(x AS CHAR(n))`/`BINARY`, `WITH ROLLUP`, `LOCATE`/`INSTR`/`POSITION`, `CEIL`, hex and
   bit literals, `DATE_ADD(x, INTERVAL n unit)` (read via the `+ INTERVAL` path only).
 - **Reader, parser-bound (sqlparser 0.63.0 rejects the text):** `7 DIV 2`, `LOCK IN SHARE MODE`,
   `SELECT .. INTO OUTFILE`, `TABLE t`. Upstream issues to file if a consumer needs them.
