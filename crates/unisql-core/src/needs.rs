@@ -106,6 +106,11 @@ impl Walk<'_> {
                 if let Some(e) = &u.where_ {
                     self.expr(e);
                 }
+                if !u.order_by.is_empty() || u.limit.is_some() {
+                    self.add("update_limit");
+                    u.order_by.iter().for_each(|o| self.expr(&o.expr));
+                    u.limit.iter().for_each(|e| self.expr(e));
+                }
                 self.returning(&u.returning);
                 self.scopes.pop();
             }
@@ -115,6 +120,11 @@ impl Walk<'_> {
                 d.using.iter().for_each(|t| self.table(t));
                 if let Some(e) = &d.where_ {
                     self.expr(e);
+                }
+                if !d.order_by.is_empty() || d.limit.is_some() {
+                    self.add("delete_limit");
+                    d.order_by.iter().for_each(|o| self.expr(&o.expr));
+                    d.limit.iter().for_each(|e| self.expr(e));
                 }
                 self.returning(&d.returning);
                 self.scopes.pop();

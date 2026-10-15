@@ -12,7 +12,7 @@ use unisql_core::Target;
 use unisql_core::ast::*;
 use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
 use unisql_core::rewrite;
-use unisql_core::target::{Ctx, Escape, StmtKind};
+use unisql_core::target::{Ctx, DmlLimit, Escape, StmtKind};
 
 type R<T> = Result<T, Untranslatable>;
 
@@ -885,6 +885,10 @@ impl Target for Mysql {
 
     fn update_from_tier(&self) -> Tier {
         Tier::Refused
+    }
+
+    fn dml_limit(&self) -> DmlLimit {
+        DmlLimit::Native
     }
 
     fn nulls_order(&self, _desc: bool, _nulls_first: bool, _ctx: &mut Ctx) -> R<String> {

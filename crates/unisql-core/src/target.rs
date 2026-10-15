@@ -140,6 +140,15 @@ pub enum Escape<'a> {
 }
 
 /// What a target dialect supplies. Every method has a PostgreSQL default.
+/// A target's way of writing `UPDATE|DELETE .. ORDER BY .. LIMIT n`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DmlLimit {
+    /// Trailing `ORDER BY .. LIMIT n` on the statement itself.
+    Native,
+    /// `WHERE <row id> IN (SELECT <row id> FROM t WHERE .. ORDER BY .. LIMIT n)`.
+    RowIdSubquery(&'static str),
+}
+
 pub trait Target {
     fn name(&self) -> &'static str;
 
@@ -340,6 +349,12 @@ pub trait Target {
     /// Tier of `UPDATE .. FROM`.
     fn update_from_tier(&self) -> Tier {
         Tier::Exact
+    }
+
+    /// How `UPDATE|DELETE .. ORDER BY .. LIMIT n` is written. The default (PostgreSQL) has no
+    /// direct form: the row is picked by its physical identifier in a subquery.
+    fn dml_limit(&self) -> DmlLimit {
+        DmlLimit::RowIdSubquery("ctid")
     }
 
     /// Whole-query rewrite before printing (for example `DISTINCT ON` via a window function).

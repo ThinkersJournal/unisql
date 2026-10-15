@@ -78,9 +78,10 @@ Gaps, by what closing them takes (statement ids in the corpus in parentheses):
   table and its one unique key, allowance `replace_is_upsert`), `JOIN .. USING` and `NATURAL JOIN`.
 - **Reader, done at 0.19.0 (IR field `Expr::IsBool`, an AST break):** `IS [NOT] TRUE` / `IS [NOT] FALSE` (`is_true`;
   translated to all three targets, differential cases against PostgreSQL, SQLite, MySQL, MariaDB).
-- **Reader (not in the IR), would be mappable:** `UPDATE/DELETE .. ORDER BY .. LIMIT` (`update_limit`,
-  `delete_limit`: PostgreSQL has no direct form, needs a key subquery, SQLite needs a compile
-  option); multi-table `UPDATE .. JOIN` / `DELETE t FROM .. JOIN` (`update_join`, `delete_join`);
+- **Reader, done (IR fields `order_by`/`limit` on `Update`/`Delete`, an AST break):** `UPDATE/DELETE ..
+  ORDER BY .. LIMIT` (`update_limit`, `delete_limit`; native on MySQL/MariaDB, a `ctid`/`rowid` subquery
+  on PostgreSQL/SQLite).
+- **Reader (not in the IR), would be mappable:** multi-table `UPDATE .. JOIN` / `DELETE t FROM .. JOIN` (`update_join`, `delete_join`);
   `DEFAULT` as a value (`insert_default`); `INSERT .. AS alias ON DUPLICATE KEY UPDATE a = alias.x`
   (`upsert_alias`, MySQL 8.0.19+ only); `LIKE BINARY` (sqlparser reads it as a cast to BINARY,
   `not_in_ir:data_type`), unary `~` (unsigned on

@@ -8,7 +8,7 @@
 use unisql_core::ast::*;
 use unisql_core::report::{Allowance, ParamBinding, Tier, Untranslatable};
 use unisql_core::rewrite;
-use unisql_core::target::{Ctx, Escape, StmtKind, generic_call, generic_call_ordered};
+use unisql_core::target::{Ctx, DmlLimit, Escape, StmtKind, generic_call, generic_call_ordered};
 use unisql_core::{Read, ReadError, Target};
 
 /// Read exactly one SQLite statement.
@@ -801,6 +801,10 @@ impl Target for Sqlite {
             }
         }
         Ok(s)
+    }
+
+    fn dml_limit(&self) -> DmlLimit {
+        DmlLimit::RowIdSubquery("rowid")
     }
 
     fn limit_offset(&self, limit: Option<&str>, offset: Option<&str>, ctx: &mut Ctx) -> R<String> {

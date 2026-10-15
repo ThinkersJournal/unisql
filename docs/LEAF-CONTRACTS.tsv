@@ -158,3 +158,5 @@ group_by.rollup	A GROUP BY with WITH ROLLUP (MySQL) or ROLLUP (a, b) (PostgreSQL
 upsert.key_from_schema	A MySQL ON DUPLICATE KEY UPDATE that states no key is written with the only unique key the schema states for the table as the conflict target. With several keys, or none stated, it is refused (upsert.no_conflict_key). Sound only if the stated keys are all the table has.
 upsert_where	ON CONFLICT ... DO UPDATE ... WHERE applies the update only when the condition holds. Refused where there is no WHERE on the conflict action.
 window_function	`f(...) OVER (PARTITION BY ... ORDER BY ...)` evaluates over each partition in order.
+update_limit	UPDATE ... ORDER BY ... LIMIT n changes the first n rows, in the stated order, that satisfy WHERE. Written natively on MySQL/MariaDB and as a row-identifier subquery (ctid, rowid) elsewhere; refused with FROM tables.
+delete_limit	DELETE ... ORDER BY ... LIMIT n removes the first n rows, in the stated order, that satisfy WHERE. Written natively on MySQL/MariaDB and as a row-identifier subquery (ctid, rowid) elsewhere.

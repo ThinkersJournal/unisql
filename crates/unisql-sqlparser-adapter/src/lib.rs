@@ -1316,16 +1316,8 @@ fn update(u: sp::Update) -> R<Statement> {
         order_by,
         limit,
     } = u;
-    if !optimizer_hints.is_empty()
-        || output.is_some()
-        || or.is_some()
-        || !order_by.is_empty()
-        || limit.is_some()
-    {
-        return no(
-            "update_option",
-            "UPDATE with hints/OUTPUT/OR/ORDER BY/LIMIT",
-        );
+    if !optimizer_hints.is_empty() || output.is_some() || or.is_some() {
+        return no("update_option", "UPDATE with hints/OUTPUT/OR");
     }
     let (table, alias) = simple_table(table)?;
     // The parser does not know MySQL's `UPDATE LOW_PRIORITY|IGNORE t ...` and reads the modifier as
@@ -1350,6 +1342,8 @@ fn update(u: sp::Update) -> R<Statement> {
         set: assignments(asg)?,
         from,
         where_: selection.map(expr).transpose()?,
+        order_by: order_by.into_iter().map(order_item).collect::<R<_>>()?,
+        limit: limit.map(expr).transpose()?,
         returning: returning(ret)?,
     }))
 }
@@ -1367,16 +1361,8 @@ fn delete(d: sp::Delete) -> R<Statement> {
         order_by,
         limit,
     } = d;
-    if !optimizer_hints.is_empty()
-        || !tables.is_empty()
-        || output.is_some()
-        || !order_by.is_empty()
-        || limit.is_some()
-    {
-        return no(
-            "delete_option",
-            "DELETE with hints/multi-table/OUTPUT/ORDER BY/LIMIT",
-        );
+    if !optimizer_hints.is_empty() || !tables.is_empty() || output.is_some() {
+        return no("delete_option", "DELETE with hints/multi-table/OUTPUT");
     }
     let ts = match from {
         sp::FromTable::WithFromKeyword(ts) | sp::FromTable::WithoutKeyword(ts) => ts,
@@ -1395,6 +1381,8 @@ fn delete(d: sp::Delete) -> R<Statement> {
         alias,
         using,
         where_: selection.map(expr).transpose()?,
+        order_by: order_by.into_iter().map(order_item).collect::<R<_>>()?,
+        limit: limit.map(expr).transpose()?,
         returning: returning(ret)?,
     }))
 }

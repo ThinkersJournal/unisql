@@ -232,6 +232,9 @@ pub struct Update {
     pub set: Vec<Assignment>,
     pub from: Vec<TableRef>,
     pub where_: Option<Expr>,
+    /// MySQL/MariaDB `UPDATE .. ORDER BY .. LIMIT n`.
+    pub order_by: Vec<OrderItem>,
+    pub limit: Option<Expr>,
     pub returning: Vec<SelectItem>,
 }
 
@@ -241,6 +244,9 @@ pub struct Delete {
     pub alias: Option<String>,
     pub using: Vec<TableRef>,
     pub where_: Option<Expr>,
+    /// MySQL/MariaDB `DELETE .. ORDER BY .. LIMIT n`.
+    pub order_by: Vec<OrderItem>,
+    pub limit: Option<Expr>,
     pub returning: Vec<SelectItem>,
 }
 

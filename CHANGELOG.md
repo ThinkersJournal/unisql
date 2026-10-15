@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.23.0 - 2026-10-15
+
+- **Breaking (AST):** `UPDATE|DELETE .. ORDER BY .. LIMIT n` (MySQL/MariaDB source) is read into the IR
+  (`Update` and `Delete` gain `order_by` and `limit`). Written natively on MySQL/MariaDB and as
+  `WHERE ctid|rowid IN (SELECT ctid|rowid FROM t WHERE .. ORDER BY .. LIMIT n)` on PostgreSQL and
+  SQLite (leaves `update_limit`, `delete_limit`; refused when the statement has FROM/USING tables).
+  Differential cases against the real engines.
+
 ## 0.22.3 - 2026-10-15
 
 - **`DATE_ADD` / `ADDDATE` / `DATE_SUB` / `SUBDATE` with an `INTERVAL`** (MySQL/MariaDB source) are read as

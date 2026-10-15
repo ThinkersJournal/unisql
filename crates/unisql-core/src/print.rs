@@ -3,7 +3,7 @@
 
 use crate::ast::*;
 use crate::report::{Allowance, Options, ParamBinding, Tier, Translation, Untranslatable};
-use crate::target::{Ctx, Escape, StmtKind, Target};
+use crate::target::{Ctx, DmlLimit, Escape, StmtKind, Target};
 
 type R<T> = Result<T, Untranslatable>;
 
@@ -565,9 +565,16 @@ impl Printer<'_> {
                 .collect::<R<Vec<_>>>()?;
             out.push_str(&format!(" FROM {}", f.join(", ")));
         }
-        if let Some(w) = &u.where_ {
-            out.push_str(&format!(" WHERE {}", self.expr(w, c)?));
-        }
+        out.push_str(&self.dml_filter(
+            "update_limit",
+            &u.table,
+            u.alias.as_deref(),
+            u.from.is_empty(),
+            u.where_.as_ref(),
+            &u.order_by,
+            u.limit.as_ref(),
+            c,
+        )?);
         out.push_str(&self.returning(&u.returning, StmtKind::Update, c)?);
         Ok(out)
     }
@@ -591,11 +598,83 @@ impl Printer<'_> {
                 &["rewrite with a subquery: DELETE FROM t WHERE id IN (SELECT ..)"],
             ));
         }
-        if let Some(w) = &d.where_ {
-            out.push_str(&format!(" WHERE {}", self.expr(w, c)?));
-        }
+        out.push_str(&self.dml_filter(
+            "delete_limit",
+            &d.table,
+            d.alias.as_deref(),
+            true,
+            d.where_.as_ref(),
+            &d.order_by,
+            d.limit.as_ref(),
+            c,
+        )?);
         out.push_str(&self.returning(&d.returning, StmtKind::Delete, c)?);
         Ok(out)
+    }
+
+    /// The `WHERE [ORDER BY] [LIMIT]` tail of an UPDATE or DELETE. Without ORDER BY and LIMIT it is
+    /// the plain WHERE; otherwise the target's [`DmlLimit`] form.
+    #[allow(clippy::too_many_arguments)]
+    fn dml_filter(
+        &self,
+        leaf: &str,
+        table: &Name,
+        alias: Option<&str>,
+        single_table: bool,
+        where_: Option<&Expr>,
+        order_by: &[OrderItem],
+        limit: Option<&Expr>,
+        c: &mut Ctx,
+    ) -> R<String> {
+        let w = where_.map(|w| self.expr(w, c)).transpose()?;
+        if order_by.is_empty() && limit.is_none() {
+            return Ok(w.map(|w| format!(" WHERE {w}")).unwrap_or_default());
+        }
+        let order = if order_by.is_empty() {
+            String::new()
+        } else {
+            format!(" ORDER BY {}", self.order_items(order_by, c)?)
+        };
+        let lim = match limit {
+            Some(l) => format!(" LIMIT {}", self.expr(l, c)?),
+            None => String::new(),
+        };
+        let wh = w.map(|w| format!(" WHERE {w}")).unwrap_or_default();
+        match self.t.dml_limit() {
+            DmlLimit::Native => {
+                c.note(leaf, Tier::Exact, "", None)?;
+                Ok(format!("{wh}{order}{lim}"))
+            }
+            DmlLimit::RowIdSubquery(id) => {
+                if !single_table {
+                    return Err(c.refuse(
+                        leaf,
+                        "ORDER BY/LIMIT on a statement with FROM/USING tables",
+                        &["pick the rows in a subquery: WHERE id IN (SELECT id FROM .. ORDER BY .. LIMIT n)"],
+                    ));
+                }
+                if limit.is_none() {
+                    // ORDER BY alone does not change which rows a write touches.
+                    c.note(leaf, Tier::Exact, "", None)?;
+                    return Ok(wh);
+                }
+                c.note(
+                    leaf,
+                    Tier::Emulated,
+                    format!(
+                        "no direct form: rows are picked by `{id}` in a subquery, which needs an                          ordinary table with a physical row identifier"
+                    ),
+                    None,
+                )?;
+                let a = alias
+                    .map(|a| format!(" AS {}", self.id(a)))
+                    .unwrap_or_default();
+                Ok(format!(
+                    " WHERE {id} IN (SELECT {id} FROM {}{a}{wh}{order}{lim})",
+                    self.name(table)
+                ))
+            }
+        }
     }
 
     /// An operand of a binary/unary/predicate: parenthesise anything that is not atomic, so the
