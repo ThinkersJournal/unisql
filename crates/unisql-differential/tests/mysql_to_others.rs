@@ -199,6 +199,10 @@ fn cases(dir: Dir) -> Vec<Case> {
             c("refuse_bit_literal", "SELECT b'101' FROM users"),
             Expect::NotInIr("bit_literal"),
         ),
+        exp(
+            c("refuse_bitwise_not", "SELECT ~age FROM users"),
+            Expect::NotInIr("bitwise_not"),
+        ),
         c(
             "mod_function",
             "SELECT id, MOD(age, 7), MOD(-age, 7), age % 7 FROM users",

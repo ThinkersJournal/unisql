@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.22.2
+
+- Unary `~x` is refused with a named `bitwise_not` reading error instead of the generic `unary_operator`
+  one: its width and signedness differ per engine (MySQL yields a 64-bit unsigned number).
+
 ## 0.22.1
 
 - Bit literals (`b'101'`, `B'101'`) are refused with an explicit `bit_literal` reading error instead of the
