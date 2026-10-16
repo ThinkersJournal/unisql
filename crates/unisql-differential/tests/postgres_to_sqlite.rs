@@ -748,6 +748,11 @@ fn cases() -> Vec<Case> {
             &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
         )),
         c(
+            "epoch_ms_of_clock",
+            "SELECT CAST(EXTRACT(EPOCH FROM clock_timestamp()) * 1000 AS BIGINT) > 1700000000000 AND CAST(EXTRACT(EPOCH FROM clock_timestamp()) * 1000 AS BIGINT) < 4102444800000",
+            &[A::LenientCast, A::ClockIsStatementStart],
+        ),
+        c(
             "to_timestamp_epoch",
             "SELECT CAST(EXTRACT(YEAR FROM to_timestamp(1592228730)) AS INTEGER), CAST(EXTRACT(HOUR FROM to_timestamp(1592228730)) AS INTEGER), CAST(EXTRACT(EPOCH FROM to_timestamp(1592228730)) AS BIGINT)",
             &[

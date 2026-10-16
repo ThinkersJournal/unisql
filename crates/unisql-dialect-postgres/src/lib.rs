@@ -268,6 +268,11 @@ impl Target for Postgres {
         Ok(())
     }
 
+    fn epoch_of_clock(&self, ctx: &mut Ctx) -> R<String> {
+        ctx.note("extract.epoch", Tier::Exact, "", None)?;
+        Ok("EXTRACT(EPOCH FROM clock_timestamp())".to_string())
+    }
+
     fn nulls_order(&self, desc: bool, nulls_first: bool, ctx: &mut Ctx) -> R<String> {
         if ctx.lenient_source() && !ctx.order_non_text {
             ctx.note(

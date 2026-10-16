@@ -531,6 +531,13 @@ impl Target for Mysql {
     /// and minute are the same fields of the same value; the epoch of a timestamp is
     /// `UNIX_TIMESTAMP` in whole seconds. Other fields (dow, week, second with its fraction ...) and
     /// the epoch of an interval have no verified mapping.
+    /// `SYSDATE(3)` is read at the call (not at statement start, unlike `NOW()`), as
+    /// `clock_timestamp()` is.
+    fn epoch_of_clock(&self, ctx: &mut Ctx) -> R<String> {
+        ctx.note("extract.epoch", Tier::Exact, "", None)?;
+        Ok("UNIX_TIMESTAMP(SYSDATE(3))".to_string())
+    }
+
     fn extract(&self, field: &str, expr: &str, interval: bool, ctx: &mut Ctx) -> R<String> {
         let leaf = unisql_core::target::extract_leaf(field, interval);
         match field {
