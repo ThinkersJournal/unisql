@@ -43,6 +43,7 @@ construct	order_by.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		t
 construct	ordered_comparison	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	diverges from the strict contract unless accepted: allowance=text_collation	sqlite
 construct	ordered_comparison.text_collation	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::arith_case	allowance=text_collation	sqlite
 construct	recursive_cte	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::with_recursive		sqlite
+construct	replace_into	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::ir_insert_or_replace	REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key	sqlite
 construct	returning	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::insert_returning		sqlite
 construct	returning.update	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::update_returning		sqlite
 construct	text_comparison	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::agg_filter		sqlite

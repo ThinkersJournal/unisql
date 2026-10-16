@@ -422,7 +422,7 @@ fn cases() -> Vec<Case> {
                 "INSERT OR REPLACE INTO kv (key, value) VALUES ('a', 'b')",
                 &[],
             ),
-            Expect::NotInIr("insert_option"),
+            Expect::Refused("replace_into"),
         ),
         exp(
             c(
