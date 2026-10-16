@@ -2,6 +2,17 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.8 - 2026-10-16
+
+- **`FROM generate_series(a, b[, step]) AS g`** now translates to SQLite and MySQL/MariaDB as a derived table
+  over `WITH RECURSIVE`, for two or three integer literal arguments (step not 0) and an alias; the series
+  column carries the alias. Ascending, descending and empty ranges agree with PostgreSQL in the differential
+  suites (PostgreSQL 16, SQLite, MySQL 8.4, MariaDB 11.4). Non-literal arguments are refused
+  (`table_function.generate_series.args`), as is a missing alias (`table_function.generate_series.alias`);
+  other table functions are still refused by leaf. `ORDER BY` on the series column on SQLite needs the
+  `text_collation` allowance, as the column's type is not known. New `Target::series_as_recursive_cte`
+  (default `false`).
+
 ## 0.24.7 - 2026-10-16
 
 - **`ON CONFLICT .. DO UPDATE .. WHERE`** now translates to MySQL/MariaDB as `col = IF(cond, new, col)` in every

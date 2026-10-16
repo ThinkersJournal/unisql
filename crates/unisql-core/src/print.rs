@@ -334,6 +334,49 @@ impl Printer<'_> {
         Ok(parts.join(", "))
     }
 
+    /// `generate_series(a, b[, step]) AS g` over integer literals as a derived table on a recursive CTE,
+    /// for a target that opts in. `None`: not this shape, or the target does not map it.
+    fn series_cte(
+        &self,
+        name: &str,
+        args: &[Expr],
+        alias: Option<&str>,
+        c: &mut Ctx,
+    ) -> R<Option<String>> {
+        if !name.eq_ignore_ascii_case("generate_series") || !self.t.series_as_recursive_cte() {
+            return Ok(None);
+        }
+        let Some(alias) = alias else {
+            return Err(c.refuse(
+                "table_function.generate_series.alias",
+                "generate_series() without an alias names its column generate_series",
+                &["add an alias: generate_series(1, 3) AS g"],
+            ));
+        };
+        let (start, stop, step) = match series_bounds(args) {
+            Some(b) => b,
+            None => {
+                return Err(c.refuse(
+                    "table_function.generate_series.args",
+                    "generate_series() is mapped only for two or three integer literal arguments, step not 0",
+                    &["write the bounds as integer literals, or generate the rows in the application"],
+                ));
+            }
+        };
+        c.note(
+            "table_function.generate_series",
+            Tier::Emulated,
+            "-> a derived table over WITH RECURSIVE, integer literal bounds only",
+            None,
+        )?;
+        self.t.feature("recursive_cte", c)?;
+        let g = self.id(alias);
+        let (cmp, keep) = if step > 0 { ("<", "<=") } else { (">", ">=") };
+        Ok(Some(format!(
+            "(WITH RECURSIVE {g} ({g}) AS (SELECT {start} UNION ALL SELECT {g} + ({step}) FROM {g}              WHERE {g} {cmp} {stop}) SELECT {g} FROM {g} WHERE {g} {keep} {stop}) AS {g}"
+        )))
+    }
+
     fn table_ref(&self, t: &TableRef, c: &mut Ctx) -> R<String> {
         match t {
             TableRef::Table { name, alias } => Ok(match alias {
@@ -344,6 +387,9 @@ impl Printer<'_> {
                 Ok(format!("({}) AS {}", self.query(query, c)?, self.id(alias)))
             }
             TableRef::Function { name, args, alias } => {
+                if let Some(s) = self.series_cte(name, args, alias.as_deref(), c)? {
+                    return Ok(s);
+                }
                 self.t.table_function(name, c)?;
                 let a = args
                     .iter()
