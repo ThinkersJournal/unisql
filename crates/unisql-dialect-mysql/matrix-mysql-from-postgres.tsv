@@ -95,7 +95,7 @@ construct	order_by	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wron
 construct	order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	premise=text_collation, read from config; see the known-bad row	postgres
 construct	order_by.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=text_collation	postgres
 construct	ordered_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder		postgres
-construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::with_recursive		postgres
+construct	recursive_cte	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::table_function_series_down_step		postgres
 construct	regexp	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::regexp_match	diverges from the strict contract unless accepted: allowance=regexp_flavor	postgres
 construct	regexp.regexp_flavor	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::regexp_match	allowance=regexp_flavor	postgres
 construct	returning	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_returning	MySQL has no RETURNING clause	postgres
@@ -104,7 +104,9 @@ construct	row_lock.nowait	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		ti
 construct	row_lock.of	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_of_table		postgres
 construct	row_lock.share	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_share		postgres
 construct	row_lock.skip_locked	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lock_skip_locked		postgres
-construct	table_function.generate_series	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_table_function	MySQL/MariaDB has no verified mapping for the table-valued function generate_series()	postgres
+construct	table_function.generate_series	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::table_function_series_down_step		postgres
+construct	table_function.generate_series.alias	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::table_function_series_alias_refused	generate_series() without an alias names its column generate_series	postgres
+construct	table_function.generate_series.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::table_function_series_args_refused	generate_series() is mapped only for two or three integer literal arguments, step not 0	postgres
 construct	text_comparison	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_text_equality	known-bad control: the result diverged from the source engine under this config	postgres
 construct	text_comparison	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	premise=text_collation, read from config; see the known-bad row	postgres
 construct	text_comparison.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::any_with_scalar_reorder	allowance=text_collation	postgres

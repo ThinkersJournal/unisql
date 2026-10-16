@@ -583,6 +583,10 @@ impl Target for Mysql {
         ))
     }
 
+    fn series_as_recursive_cte(&self) -> bool {
+        true
+    }
+
     fn table_function(&self, name: &str, ctx: &mut Ctx) -> R<()> {
         Err(ctx.refuse(
             &format!("table_function.{name}"),

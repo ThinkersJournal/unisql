@@ -53,7 +53,9 @@ division_integer	Division of two integers truncates toward zero and yields an in
 filter_clause	`agg(...) FILTER (WHERE p)` aggregates only the rows for which p is true.
 fn:avg	avg() over non-NULL inputs gives the source's mean and NULL over no rows.
 fn:btrim	btrim(s) removes leading and trailing spaces.
-table_function.generate_series	FROM generate_series(a, b[, step]) yields the integers (or timestamps) from a to b inclusive in order, one row each, column named by the alias. Refused where no mapping is verified.
+table_function.generate_series	FROM generate_series(a, b[, step]) yields the integers (or timestamps) from a to b inclusive in order, one row each, column named by the alias. Mapped on SQLite and MySQL/MariaDB as a derived table over WITH RECURSIVE for integer literal bounds and a nonzero literal step; refused elsewhere where no mapping is verified.
+table_function.generate_series.args	FROM generate_series(..) whose arguments are not two or three integer literals (step not 0) is refused where it is written as a recursive CTE.
+table_function.generate_series.alias	FROM generate_series(..) with no alias is refused where it is written as a recursive CTE: its column would be named generate_series.
 fn:char_length	char_length(s) is the number of characters of s.
 fn:date_trunc.day	date_trunc('day', ts) is ts cut to the start of its day.
 fn:date_trunc.hour	date_trunc('hour', ts) is ts cut to the start of its hour.

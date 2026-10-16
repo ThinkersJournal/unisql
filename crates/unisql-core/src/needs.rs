@@ -272,8 +272,18 @@ impl Walk<'_> {
         match t {
             TableRef::Table { .. } => {}
             TableRef::Subquery { query, .. } => self.query(query),
-            TableRef::Function { name, args, .. } => {
+            TableRef::Function { name, args, alias } => {
                 self.add(format!("table_function.{name}"));
+                if name.eq_ignore_ascii_case("generate_series") {
+                    // Where it is written as a recursive CTE (SQLite, MySQL/MariaDB), and its refusals.
+                    self.add("recursive_cte");
+                    if alias.is_none() {
+                        self.add("table_function.generate_series.alias");
+                    }
+                    if crate::ast::series_bounds(args).is_none() {
+                        self.add("table_function.generate_series.args");
+                    }
+                }
                 args.iter().for_each(|x| self.expr(x));
             }
             TableRef::Join {

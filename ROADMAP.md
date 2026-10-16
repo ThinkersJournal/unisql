@@ -192,4 +192,5 @@ later.
   MySQL refuses it by leaf) and a differential case. Nothing to do on our side until then.
 - **`INSERT OR REPLACE`** (SQLite replace semantics with no conflict key): not in the IR.
 - **Table-valued functions in FROM** are read and refused by leaf (`table_function.<name>`) on SQLite and
-  MySQL/MariaDB; `generate_series` could be mapped through a recursive CTE once a consumer needs it.
+  MySQL/MariaDB; `generate_series` with integer literal bounds is mapped through a recursive CTE (0.24.8); other table
+  functions, and non-literal bounds (which need LATERAL), remain refused.

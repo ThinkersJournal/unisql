@@ -855,12 +855,35 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         Expect::RandomUuidV4,
     ));
+    v.push(ord(c(
+        "table_function_series_up",
+        "SELECT g FROM generate_series(1, 5) AS g ORDER BY g",
+    )));
+    v.push(ord(c(
+        "table_function_series_down_step",
+        "SELECT g FROM generate_series(10, -4, -3) AS g ORDER BY g",
+    )));
+    v.push(ord(c(
+        "table_function_series_empty",
+        "SELECT count(*) AS n FROM generate_series(5, 1) AS g",
+    )));
+    v.push(ord(c(
+        "table_function_series_joined",
+        "SELECT u.id, g FROM users u JOIN generate_series(1, 2) AS g ON g = u.id ORDER BY u.id",
+    )));
     v.push(exp(
         c(
-            "refuse_table_function",
-            "SELECT g FROM generate_series(1, 3) AS g",
+            "table_function_series_args_refused",
+            "SELECT g FROM generate_series(1, 2 + 1) AS g",
         ),
-        Expect::Refused("table_function.generate_series"),
+        Expect::Refused("table_function.generate_series.args"),
+    ));
+    v.push(exp(
+        c(
+            "table_function_series_alias_refused",
+            "SELECT * FROM generate_series(1, 3)",
+        ),
+        Expect::Refused("table_function.generate_series.alias"),
     ));
     // FOR SHARE and FOR UPDATE OF <table>: MySQL has them (measured), MariaDB 11.4 gives a syntax
     // error for both, so it is refused rather than sent.

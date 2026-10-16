@@ -417,6 +417,27 @@ pub enum TrimSide {
     Trailing,
 }
 
+/// The `(start, stop, step)` of `generate_series(start, stop[, step])` when every argument is an integer
+/// literal (a leading `-` allowed) and the step is not 0; `None` for any other arguments.
+pub fn series_bounds(args: &[Expr]) -> Option<(i64, i64, i64)> {
+    fn int(e: &Expr) -> Option<i64> {
+        match e {
+            Expr::Literal(Literal::Number(n)) => n.parse().ok(),
+            Expr::Unary {
+                op: UnaryOp::Minus,
+                expr,
+            } => int(expr)?.checked_neg(),
+            _ => None,
+        }
+    }
+    let nums: Option<Vec<i64>> = args.iter().map(int).collect();
+    match nums?.as_slice() {
+        [a, b] => Some((*a, *b, 1)),
+        [a, b, s] if *s != 0 => Some((*a, *b, *s)),
+        _ => None,
+    }
+}
+
 #[derive(Clone, Debug, PartialEq)]
 pub enum Literal {
     Null,

@@ -384,6 +384,8 @@ fn catalogue() -> &'static [(&'static str, &'static str)] {
             "SELECT k FROM users u, jsonb_object_keys(u.attributes) AS k WHERE u.id = $1",
         ),
         ("postgres", "SELECT g FROM generate_series(1, 3) AS g"),
+        ("postgres", "SELECT g FROM generate_series(1, 2 + 1) AS g"),
+        ("postgres", "SELECT * FROM generate_series(1, 3)"),
         (
             "postgres",
             "SELECT array_length(ARRAY[1, 2], 1), current_user",
