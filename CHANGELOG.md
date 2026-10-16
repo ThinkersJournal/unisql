@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.6 - 2026-10-16
+
+- **SQLite `INSERT OR IGNORE`** is read as `INSERT IGNORE` (`ON CONFLICT DO NOTHING` with no target), with
+  the same `ignore_covers_only_unique_conflicts` allowance; other `OR` conflict clauses are still refused.
+  No AST change.
+
 ## 0.24.5 - 2026-10-16
 
 - **SQLite `INSERT OR REPLACE`** is read as `REPLACE INTO` (the IR's `replace_into`), so it now translates

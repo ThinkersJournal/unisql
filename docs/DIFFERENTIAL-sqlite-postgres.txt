@@ -1,4 +1,4 @@
-sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=61
+sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=64
 PASS hex_literal_compare          same
        -> SELECT "id", '\x41'::bytea = '\x41'::bytea, '\x41'::bytea = '\x42'::bytea, '\x4142'::bytea = '\x4142'::bytea FROM "users"
 PASS ph_question                  same
@@ -95,6 +95,11 @@ PASS upsert                       same
        -> INSERT INTO "kv" ("key", "value", "n") VALUES ($1, $2, $3) ON CONFLICT ("key") DO UPDATE SET "value" = EXCLUDED."value", "n" = EXCLUDED."n"
 PASS upsert_do_nothing            same
        -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'x', 0) ON CONFLICT ("key") DO NOTHING
+PASS upsert_or_ignore_duplicate   same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'x', 0) ON CONFLICT DO NOTHING
+PASS upsert_or_ignore_new         same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('z', 'x', 0) ON CONFLICT DO NOTHING
+PASS gate_insert_or_ignore        refused without allowance: conditional: needs allowance `ignore_covers_only_unique_conflicts`: INSERT IGNORE downgrades every error of the statement to a warning; ON CONFLICT DO NOTHING skips unique-key conflicts only
 PASS update_returning             same
        -> UPDATE "users" SET "age" = "age" + 1 WHERE "city" = 'Oslo' RETURNING "id", "age"
 PASS delete_where                 same
@@ -113,7 +118,7 @@ PASS refuse_strftime              refused `fn:strftime`: no verified mapping for
 PASS ir_insert_or_replace         refused `replace_into`: REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key
 PASS ir_glob                      not in IR `binary_operator`: Glob (JSON/array/regex/bitwise operators are not in the IR)
 
-MATRIX (construct, tier) from 52 passing translated cases:
+MATRIX (construct, tier) from 54 passing translated cases:
   bitwise                      conditional
   cast.to_integer              conditional
   cast.to_text                 conditional
@@ -139,6 +144,7 @@ MATRIX (construct, tier) from 52 passing translated cases:
   fn:sum                       exact
   fn:upper                     exact
   ilike                        exact
+  insert_ignore                conditional
   join:inner_join              exact
   join:left_join               exact
   like                         conditional

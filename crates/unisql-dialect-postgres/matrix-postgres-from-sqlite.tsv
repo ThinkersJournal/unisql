@@ -31,6 +31,8 @@ construct	fn:sum	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=
 construct	fn:typeof	postgres	16.15	lc_collate=C;schema=none	no	missing	suite=sqlite-to-postgres;test=sqlite-to-postgres::refuse_typeof	no verified mapping for this function on PostgreSQL yet	sqlite
 construct	fn:upper	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::string_funcs		sqlite
 construct	ilike	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default		sqlite
+construct	insert_ignore	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::upsert_or_ignore_duplicate	diverges from the strict contract unless accepted: allowance=ignore_covers_only_unique_conflicts	sqlite
+construct	insert_ignore.ignore_covers_only_unique_conflicts	postgres	16.15	lc_collate=C;schema=none	yes		tier=conditional;suite=sqlite-to-postgres;test=sqlite-to-postgres::upsert_or_ignore_duplicate	allowance=ignore_covers_only_unique_conflicts	sqlite
 construct	join:inner_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::cte		sqlite
 construct	join:left_join	postgres	16.15	lc_collate=C;schema=none	yes		tier=native;suite=sqlite-to-postgres;test=sqlite-to-postgres::left_join		sqlite
 construct	like	postgres	16.15	lc_collate=C;schema=none	no	wrong	suite=sqlite-to-postgres;test=sqlite-to-postgres::like_ci_default	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	sqlite
