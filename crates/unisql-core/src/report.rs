@@ -116,6 +116,12 @@ pub enum Allowance {
     /// `'now'`), not once per call: two calls in one statement give the same instant. It needs
     /// SQLite 3.42 or later (`unixepoch(.., 'subsec')`).
     ClockIsStatementStart,
+    /// `ON CONFLICT .. DO UPDATE .. WHERE cond` is written as `SET col = IF(cond, new, col)` for every
+    /// column (MySQL's `ON DUPLICATE KEY UPDATE` has no `WHERE`). The affected-row count then differs:
+    /// 1 for an inserted row, 2 for an updated one, and 0 both for a row the condition kept and for an
+    /// update that changed nothing (MySQL counts changed rows only); under `CLIENT_FOUND_ROWS` the kept
+    /// row counts 1, so a caller who tells "updated" from "kept" by the count must not set it.
+    UpsertWhereAsIf,
 }
 
 impl Allowance {
@@ -150,6 +156,7 @@ impl Allowance {
         Allowance::ClockIsStatementStart,
         Allowance::ArrayNullSemantics,
         Allowance::DecimalDivisionAsFloat,
+        Allowance::UpsertWhereAsIf,
     ];
 
     pub fn name(self) -> &'static str {
@@ -185,6 +192,7 @@ impl Allowance {
             Allowance::BitwiseNonNegativeIntegers => "bitwise_non_negative_integers",
             Allowance::XorOperandsBoolean => "xor_operands_boolean",
             Allowance::ClockIsStatementStart => "clock_is_statement_start",
+            Allowance::UpsertWhereAsIf => "upsert_where_as_if",
         }
     }
 }

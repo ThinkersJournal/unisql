@@ -2,6 +2,16 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.7 - 2026-10-16
+
+- **`ON CONFLICT .. DO UPDATE .. WHERE`** now translates to MySQL/MariaDB as `col = IF(cond, new, col)` in every
+  `SET` expression, under the new `Allowance::UpsertWhereAsIf`. The column the condition reads is assigned last
+  (MySQL assigns left to right); a condition reading two or more set columns is refused
+  (`upsert_where.two_columns`). Rows affected, measured on MySQL 8.4 and MariaDB 11.4: 1 inserted, 2 updated,
+  0 kept by the condition and 0 for an update that changes nothing; do not set `CLIENT_FOUND_ROWS`, which
+  counts a kept row as 1. A parameter in the condition is bound once per set column. New `Target::upsert_where_as_if`
+  (default `false`).
+
 ## 0.24.6 - 2026-10-16
 
 - **SQLite `INSERT OR IGNORE`** is read as `INSERT IGNORE` (`ON CONFLICT DO NOTHING` with no target), with

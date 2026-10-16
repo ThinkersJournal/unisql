@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=133
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=139
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -113,6 +113,17 @@ PASS insert_values                same
        -> INSERT INTO `users` (`id`, `name`, `active`) VALUES (?, ?, TRUE)
 PASS upsert_do_update             same
        -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `n` = VALUES(`n`)
+PASS upsert_where_updates         same
+       -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES ('a', 'w', 5) ON DUPLICATE KEY UPDATE `value` = IF(`kv`.`n` < VALUES(`n`), VALUES(`value`), `value`), `n` = IF(`kv`.`n` < VALUES(`n`), VALUES(`n`), `n`)
+PASS upsert_where_kept            same
+       -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES ('b', 'w', 1) ON DUPLICATE KEY UPDATE `value` = IF(`kv`.`n` < VALUES(`n`), VALUES(`value`), `value`), `n` = IF(`kv`.`n` < VALUES(`n`), VALUES(`n`), `n`)
+PASS upsert_where_null_kept       same
+       -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES ('c', 'w', 9) ON DUPLICATE KEY UPDATE `value` = IF(`kv`.`n` < VALUES(`n`), VALUES(`value`), `value`), `n` = IF(`kv`.`n` < VALUES(`n`), VALUES(`n`), `n`)
+PASS upsert_where_inserts         same
+       -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES ('new', 'w', 1) ON DUPLICATE KEY UPDATE `value` = IF(`kv`.`n` < VALUES(`n`), VALUES(`value`), `value`), `n` = IF(`kv`.`n` < VALUES(`n`), VALUES(`n`), `n`)
+PASS upsert_where_param           same
+       -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE `value` = IF(`kv`.`n` < ?, VALUES(`value`), `value`), `n` = IF(`kv`.`n` < ?, VALUES(`n`), `n`)
+PASS gate_upsert_where            refused without allowance: conditional: needs allowance `upsert_where_as_if`: ON DUPLICATE KEY UPDATE has no WHERE: written as IF() in each SET expression; rows affected is 1 inserted, 2 updated, 0 kept or unchanged
 PASS upsert_do_nothing            same
        -> INSERT INTO `kv` (`key`, `value`, `n`) VALUES ('a', 'ignored', 0) ON DUPLICATE KEY UPDATE `key` = `key`
 PASS update_subquery              same
@@ -185,7 +196,7 @@ PASS diverge_division_by_zero     diverges: postgres errors (query: db error); m
        -> SELECT 1 DIV 0
 PASS diverge_bad_cast             diverges: postgres errors (prepare: db error); mariadb returns [[Int(0)]]
        -> SELECT CAST('abc' AS SIGNED)
-PASS refuse_upsert_where          refused `upsert_where`: ON DUPLICATE KEY UPDATE has no WHERE clause
+PASS refuse_upsert_where_two_columns refused `upsert_where.two_columns`: the WHERE reads more than one column the upsert sets; MySQL assigns left to right, so no order keeps each condition on the old row
 PASS refuse_filter                refused `filter_clause`: MySQL has no FILTER (WHERE ..) on aggregates
 PASS refuse_json                  refused `json_get_text`: MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented
 PASS refuse_substr                refused `fn:substr`: start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')
@@ -236,7 +247,7 @@ PASS refuse_table_function        refused `table_function.generate_series`: MySQ
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 102 passing translated cases:
+MATRIX (construct, tier) from 107 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -307,4 +318,5 @@ MATRIX (construct, tier) from 102 passing translated cases:
   trim                         exact
   update_from                  exact
   upsert                       conditional
+  upsert_where                 conditional
   window_function              exact

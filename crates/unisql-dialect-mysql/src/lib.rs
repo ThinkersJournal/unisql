@@ -675,6 +675,10 @@ impl Target for Mysql {
         false
     }
 
+    fn upsert_where_as_if(&self) -> bool {
+        true
+    }
+
     fn replace_keyword(&self) -> Option<&'static str> {
         Some("REPLACE INTO")
     }
@@ -689,6 +693,7 @@ impl Target for Mysql {
         ctx: &mut Ctx,
     ) -> R<String> {
         if where_.is_some() {
+            // The printer folds the WHERE into SET (`upsert_where_as_if`) and passes none.
             return Err(ctx.refuse(
                 "upsert_where",
                 "ON DUPLICATE KEY UPDATE has no WHERE clause",

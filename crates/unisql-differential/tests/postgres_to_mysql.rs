@@ -79,6 +79,7 @@ const ALL: &[A] = &[
     A::RegexpFlavor,
     A::BitwiseNonNegativeIntegers,
     A::XorOperandsBoolean,
+    A::UpsertWhereAsIf,
 ];
 
 fn c(name: &'static str, sql: &'static str) -> Case {
@@ -374,6 +375,55 @@ fn cases(maria: bool) -> Vec<Case> {
             ),
             kvs_pg,
         ),
+        // the WHERE column is set first in the source; the target must assign it last
+        after(
+            c(
+                "upsert_where_updates",
+                "INSERT INTO kv (key, value, n) VALUES ('a', 'w', 5) ON CONFLICT (key) DO UPDATE SET n = EXCLUDED.n, value = EXCLUDED.value WHERE kv.n < EXCLUDED.n",
+            ),
+            kvs_pg,
+        ),
+        after(
+            c(
+                "upsert_where_kept",
+                "INSERT INTO kv (key, value, n) VALUES ('b', 'w', 1) ON CONFLICT (key) DO UPDATE SET n = EXCLUDED.n, value = EXCLUDED.value WHERE kv.n < EXCLUDED.n",
+            ),
+            kvs_pg,
+        ),
+        after(
+            c(
+                "upsert_where_null_kept",
+                "INSERT INTO kv (key, value, n) VALUES ('c', 'w', 9) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, n = EXCLUDED.n WHERE kv.n < EXCLUDED.n",
+            ),
+            kvs_pg,
+        ),
+        after(
+            c(
+                "upsert_where_inserts",
+                "INSERT INTO kv (key, value, n) VALUES ('new', 'w', 1) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, n = EXCLUDED.n WHERE kv.n < EXCLUDED.n",
+            ),
+            kvs_pg,
+        ),
+        after(
+            p(
+                c(
+                    "upsert_where_param",
+                    "INSERT INTO kv (key, value, n) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET n = EXCLUDED.n, value = EXCLUDED.value WHERE kv.n < $3",
+                ),
+                vec![Param::Text("a"), Param::Text("p"), Param::Int(7)],
+            ),
+            kvs_pg,
+        ),
+        exp(
+            only(
+                c(
+                    "gate_upsert_where",
+                    "INSERT INTO kv (key, value, n) VALUES ('a', 'w', 5) ON CONFLICT (key) DO UPDATE SET n = EXCLUDED.n WHERE kv.n < EXCLUDED.n",
+                ),
+                &[A::UpsertAnyUniqueKey],
+            ),
+            Expect::NeedsAllowance(A::UpsertWhereAsIf),
+        ),
         after(
             c(
                 "upsert_do_nothing",
@@ -593,10 +643,10 @@ fn cases(maria: bool) -> Vec<Case> {
         // ---- refusals
         exp(
             c(
-                "refuse_upsert_where",
-                "INSERT INTO kv (key, value, n) VALUES ('a','w',5) ON CONFLICT (key) DO UPDATE SET n = EXCLUDED.n WHERE kv.n < EXCLUDED.n",
+                "refuse_upsert_where_two_columns",
+                "INSERT INTO kv (key, value, n) VALUES ('a','w',5) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, n = EXCLUDED.n WHERE kv.n < EXCLUDED.n AND kv.value IS NOT NULL",
             ),
-            Expect::Refused("upsert_where"),
+            Expect::Refused("upsert_where.two_columns"),
         ),
         exp(
             c(

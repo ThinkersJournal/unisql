@@ -511,6 +511,17 @@ impl Printer<'_> {
             let first = i.columns.first().map(|x| self.id(x)).unwrap_or_default();
             let (do_nothing, set, where_) = match &oc.action {
                 ConflictAction::DoNothing => (true, String::new(), None),
+                ConflictAction::DoUpdate {
+                    set,
+                    where_: Some(w),
+                } if self.t.upsert_where_as_if() => {
+                    c.in_upsert = true;
+                    c.upsert_table = Some(self.id(i.table.last()));
+                    let s = self.upsert_set_if(set, w, c);
+                    c.in_upsert = false;
+                    c.upsert_table = None;
+                    (false, s?, None)
+                }
                 ConflictAction::DoUpdate { set, where_ } => {
                     c.in_upsert = true;
                     c.upsert_table = Some(self.id(i.table.last()));
@@ -532,6 +543,41 @@ impl Printer<'_> {
         }
         out.push_str(&self.returning(&i.returning, StmtKind::Insert, c)?);
         Ok(out)
+    }
+
+    /// An upsert's `SET` with its `WHERE` folded in: `col = IF(cond, new, col)` for each column.
+    /// MySQL evaluates the assignments left to right and a later one reads the columns an earlier one
+    /// already changed, so the one column the condition reads is assigned last; a condition that reads
+    /// two assigned columns has no such order and is refused. The condition is printed once per column,
+    /// so a parameter in it is bound once per column too (`param_order` records each).
+    fn upsert_set_if(&self, set: &[Assignment], w: &Expr, c: &mut Ctx) -> R<String> {
+        c.note(
+            "upsert_where",
+            Tier::Conditional,
+            "ON DUPLICATE KEY UPDATE has no WHERE: written as IF() in each SET expression; rows affected is 1 inserted, 2 updated, 0 kept or unchanged",
+            Some(Allowance::UpsertWhereAsIf),
+        )?;
+        let mark = c.param_order.len();
+        let probe = self.expr(w, c)?;
+        c.param_order.truncate(mark);
+        let (read, rest): (Vec<_>, Vec<_>) = set
+            .iter()
+            .partition(|a| probe.contains(&self.id(&a.column)));
+        if read.len() > 1 {
+            return Err(c.refuse(
+                "upsert_where.two_columns",
+                "the WHERE reads more than one column the upsert sets; MySQL assigns left to right, so no order keeps each condition on the old row",
+                &["make the condition read one assigned column", "or run an UPDATE .. WHERE in the same transaction"],
+            ));
+        }
+        let mut parts = Vec::new();
+        for a in rest.into_iter().chain(read) {
+            let col = self.id(&a.column);
+            let cond = self.expr(w, c)?;
+            let new = self.expr(&a.value, c)?;
+            parts.push(format!("{col} = IF({cond}, {new}, {col})"));
+        }
+        Ok(parts.join(", "))
     }
 
     /// `SET` assignments; `qualifier` is written before each column where the statement has more
