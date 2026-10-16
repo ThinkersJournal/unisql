@@ -355,6 +355,30 @@ fn cases() -> Vec<Case> {
             ),
             kvs,
         ),
+        after(
+            c(
+                "upsert_or_ignore_duplicate",
+                "INSERT OR IGNORE INTO kv (key, value, n) VALUES ('a', 'x', 0)",
+                &[A::IgnoreCoversOnlyUniqueConflicts],
+            ),
+            kvs,
+        ),
+        after(
+            c(
+                "upsert_or_ignore_new",
+                "INSERT OR IGNORE INTO kv (key, value, n) VALUES ('z', 'x', 0)",
+                &[A::IgnoreCoversOnlyUniqueConflicts],
+            ),
+            kvs,
+        ),
+        exp(
+            c(
+                "gate_insert_or_ignore",
+                "INSERT OR IGNORE INTO kv (key, value, n) VALUES ('a', 'x', 0)",
+                &[],
+            ),
+            Expect::NeedsAllowance(A::IgnoreCoversOnlyUniqueConflicts),
+        ),
         c(
             "update_returning",
             "UPDATE users SET age = age + 1 WHERE city = 'Oslo' RETURNING id, age",

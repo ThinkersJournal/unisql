@@ -1170,7 +1170,10 @@ fn insert(i: sp::Insert) -> R<Statement> {
         multi_table_else_clause,
     } = i;
     if !optimizer_hints.is_empty()
-        || !matches!(or, None | Some(sp::SqliteOnConflict::Replace))
+        || !matches!(
+            or,
+            None | Some(sp::SqliteOnConflict::Replace | sp::SqliteOnConflict::Ignore)
+        )
         || table_alias.is_some()
         || overwrite
         || (!asg.is_empty() && (!columns.is_empty() || source.is_some()))
@@ -1286,6 +1289,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
     };
     // MySQL `INSERT IGNORE`: a unique-key conflict skips the row, as `ON CONFLICT DO NOTHING`
     // (with no target) does. IGNORE also downgrades other errors, hence the allowance.
+    let ignore = ignore || matches!(or, Some(sp::SqliteOnConflict::Ignore));
     let on_conflict = if ignore {
         if on_conflict.is_some() {
             return no(
@@ -1308,8 +1312,8 @@ fn insert(i: sp::Insert) -> R<Statement> {
     };
     Ok(Statement::Insert(Insert {
         table,
-        // SQLite `INSERT OR REPLACE` is MySQL's `REPLACE INTO`.
-        replace: replace_into || or.is_some(),
+        // SQLite `INSERT OR REPLACE` is MySQL's `REPLACE INTO`; `OR IGNORE` is read above as `IGNORE`.
+        replace: replace_into || matches!(or, Some(sp::SqliteOnConflict::Replace)),
         columns,
         source,
         on_conflict,
