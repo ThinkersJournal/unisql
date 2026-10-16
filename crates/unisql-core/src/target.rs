@@ -479,6 +479,12 @@ pub trait Target {
         format!("EXCLUDED.{column_quoted}")
     }
 
+    /// Whether an upsert's `WHERE` has no native spelling and is written into the `SET` expressions as
+    /// `col = IF(cond, new, col)` (MySQL and MariaDB). The printer does the rewrite.
+    fn upsert_where_as_if(&self) -> bool {
+        false
+    }
+
     /// The whole `ON CONFLICT ..` clause. `set` and `where_` are printed; `columns` are quoted.
     #[allow(clippy::too_many_arguments)]
     fn upsert_clause(
