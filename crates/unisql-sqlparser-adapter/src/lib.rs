@@ -1170,7 +1170,7 @@ fn insert(i: sp::Insert) -> R<Statement> {
         multi_table_else_clause,
     } = i;
     if !optimizer_hints.is_empty()
-        || or.is_some()
+        || !matches!(or, None | Some(sp::SqliteOnConflict::Replace))
         || table_alias.is_some()
         || overwrite
         || (!asg.is_empty() && (!columns.is_empty() || source.is_some()))
@@ -1308,7 +1308,8 @@ fn insert(i: sp::Insert) -> R<Statement> {
     };
     Ok(Statement::Insert(Insert {
         table,
-        replace: replace_into,
+        // SQLite `INSERT OR REPLACE` is MySQL's `REPLACE INTO`.
+        replace: replace_into || or.is_some(),
         columns,
         source,
         on_conflict,

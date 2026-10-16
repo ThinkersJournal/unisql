@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.5 - 2026-10-16
+
+- **SQLite `INSERT OR REPLACE`** is read as `REPLACE INTO` (the IR's `replace_into`), so it now translates
+  wherever `REPLACE INTO` does; other `OR` conflict clauses are still refused. No AST change.
+
 ## 0.24.4 - 2026-10-15
 
 - **`EXTRACT(EPOCH FROM clock_timestamp())`** (PostgreSQL source) is mapped to the database server clock with
