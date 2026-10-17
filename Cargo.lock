@@ -1553,7 +1553,7 @@ checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
 
 [[package]]
 name = "unisql"
-version = "0.24.10"
+version = "0.24.11"
 dependencies = [
  "unisql-core",
  "unisql-dialect-mysql",
@@ -1564,11 +1564,11 @@ dependencies = [
 
 [[package]]
 name = "unisql-core"
-version = "0.24.10"
+version = "0.24.11"
 
 [[package]]
 name = "unisql-dialect-mysql"
-version = "0.24.10"
+version = "0.24.11"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1576,7 +1576,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-postgres"
-version = "0.24.10"
+version = "0.24.11"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1584,7 +1584,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-sqlite"
-version = "0.24.10"
+version = "0.24.11"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1592,7 +1592,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-differential"
-version = "0.24.10"
+version = "0.24.11"
 dependencies = [
  "mysql",
  "postgres",
@@ -1603,7 +1603,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-sqlparser-adapter"
-version = "0.24.10"
+version = "0.24.11"
 dependencies = [
  "sqlparser",
  "unisql-core",

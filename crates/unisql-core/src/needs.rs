@@ -83,10 +83,12 @@ impl Walk<'_> {
                                     _ => self.add("upsert.no_conflict_key"),
                                 }
                             }
+                            self.scopes.push_upsert(&i.table);
                             set.iter().for_each(|a| self.expr(&a.value));
                             if let Some(e) = where_ {
                                 self.expr(e);
                             }
+                            self.scopes.pop();
                         }
                     }
                 }

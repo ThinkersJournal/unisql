@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.11 - 2026-10-17
+
+- **Fix:** `ON CONFLICT .. DO UPDATE SET .. WHERE` read its `t.col` and `EXCLUDED.col` without the schema, so a
+  comparison on numeric columns named `text_comparison` (and demanded `text_collation`) on a target that has one. The upsert's
+  table is now in scope under its own name and as `excluded`.
+
 ## 0.24.10 - 2026-10-17
 
 - **CI only.** Every cargo step in the workflow now passes `--locked`, so CI builds the committed `Cargo.lock`.

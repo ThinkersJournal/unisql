@@ -3,7 +3,7 @@
 //! columns it classified exactly as it does for a hand-built `Schema`.
 
 use unisql::ast::Name;
-use unisql::{ColumnClass, Options, analyse_with, schema_from_ddl};
+use unisql::{Allowance, ColumnClass, Options, analyse_with, schema_from_ddl};
 
 const PG: &str = r#"
 CREATE TABLE users (
@@ -281,6 +281,37 @@ fn ddl_reads_unique_keys_and_an_upsert_without_a_target_takes_the_sole_key() {
     )
     .unwrap();
     assert_eq!(d2.schema.unique_keys(&Name::simple("t")), None);
+}
+
+#[test]
+fn an_upsert_where_on_numeric_columns_names_no_text_comparison() {
+    use unisql::translate;
+    let s = schema_from_ddl(
+        "CREATE TABLE t (id BIGINT PRIMARY KEY, n BIGINT NOT NULL, s TEXT);",
+        "postgres",
+    )
+    .unwrap();
+    let o = Options::default().with_schema(s.schema);
+    let pg = |w: &str| {
+        format!(
+            "INSERT INTO t (id, n) VALUES ($1, $2) ON CONFLICT (id) DO UPDATE SET n = EXCLUDED.n WHERE {w}"
+        )
+    };
+    let n = analyse_with(&pg("t.n < EXCLUDED.n"), "postgres", &o)
+        .unwrap()
+        .constructs;
+    assert!(!n.contains("text_comparison"), "{n:?}");
+    // control: a text column in the same position still names it
+    let n = analyse_with(&pg("t.s < EXCLUDED.s"), "postgres", &o)
+        .unwrap()
+        .constructs;
+    assert!(n.contains("text_comparison"), "{n:?}");
+    // translated with the two upsert allowances only: no `text_collation` is demanded
+    let o = o
+        .with(Allowance::UpsertWhereAsIf)
+        .with(Allowance::UpsertAnyUniqueKey);
+    let t = translate(&pg("t.n < EXCLUDED.n"), "postgres", "mysql", &o).unwrap();
+    assert!(t.sql.contains("IF("), "{}", t.sql);
 }
 
 #[test]

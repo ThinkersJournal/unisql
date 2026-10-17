@@ -256,6 +256,17 @@ impl<'a> Scopes<'a> {
         self.stack.push(scope);
     }
 
+    /// Enter an upsert's `DO UPDATE`: the table under its own name and as `excluded`.
+    pub fn push_upsert(&mut self, table: &Name) {
+        if self.schema.is_none() {
+            return;
+        }
+        self.stack.push(vec![
+            (table.last().to_string(), Some(table.clone())),
+            ("excluded".to_string(), Some(table.clone())),
+        ]);
+    }
+
     /// The stated unique keys of a base table (see [`Schema::unique_keys`]).
     pub fn unique_keys(&self, table: &Name) -> Option<&'a [Vec<String>]> {
         self.schema?.unique_keys(table)

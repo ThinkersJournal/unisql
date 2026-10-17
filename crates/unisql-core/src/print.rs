@@ -563,7 +563,9 @@ impl Printer<'_> {
                 } if self.t.upsert_where_as_if() => {
                     c.in_upsert = true;
                     c.upsert_table = Some(self.id(i.table.last()));
+                    c.scopes.push_upsert(&i.table);
                     let s = self.upsert_set_if(set, w, c);
+                    c.scopes.pop();
                     c.in_upsert = false;
                     c.upsert_table = None;
                     (false, s?, None)
@@ -571,8 +573,10 @@ impl Printer<'_> {
                 ConflictAction::DoUpdate { set, where_ } => {
                     c.in_upsert = true;
                     c.upsert_table = Some(self.id(i.table.last()));
+                    c.scopes.push_upsert(&i.table);
                     let s = self.assignments(set, None, c);
                     let w = where_.as_ref().map(|w| self.expr(w, c)).transpose();
+                    c.scopes.pop();
                     c.in_upsert = false;
                     c.upsert_table = None;
                     (false, s?, w?)
