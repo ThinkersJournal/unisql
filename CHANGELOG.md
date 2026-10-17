@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.10 - 2026-10-17
+
+- **CI only.** Every cargo step in the workflow now passes `--locked`, so CI builds the committed `Cargo.lock`.
+
 ## 0.24.9 - 2026-10-16
 
 - **Docs only.** `Allowance::UpsertWhereAsIf` and the 0.24.7 note now say that sqlx-mysql 0.9.0 always sends

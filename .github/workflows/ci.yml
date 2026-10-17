@@ -35,20 +35,20 @@ jobs:
         run: cargo fmt --all --check
 
       - name: cargo clippy
-        run: cargo clippy --workspace --all-targets -- -D warnings
+        run: cargo clippy --locked --workspace --all-targets -- -D warnings
 
       - name: cargo build
-        run: cargo build --workspace --all-targets
+        run: cargo build --locked --workspace --all-targets
 
       # The differential crate's suites need real engines and fail (never skip) without them; they
       # run in the `differential` job. Everything else runs here, on both operating systems.
       - name: cargo test (everything that needs no engine)
-        run: cargo test --workspace --exclude unisql-differential --no-fail-fast
+        run: cargo test --locked --workspace --exclude unisql-differential --no-fail-fast
 
       # The leaf-contract and licence-copy checks read the workspace layout (docs/, sibling crates), so
       # they live in the unpublished differential crate; they need no engine.
       - name: cargo test (workspace-layout checks, no engine)
-        run: cargo test -p unisql-differential --test leaf_contracts
+        run: cargo test --locked -p unisql-differential --test leaf_contracts
 
   msrv:
     name: MSRV (rust-version in Cargo.toml)
@@ -72,7 +72,7 @@ jobs:
       - name: cargo check on the MSRV toolchain
         run: |
           rustc --version
-          cargo check --workspace --all-targets
+          cargo check --workspace --all-targets --locked
 
   deny:
     name: cargo deny (advisories, licences, bans, sources)
@@ -141,7 +141,7 @@ jobs:
           wait_for unisql-pg docker exec unisql-pg psql -U postgres -c 'select 1'
 
       - name: cargo test -p unisql-differential
-        run: cargo test -p unisql-differential --no-fail-fast
+        run: cargo test --locked -p unisql-differential --no-fail-fast
 
       # The suites regenerate the matrix files and run logs; they must match what is checked in.
       - name: Checked-in matrix files and run logs are current
