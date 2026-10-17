@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.9 - 2026-10-16
+
+- **Docs only.** `Allowance::UpsertWhereAsIf` and the 0.24.7 note now say that sqlx-mysql 0.9.0 always sends
+  `CLIENT_FOUND_ROWS` (no option), so sqlx callers see 1 inserted, 2 updated, 1 kept or unchanged (measured on MySQL 8.4)
+  and cannot tell an insert from a kept row by the count.
+
 ## 0.24.8 - 2026-10-16
 
 - **`FROM generate_series(a, b[, step]) AS g`** now translates to SQLite and MySQL/MariaDB as a derived table

@@ -121,6 +121,8 @@ pub enum Allowance {
     /// 1 for an inserted row, 2 for an updated one, and 0 both for a row the condition kept and for an
     /// update that changed nothing (MySQL counts changed rows only); under `CLIENT_FOUND_ROWS` the kept
     /// row counts 1, so a caller who tells "updated" from "kept" by the count must not set it.
+    /// sqlx-mysql 0.9.0 always sets it (no option), so with sqlx the counts are 1 inserted, 2 updated and 1
+    /// kept or unchanged: an insert cannot be told from a kept row.
     UpsertWhereAsIf,
 }
 
