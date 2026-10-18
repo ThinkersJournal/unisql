@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.12 - 2026-10-18
+
+- **Docs only.** `docs/MACROS.md`: design for compile-time translation and database-free checks as macro crates, and ROADMAP row 3 for them. No code change.
+
 ## 0.24.11 - 2026-10-17
 
 - **Fix:** `ON CONFLICT .. DO UPDATE SET .. WHERE` read its `t.col` and `EXCLUDED.col` without the schema, so a

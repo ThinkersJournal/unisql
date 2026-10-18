@@ -29,6 +29,16 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    columns from `CREATE VIEW`, `LIKE`/`ILIKE` against a column's collation (a different allowance than
    the one used for comparisons today).
 
+3. **Compile-time macros** (`unisql-macro-core`, `unisql-macros`, `unisql-embed`; design in
+   `docs/MACROS.md`, written 2026-10-18 at 0.24.11, status: design only). A literal statement is
+   syntax-checked, placeholder-checked and translated for each named target at build time; a refusal is
+   a build error; PersistAnt layers catalog checks through a `Checker` seam. Slices, each one PR and each
+   checked by a `trybuild` compile-fail suite: (1) macro-core and embed, (2) bare `sql!` PostgreSQL to
+   SQLite/MySQL, (3) `allow`/`requires`/`forbids` and the argument form, (4) `schema = ` and the
+   `Checker` seam agreed with PersistAnt, (5) caching, measured build cost, positions in
+   `ReadError::Syntax`. *Verified by:* compile-fail cases per failure kind, and compile-pass cases whose
+   embedded text equals `unisql::translate`.
+
 ## Later
 
 - **Date and time functions** (`date_trunc`, `to_char`, `extract`, `age`, `date_part`): rare in the
