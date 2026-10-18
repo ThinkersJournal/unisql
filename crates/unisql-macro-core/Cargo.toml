@@ -1,0 +1,15 @@
+[package]
+name = "unisql-macro-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "The checks and translation behind UniSQL's compile-time macros, as a plain library."
+
+[dependencies]
+unisql.workspace = true

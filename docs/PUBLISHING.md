@@ -69,6 +69,7 @@ Dependency order (each waits for the previous one to appear in the index):
 2. `unisql-sqlparser-adapter`
 3. `unisql-dialect-postgres`, `unisql-dialect-sqlite`, `unisql-dialect-mysql`
 4. `unisql`
+5. `unisql-embed`, then `unisql-macro-core` (needs `unisql`), then the later `unisql-macros`. Not published yet; their 0.0.0 placeholders are claimed.
 
 Before each: `cargo publish --dry-run -p <crate>` (it needs its dependencies already on crates.io, so
 only step 1 can be dry-run before anything is published). After step 4: `cargo add unisql` in a scratch
