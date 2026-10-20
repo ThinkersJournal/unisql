@@ -104,7 +104,7 @@ Cargo features cannot choose them alone: features unify across a workspace, so a
 
 - **Options at the call site.** `allow = [..]` takes `Allowance` names; an unknown name is an error
   listing the known ones. `Options` has no other knobs today, and the macro adds none.
-- **Schema (database-free).** `schema = "path/to/schema.sql"` (DDL in the source dialect) feeds
+- **Schema (database-free).** `schema = "path/to/schema.sql"` (DDL in the source dialect; `schema_ddl = ".."` is the same inline) feeds
   `schema_from_ddl`, so numeric-column comparisons stop demanding `text_collation` and a sole unique key
   can serve an upsert without a target. The path is relative to `CARGO_MANIFEST_DIR`, read at expansion,
   and the expansion also emits `const _: &str = include_str!(..)` so **cargo rebuilds when the file

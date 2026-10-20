@@ -1,0 +1,5 @@
+error: VALUES row 1 has 1 value(s) but the INSERT into `kv` names 2 column(s)
+ --> tests/ui/fail_schema_row_width.rs:7:9
+  |
+7 |         "INSERT INTO kv VALUES ($1)"
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

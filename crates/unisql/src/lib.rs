@@ -67,6 +67,12 @@ fn read(sql: &str, source: &str) -> Result<unisql_core::Read, Error> {
     }
 }
 
+/// Read one statement written in `source` into the IR, without translating it: what a checker that
+/// looks at the statement itself (`unisql-macro-core::Checker`) works from.
+pub fn read_statement(sql: &str, source: &str) -> Result<ast::Statement, Error> {
+    read(sql, source).map(|r| r.stmt)
+}
+
 fn target(name: &str) -> Result<Box<dyn Target>, Error> {
     match name {
         "postgres" => Ok(Box::new(Postgres)),

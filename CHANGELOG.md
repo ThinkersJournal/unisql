@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.16 - 2026-10-20
+
+- **`sql!` reads a schema** (slice 4 of `docs/MACROS.md`): `schema = "path.sql"` (DDL in the source dialect, relative to the crate's manifest directory, included so cargo rebuilds when it changes) or `schema_ddl = "CREATE TABLE .."`. It feeds the translator (a comparison on a non-text column no longer asks for `text_collation`) and `SchemaChecker`: an `INSERT` row whose width differs from its column list, a column listed twice, and, where the schema states a table's columns in full, an unknown column in `INSERT`/`UPDATE .. SET` or a row of the wrong width for an `INSERT` with no column list. It reports only what is certain; every problem is reported, not the first.
+- **`unisql-macro-core`**: the `Checker` trait, `CheckContext` (non-exhaustive), `expand_with(&Input, &[&dyn Checker])`, `Kind::Catalog`, `Input::schema`. Checkers run after the syntax check and before translation. **`unisql`**: `read_statement(sql, source)` returns the IR without translating.
+
 ## 0.24.15 - 2026-10-19
 
 - **`sql!` takes arguments** (slice 3 of `docs/MACROS.md`): `sql!(.., "SELECT .. $1 .. $2", a, b)` checks at build time that the count equals the statement's parameters (the error points at the arguments) and expands to `(Query, (a, b))`. Nothing is bound. With no arguments the expansion is the bare `Query`, as before. `allow`, `requires`, `forbids` and `Query::constructs` were already in 0.24.14.
