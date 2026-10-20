@@ -7,7 +7,8 @@
 
 use std::collections::BTreeSet;
 
-use unisql::{Allowance, Error, Options};
+use unisql::ast::{self, InsertSource};
+use unisql::{Allowance, Error, Options, Schema};
 
 pub use unisql::ParamBinding;
 
@@ -25,6 +26,10 @@ pub struct Input {
     /// Construct ids the statement must not use.
     pub forbids: Vec<String>,
     pub sql: String,
+    /// What the caller knows about its tables (see `unisql::schema_from_ddl`); the macro crate reads it
+    /// from a file, so this crate does no I/O. With a schema the translator stops treating comparisons
+    /// on non-text columns as text, and [`SchemaChecker`] runs.
+    pub schema: Option<Schema>,
 }
 
 /// One target's translation.
@@ -58,6 +63,8 @@ pub enum Kind {
     Refused,
     Requires,
     Forbids,
+    /// A [`Checker`] found the statement wrong against the caller's tables.
+    Catalog,
 }
 
 /// One failed check.
@@ -96,8 +103,110 @@ fn check_dialect(kind: Kind, role: &str, name: &str, out: &mut Vec<Problem>) -> 
     false
 }
 
+/// What a [`Checker`] is told besides the statement. Non-exhaustive: more is added as checks need it.
+#[derive(Clone, Copy, Debug)]
+#[non_exhaustive]
+pub struct CheckContext<'a> {
+    /// The dialect the statement is written in.
+    pub source: &'a str,
+    pub schema: Option<&'a Schema>,
+}
+
+/// A check over the parsed source statement, run after syntax and before translation. It reports every
+/// problem it finds as [`Kind::Catalog`]; it must only report what is certain (a name it cannot resolve
+/// is unknown, not wrong). PersistAnt implements this over its catalog snapshot.
+pub trait Checker {
+    fn check(&self, stmt: &ast::Statement, ctx: &CheckContext<'_>) -> Vec<Problem>;
+}
+
+/// Checks that need only names: an `INSERT` row whose width differs from its column list and a column
+/// listed twice (both from the statement alone), and, where the schema states a table's column list in
+/// full, a column the table does not have and a row of the wrong width for a statement without a list. `INSERT` and
+/// `UPDATE .. SET` only; other statements are not looked at.
+pub struct SchemaChecker;
+
+fn catalog(message: String) -> Problem {
+    Problem {
+        kind: Kind::Catalog,
+        message,
+    }
+}
+
+/// A column unknown to a complete column list. Compared case-insensitively so an unquoted name written
+/// in another case is never reported: only a name with no match at all is.
+fn unknown_column(complete: &[&str], column: &str) -> bool {
+    !complete.iter().any(|c| c.eq_ignore_ascii_case(column))
+}
+
+impl Checker for SchemaChecker {
+    fn check(&self, stmt: &ast::Statement, ctx: &CheckContext<'_>) -> Vec<Problem> {
+        let mut out = Vec::new();
+        match stmt {
+            ast::Statement::Insert(i) => {
+                let complete = ctx.schema.and_then(|s| s.complete_columns(&i.table));
+                let table = i.table.last();
+                let mut seen = Vec::new();
+                for c in &i.columns {
+                    if seen.iter().any(|s: &&String| s.eq_ignore_ascii_case(c)) {
+                        out.push(catalog(format!(
+                            "column `{c}` is listed twice in the INSERT into `{table}`"
+                        )));
+                    }
+                    seen.push(c);
+                    if complete
+                        .as_deref()
+                        .is_some_and(|cols| unknown_column(cols, c))
+                    {
+                        out.push(catalog(format!("table `{table}` has no column `{c}`")));
+                    }
+                }
+                if let InsertSource::Values(rows) = &i.source {
+                    let width = if i.columns.is_empty() {
+                        complete.as_ref().map(Vec::len)
+                    } else {
+                        Some(i.columns.len())
+                    };
+                    if let Some(width) = width {
+                        for (n, row) in rows.iter().enumerate() {
+                            if row.len() != width {
+                                out.push(catalog(format!(
+                                    "VALUES row {} has {} value(s) but the INSERT into `{table}` names {width} column(s)",
+                                    n + 1,
+                                    row.len()
+                                )));
+                            }
+                        }
+                    }
+                }
+            }
+            ast::Statement::Update(u) => {
+                if let Some(cols) = ctx.schema.and_then(|s| s.complete_columns(&u.table)) {
+                    for a in &u.set {
+                        if unknown_column(&cols, &a.column) {
+                            out.push(catalog(format!(
+                                "table `{}` has no column `{}`",
+                                u.table.last(),
+                                a.column
+                            )));
+                        }
+                    }
+                }
+            }
+            _ => {}
+        }
+        out
+    }
+}
+
 /// Check and translate one call. `Err` holds every problem found, never an empty list.
 pub fn expand(input: &Input) -> Result<Expansion, Vec<Problem>> {
+    expand_with(input, &[])
+}
+
+/// As [`expand`], also running `checkers` over the parsed statement (after the syntax check, before
+/// translation). [`SchemaChecker`] runs first whenever `input.schema` is set. Every catalog problem is
+/// reported, not the first; a statement with catalog problems is not translated.
+pub fn expand_with(input: &Input, checkers: &[&dyn Checker]) -> Result<Expansion, Vec<Problem>> {
     let mut problems = Vec::new();
 
     check_dialect(Kind::Source, "source", &input.source, &mut problems);
@@ -118,6 +227,9 @@ pub fn expand(input: &Input) -> Result<Expansion, Vec<Problem>> {
         }
     }
     let mut opts = Options::default();
+    if let Some(schema) = &input.schema {
+        opts = opts.with_schema(schema.clone());
+    }
     for name in &input.allow {
         match Allowance::ALL.iter().find(|a| a.name() == name) {
             Some(a) => opts = opts.with(*a),
@@ -141,6 +253,22 @@ pub fn expand(input: &Input) -> Result<Expansion, Vec<Problem>> {
             Kind::Syntax,
             format!("construct `{construct}` is not in the IR, so it cannot be translated"),
         )]);
+    }
+
+    let stmt = match unisql::read_statement(&input.sql, &input.source) {
+        Ok(stmt) => stmt,
+        Err(e) => return Err(vec![problem(Kind::Syntax, e.to_string())]),
+    };
+    let ctx = CheckContext {
+        source: &input.source,
+        schema: input.schema.as_ref(),
+    };
+    let mut found: Vec<Problem> = SchemaChecker.check(&stmt, &ctx);
+    for checker in checkers {
+        found.extend(checker.check(&stmt, &ctx));
+    }
+    if !found.is_empty() {
+        return Err(found);
     }
 
     let mut rendered = Vec::new();

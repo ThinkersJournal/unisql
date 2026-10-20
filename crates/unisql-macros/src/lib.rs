@@ -57,6 +57,8 @@ struct Call {
     allow: Option<Spanned<Vec<String>>>,
     requires: Option<Spanned<Vec<String>>>,
     forbids: Option<Spanned<Vec<String>>>,
+    schema: Option<Spanned<String>>,
+    schema_ddl: Option<Spanned<String>>,
     embed: Option<Path>,
     sql: Option<Spanned<String>>,
     args: Option<Spanned<Vec<Expr>>>,
@@ -150,6 +152,21 @@ impl Parse for Call {
                     }
                     call.forbids = Some(strings(input)?);
                 }
+                "schema" | "schema_ddl" => {
+                    let lit: LitStr = input.parse()?;
+                    let slot = if key == "schema" {
+                        &mut call.schema
+                    } else {
+                        &mut call.schema_ddl
+                    };
+                    if slot.is_some() {
+                        return Err(dup(&key.to_string()));
+                    }
+                    *slot = Some(Spanned {
+                        value: lit.value(),
+                        span: lit.span(),
+                    });
+                }
                 "crate" => {
                     if call.embed.is_some() {
                         return Err(dup("crate"));
@@ -160,7 +177,7 @@ impl Parse for Call {
                     return Err(syn::Error::new(
                         key.span(),
                         format!(
-                            "unknown argument `{other}` (known: source, targets, allow, requires, forbids, crate)"
+                            "unknown argument `{other}` (known: source, targets, allow, requires, forbids, schema, schema_ddl, crate)"
                         ),
                     ));
                 }
@@ -195,6 +212,43 @@ fn binding(b: unisql_macro_core::ParamBinding) -> &'static str {
     }
 }
 
+/// The schema a call names, if any, and the absolute path to track when it came from a file.
+fn load_schema(
+    path: &Option<Spanned<String>>,
+    ddl: &Option<Spanned<String>>,
+    source: &str,
+) -> Result<(Option<unisql::Schema>, Option<String>), TokenStream2> {
+    let (text, span, tracked) = match (path, ddl) {
+        (None, None) => return Ok((None, None)),
+        (Some(p), Some(_)) => {
+            return Err(error(p.span, "give `schema` or `schema_ddl`, not both"));
+        }
+        (None, Some(d)) => (d.value.clone(), d.span, None),
+        (Some(p), None) => {
+            let dir = std::env::var("CARGO_MANIFEST_DIR").unwrap_or_default();
+            let full = std::path::Path::new(&dir).join(&p.value);
+            let text = std::fs::read_to_string(&full).map_err(|_| {
+                error(
+                    p.span,
+                    &format!(
+                        "cannot read the schema file `{}` (the path is relative to the crate's manifest directory)",
+                        p.value
+                    ),
+                )
+            })?;
+            (text, p.span, Some(full.to_string_lossy().into_owned()))
+        }
+    };
+    // An unknown source dialect is reported by the checks that follow; there is nothing to read with.
+    if !unisql::dialects().contains(&source) {
+        return Ok((None, tracked));
+    }
+    match unisql::schema_from_ddl(&text, source) {
+        Ok(d) => Ok((Some(d.schema), tracked)),
+        Err(e) => Err(error(span, &format!("cannot read the schema: {e}"))),
+    }
+}
+
 fn run(call: Call) -> TokenStream2 {
     let here = Span::call_site();
     let Some(sql) = call.sql else {
@@ -209,7 +263,12 @@ fn run(call: Call) -> TokenStream2 {
             "missing `targets = [..]`: a call translates for exactly the targets it lists",
         );
     };
+    let (schema, track) = match load_schema(&call.schema, &call.schema_ddl, &source.value) {
+        Ok(loaded) => loaded,
+        Err(e) => return e,
+    };
     let input = Input {
+        schema,
         source: source.value,
         targets: targets.value,
         allow: call
@@ -241,7 +300,9 @@ fn run(call: Call) -> TokenStream2 {
                         Kind::Allow => call.allow.as_ref().map_or(sql.span, |a| a.span),
                         Kind::Requires => call.requires.as_ref().map_or(sql.span, |a| a.span),
                         Kind::Forbids => call.forbids.as_ref().map_or(sql.span, |a| a.span),
-                        Kind::Syntax | Kind::Placeholders | Kind::Refused => sql.span,
+                        Kind::Syntax | Kind::Placeholders | Kind::Refused | Kind::Catalog => {
+                            sql.span
+                        }
                     };
                     error(span, &p.message)
                 })
@@ -270,11 +331,20 @@ fn run(call: Call) -> TokenStream2 {
             }
         }
     });
+    // A schema file is registered with cargo by including it, so editing the file rebuilds the caller.
+    let track = track.map(|path| {
+        quote!(
+            const _: &str = include_str!(#path);
+        )
+    });
     let query = quote! {
-        #embed::Query {
-            params: #params,
-            constructs: &[#(#constructs),*],
-            rendered: &[#(#rendered),*],
+        {
+            #track
+            #embed::Query {
+                params: #params,
+                constructs: &[#(#constructs),*],
+                rendered: &[#(#rendered),*],
+            }
         }
     };
     match call.args {

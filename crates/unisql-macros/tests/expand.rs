@@ -82,3 +82,27 @@ fn arguments_come_back_as_a_tuple_after_the_count_is_checked() {
     let bare: Query = sql!(source = postgres, targets = [sqlite], "SELECT 1",);
     assert_eq!(bare.params, 0);
 }
+
+// `schema = ".."` is relative to this crate's manifest directory and read at build time.
+#[test]
+fn a_schema_file_feeds_the_checks_and_the_translator() {
+    // `n` is BIGINT in tests/schema.sql: no `text_collation` is asked for on MySQL
+    const Q: Query = sql!(
+        source = postgres,
+        targets = [mysql],
+        schema = "tests/schema.sql",
+        "SELECT k FROM kv WHERE n < $1"
+    );
+    assert_eq!(Q.params, 1);
+}
+
+#[test]
+fn an_inline_schema_works_the_same() {
+    const Q: Query = sql!(
+        source = postgres,
+        targets = [mysql],
+        schema_ddl = "CREATE TABLE kv (k TEXT PRIMARY KEY, n BIGINT NOT NULL);",
+        "SELECT k FROM kv WHERE n < $1"
+    );
+    assert_eq!(Q.params, 1);
+}

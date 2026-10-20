@@ -1,0 +1,5 @@
+error: give `schema` or `schema_ddl`, not both
+ --> tests/ui/fail_schema_both.rs:6:18
+  |
+6 |         schema = "tests/schema.sql",
+  |                  ^^^^^^^^^^^^^^^^^^

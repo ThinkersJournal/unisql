@@ -1,0 +1,5 @@
+error: table `kv` has no column `nope`
+ --> tests/ui/fail_schema_missing_column.rs:7:9
+  |
+7 |         "INSERT INTO kv (k, nope) VALUES ($1, $2)"
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
