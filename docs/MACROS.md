@@ -1,6 +1,6 @@
 # Compile-time macros: design
 
-Written 2026-10-18 at origin/main a5cb56e (0.24.11). Status: **design, nothing built**. This is the
+Written 2026-10-18 at origin/main a5cb56e (0.24.11). Status: **built in 0.24.14 to 0.24.18 (slices 1 to 5, section 8); the PersistAnt catalog `Checker` is theirs**. This is the
 "spike" that `docs/DESIGN.md` section 6, option 3 left open, now taken up: translate a literal
 statement at build time and fail the build on what cannot be translated, with no database connection.
 
@@ -78,10 +78,13 @@ Cargo features cannot choose them alone: features unify across a workspace, so a
 
 - **The call site names its targets** (`targets = [...]`). That list is the contract and is what a
   reader of the code sees.
-- Features of `unisql-macros` (`postgres`, `sqlite`, `mysql`, `mariadb`) that decide which dialect crates are
-  *compiled into the macro*, a build-cost knob, are **deferred**: `unisql` compiles all four dialects
-  unconditionally, so the macro cannot drop one until `unisql` gets the same features. Today every target is
-  available.
+- Cargo features of `unisql-macros` (`postgres`, `sqlite`, `mysql`, `mariadb`) that would drop dialect
+  crates from the macro's build are **not planned**. Measured 2026-10-20 at 0.24.18 (clean dev build, the
+  adapter already built): `unisql-dialect-sqlite` 2.8 s, `unisql-dialect-postgres` 1.7 s,
+  `unisql-dialect-mysql` 2.6 s, against 96 s for the whole macro crate, of which `sqlparser` is most. Gating
+  would save about 5 s (5%) and put a "this dialect is not compiled in" state into `unisql`'s error
+  surface and every consumer's feature matrix. Every target is always available. Revisit only if a
+  measurement shows the dialect crates growing to a real share.
 - Omitting `targets` is an error in slice 1 (no hidden set). A project-wide default can come later as
   a `const`-evaluated list in the project's own macro wrapper, which is a call into `unisql-macro-core`
   and needs nothing here.

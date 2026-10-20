@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.19 - 2026-10-20
+
+- **Docs only.** `docs/MACROS.md` records why dialect-gating cargo features for `unisql-macros` are not planned (measured: 1.7 to 2.8 s per dialect crate of a 96 s clean build) and that slices 1 to 5 are built; ROADMAP row 3 follows.
+
 ## 0.24.18 - 2026-10-20
 
 - **`sql!` syntax errors show the line and a caret** when the parser gave a position (`Line: n, Column: m`, read out of the message; `ReadError::Syntax` is unchanged). An error without a position is shown as before.
