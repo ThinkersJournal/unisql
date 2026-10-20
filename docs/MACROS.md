@@ -109,10 +109,16 @@ Cargo features cannot choose them alone: features unify across a workspace, so a
   can serve an upsert without a target. The path is relative to `CARGO_MANIFEST_DIR`, read at expansion,
   and the expansion also emits `const _: &str = include_str!(..)` so **cargo rebuilds when the file
   changes** (a proc macro has no stable way to register a dependency otherwise).
-- **Cost.** One parse and one write per target per call, microseconds each against a rustc run; the
-  schema file is parsed once per macro process (a `static` cache keyed by path and content hash; the
-  proc-macro dylib lives for the whole rustc invocation). The cost to measure, not assume, is dialect
-  crates in the macro's build graph; slice 5 records it.
+- **Cost, measured 2026-10-20 at 0.24.17 on a 32-core Windows 11 machine, unoptimised (what a
+  proc-macro is built with by default).** A call translating one upsert for four targets takes
+  about 1.4 ms (`tests/cost.rs`). Reading a schema takes about 9 ms for 20 tables and 90 ms for 200
+  (linear), so a crate with 300 `sql!` calls naming one 200-table schema would spend about 27 s
+  re-reading it: the macro keeps a parsed schema for the life of the compiler process, keyed by
+  (kind, dialect, text), so an edited file is a new key and only successful reads are kept. A clean
+  dev build of `unisql-macros` takes 96 s against 23 s for a proc-macro crate with only
+  `syn`/`quote`/`proc-macro2`; `sqlparser` and the UniSQL crates are the other ~70 s, paid once per
+  clean build (the 32 cores hide part of it). Statements are not cached: one occurrence is expanded once
+  per compiler run, and identical statements cost 1.4 ms.
 - **rust-analyzer.** It runs the macro, so errors appear as diagnostics. The expansion must be pure
   (same tokens and files, same output; no environment reads other than `CARGO_MANIFEST_DIR`, no
   network, no clock), which also keeps builds reproducible. Failing macros return `compile_error!` tokens
@@ -151,7 +157,9 @@ not fixed here.
    `trybuild` and `.stderr` files are rustc-version sensitive: CI pins the toolchain for that test.
 3. `allow`, `requires`, `forbids`, `CONSTRUCTS`; the argument-checking form.
 4. `schema = ` and the reference `Checker`; the `Checker` seam agreed with PersistAnt.
-5. Caching and a recorded build-cost measurement; positions in `ReadError::Syntax`.
+5. Caching and a recorded build-cost measurement; positions in syntax errors. **Done at 0.24.18:** the
+   parser's `Line: n, Column: m` is parsed out of the message (`ReadError::Syntax` is unchanged, so
+   nothing breaks) and shown as the offending line with a caret; an error with no position is left as is.
 
 Every slice is checked by the compile-fail suite; a check that cannot be written as a compile-fail case
 is not considered done.

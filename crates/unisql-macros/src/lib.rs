@@ -243,20 +243,52 @@ fn load_schema(
         }
     };
     // A `.json` file is a schema snapshot (`unisql::Snapshot`), not DDL.
-    if tracked.as_deref().is_some_and(|p| p.ends_with(".json")) {
-        return match unisql::Snapshot::from_json(&text) {
-            Ok(snapshot) => Ok((Some(snapshot.schema), tracked)),
-            Err(e) => Err(error(span, &e.to_string())),
-        };
-    }
+    let json = tracked.as_deref().is_some_and(|p| p.ends_with(".json"));
     // An unknown source dialect is reported by the checks that follow; there is nothing to read with.
-    if !unisql::dialects().contains(&source) {
+    if !json && !unisql::dialects().contains(&source) {
         return Ok((None, tracked));
     }
-    match unisql::schema_from_ddl(&text, source) {
-        Ok(d) => Ok((Some(d.schema), tracked)),
-        Err(e) => Err(error(span, &format!("cannot read the schema: {e}"))),
+    let read = |text: &str| -> Result<unisql::Schema, String> {
+        if json {
+            unisql::Snapshot::from_json(text)
+                .map(|s| s.schema)
+                .map_err(|e| e.to_string())
+        } else {
+            unisql::schema_from_ddl(text, source)
+                .map(|d| d.schema)
+                .map_err(|e| format!("cannot read the schema: {e}"))
+        }
+    };
+    match cached_schema(json, source, &text, read) {
+        Ok(schema) => Ok((Some(schema), tracked)),
+        Err(e) => Err(error(span, &e)),
     }
+}
+
+type SchemaKey = (bool, String, String);
+
+/// A crate with many `sql!` calls names the same schema in each; the proc-macro library lives for the
+/// whole compiler run, so a parsed schema is kept by its (kind, dialect, text), and an edited file
+/// is a different key. Only successful reads are kept.
+fn cached_schema(
+    json: bool,
+    source: &str,
+    text: &str,
+    read: impl FnOnce(&str) -> Result<unisql::Schema, String>,
+) -> Result<unisql::Schema, String> {
+    use std::collections::HashMap;
+    use std::sync::{Mutex, OnceLock};
+    static CACHE: OnceLock<Mutex<HashMap<SchemaKey, unisql::Schema>>> = OnceLock::new();
+    let key = (json, source.to_string(), text.to_string());
+    let cache = CACHE.get_or_init(Mutex::default);
+    if let Some(hit) = cache.lock().ok().and_then(|c| c.get(&key).cloned()) {
+        return Ok(hit);
+    }
+    let schema = read(text)?;
+    if let Ok(mut c) = cache.lock() {
+        c.insert(key, schema.clone());
+    }
+    Ok(schema)
 }
 
 fn run(call: Call) -> TokenStream2 {
@@ -370,5 +402,47 @@ fn run(call: Call) -> TokenStream2 {
             let values = args.value.iter();
             quote!((#query, (#(#values,)*)))
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::cached_schema;
+
+    #[test]
+    fn a_schema_is_read_once_per_text_and_dialect() {
+        let reads = std::cell::Cell::new(0);
+        let read = |text: &str| {
+            reads.set(reads.get() + 1);
+            unisql::schema_from_ddl(text, "postgres")
+                .map(|d| d.schema)
+                .map_err(|e| e.to_string())
+        };
+        let ddl = "CREATE TABLE cache_probe_a (id INT);";
+        let first = cached_schema(false, "postgres", ddl, read).unwrap();
+        let second = cached_schema(false, "postgres", ddl, read).unwrap();
+        assert_eq!((first == second, reads.get()), (true, 1));
+        // control: other text, and the same text for another dialect, are read afresh
+        cached_schema(
+            false,
+            "postgres",
+            "CREATE TABLE cache_probe_b (id INT);",
+            read,
+        )
+        .unwrap();
+        cached_schema(false, "mysql", ddl, read).unwrap();
+        assert_eq!(reads.get(), 3);
+    }
+
+    #[test]
+    fn a_failed_read_is_not_kept() {
+        let reads = std::cell::Cell::new(0);
+        let fail = |_: &str| -> Result<unisql::Schema, String> {
+            reads.set(reads.get() + 1);
+            Err("no".into())
+        };
+        assert!(cached_schema(false, "postgres", "cache_probe_c", fail).is_err());
+        assert!(cached_schema(false, "postgres", "cache_probe_c", fail).is_err());
+        assert_eq!(reads.get(), 2);
     }
 }

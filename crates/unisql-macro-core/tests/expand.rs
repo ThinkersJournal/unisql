@@ -149,3 +149,21 @@ fn requires_and_forbids_check_the_construct_ids() {
     c.forbids = vec!["returning".into()];
     assert!(expand(&c).is_ok());
 }
+
+#[test]
+fn a_syntax_error_shows_its_line_and_a_caret() {
+    let errs = expand(&call("SELECT a\nFROM t\nWHERE x = = 1", &["sqlite"])).unwrap_err();
+    assert_eq!(errs[0].kind, Kind::Syntax);
+    let m = &errs[0].message;
+    let lines: Vec<&str> = m.lines().collect();
+    assert_eq!(lines.len(), 3, "{m}");
+    assert!(lines[0].contains("Line: 3"), "{m}");
+    assert_eq!(lines[1], "  WHERE x = = 1", "{m}");
+    assert!(lines[2].trim_start().starts_with('^'), "{m}");
+    // control: the caret sits under the column the parser reported
+    let col: usize = lines[0].rsplit("Column: ").next().unwrap().parse().unwrap();
+    assert_eq!(lines[2].find('^').unwrap(), 2 + col - 1, "{m}");
+    // a message without a position is left alone
+    let c = call("SELECT 1", &["sqlite"]);
+    assert!(expand(&c).is_ok());
+}

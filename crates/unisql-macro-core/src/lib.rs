@@ -8,7 +8,7 @@
 use std::collections::BTreeSet;
 
 use unisql::ast::{self, InsertSource};
-use unisql::{Allowance, Error, Options, Schema};
+use unisql::{Allowance, Options, Schema};
 
 pub use unisql::ParamBinding;
 pub use unisql::{SNAPSHOT_FORMAT, Snapshot, SnapshotError};
@@ -80,6 +80,34 @@ fn problem(kind: Kind, message: impl Into<String>) -> Problem {
         kind,
         message: message.into(),
     }
+}
+
+/// The `Line: n, Column: m` the parser puts at the end of a syntax error, 1-based.
+fn parser_position(message: &str) -> Option<(usize, usize)> {
+    let rest = message.rsplit_once("Line: ")?.1;
+    let (line, rest) = rest.split_once(", Column: ")?;
+    let column: String = rest.chars().take_while(char::is_ascii_digit).collect();
+    Some((line.trim().parse().ok()?, column.parse().ok()?))
+}
+
+/// A syntax problem for `sql`: the reader's message and, when it gave a position, the offending line
+/// with a caret under the column. The statement is one string literal, so a line number counts inside it.
+fn syntax_problem(message: String, sql: &str) -> Problem {
+    let Some((line, column)) = parser_position(&message) else {
+        return problem(Kind::Syntax, message);
+    };
+    let Some(text) = sql.lines().nth(line.saturating_sub(1)) else {
+        return problem(Kind::Syntax, message);
+    };
+    let caret = " ".repeat(column.saturating_sub(1).min(text.chars().count()));
+    problem(
+        Kind::Syntax,
+        format!(
+            "{message}
+  {text}
+  {caret}^"
+        ),
+    )
 }
 
 fn known_allowances() -> String {
@@ -246,8 +274,7 @@ pub fn expand_with(input: &Input, checkers: &[&dyn Checker]) -> Result<Expansion
 
     let analysis = match unisql::analyse_with(&input.sql, &input.source, &opts) {
         Ok(a) => a,
-        Err(Error::Read(e)) => return Err(vec![problem(Kind::Syntax, e.to_string())]),
-        Err(e) => return Err(vec![problem(Kind::Syntax, e.to_string())]),
+        Err(e) => return Err(vec![syntax_problem(e.to_string(), &input.sql)]),
     };
     if let Some(construct) = &analysis.unreadable {
         return Err(vec![problem(
@@ -258,7 +285,7 @@ pub fn expand_with(input: &Input, checkers: &[&dyn Checker]) -> Result<Expansion
 
     let stmt = match unisql::read_statement(&input.sql, &input.source) {
         Ok(stmt) => stmt,
-        Err(e) => return Err(vec![problem(Kind::Syntax, e.to_string())]),
+        Err(e) => return Err(vec![syntax_problem(e.to_string(), &input.sql)]),
     };
     let ctx = CheckContext {
         source: &input.source,

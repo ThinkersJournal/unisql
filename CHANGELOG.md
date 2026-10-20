@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.18 - 2026-10-20
+
+- **`sql!` syntax errors show the line and a caret** when the parser gave a position (`Line: n, Column: m`, read out of the message; `ReadError::Syntax` is unchanged). An error without a position is shown as before.
+- **`sql!` keeps a parsed schema** for the life of the compiler process (keyed by kind, dialect and text; only successful reads), so a crate naming one schema in many calls reads it once. Measured costs are in `docs/MACROS.md` section 6, with `tests/cost.rs` as loose regression guards.
+- **crates.io:** 0.24.15 and 0.24.16 were not published; their changes are in 0.24.17 (the next published version after 0.24.14).
+
 ## 0.24.17 - 2026-10-20
 
 - **`Column` gains `declared_type`, `nullable` and `has_default`** (all `Option`: `None` is unknown, never "no"), filled by `schema_from_ddl` from the column definition, `ALTER COLUMN SET/DROP NOT NULL`, `SET/DROP DEFAULT`, `SET DATA TYPE` (which keeps the other two) and a table-level `PRIMARY KEY`. A serial, identity or `AUTO_INCREMENT` column has a default; `NOT NULL`, a primary key and serial columns are not nullable. `Column` equality now also compares them; the scope resolution that decides whether two same-named columns agree still compares class and collation only.
