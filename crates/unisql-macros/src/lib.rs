@@ -1,12 +1,12 @@
 // SPDX-License-Identifier: MIT OR Apache-2.0
 //! `sql!`: check a literal SQL statement and translate it for each named target at build time.
 //!
-//! ```ignore
+//! ```
 //! const Q: unisql_embed::Query = unisql_macros::sql!(
 //!     source = postgres,
 //!     targets = [sqlite, mysql],
 //!     allow = [text_collation],
-//!     requires = ["upsert"],
+//!     requires = ["ordered_comparison"],
 //!     forbids = ["fn:md5"],
 //!     "SELECT a FROM t WHERE name < $1"
 //! );
