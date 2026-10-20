@@ -1,4 +1,6 @@
 error: syntax error: sql parser error: Expected: an SQL statement, found: SELEC at Line: 1, Column: 1
+         SELEC 1
+         ^
  --> tests/ui/fail_syntax.rs:2:91
   |
 2 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, targets = [sqlite], "SELEC 1");
