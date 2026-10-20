@@ -22,14 +22,17 @@
 //! * `crate = path` names the path of `unisql_embed` in the expansion (default `::unisql_embed`), so a
 //!   crate that re-exports it can point the macro at its own re-export.
 //!
-//! The statement is the last argument, a string literal.
+//! The statement is a string literal. It may be followed by one argument per parameter
+//! (`sql!(.., "SELECT .. $1 .. $2", a, b)`): the count is checked against the statement's `$n` at build
+//! time and the expansion is the tuple `(Query, (a, b))`. Nothing is bound; the driver does that.
 
 use proc_macro::TokenStream;
 use proc_macro2::{Span, TokenStream as TokenStream2};
 use quote::{quote, quote_spanned};
 use syn::parse::{Parse, ParseStream};
 use syn::punctuated::Punctuated;
-use syn::{Ident, LitStr, Path, Token, bracketed};
+use syn::spanned::Spanned as _;
+use syn::{Expr, Ident, LitStr, Path, Token, bracketed};
 use unisql_macro_core::{Input, Kind, expand};
 
 /// Check and translate a statement for the named targets. See the crate documentation.
@@ -56,6 +59,7 @@ struct Call {
     forbids: Option<Spanned<Vec<String>>>,
     embed: Option<Path>,
     sql: Option<Spanned<String>>,
+    args: Option<Spanned<Vec<Expr>>>,
 }
 
 fn idents(input: ParseStream) -> syn::Result<Spanned<Vec<String>>> {
@@ -92,7 +96,14 @@ impl Parse for Call {
                     span: lit.span(),
                 });
                 if !input.is_empty() {
-                    return Err(input.error("the statement must be the last argument"));
+                    input.parse::<Token![,]>()?;
+                    let rest = Punctuated::<Expr, Token![,]>::parse_terminated(input)?;
+                    if !rest.is_empty() {
+                        call.args = Some(Spanned {
+                            span: rest.span(),
+                            value: rest.into_iter().collect(),
+                        });
+                    }
                 }
                 break;
             }
@@ -187,10 +198,7 @@ fn binding(b: unisql_macro_core::ParamBinding) -> &'static str {
 fn run(call: Call) -> TokenStream2 {
     let here = Span::call_site();
     let Some(sql) = call.sql else {
-        return error(
-            here,
-            "missing the statement: the last argument is a string literal",
-        );
+        return error(here, "missing the statement: give a string literal");
     };
     let Some(source) = call.source else {
         return error(sql.span, "missing `source = <dialect>`");
@@ -262,11 +270,25 @@ fn run(call: Call) -> TokenStream2 {
             }
         }
     });
-    quote! {
+    let query = quote! {
         #embed::Query {
             params: #params,
             constructs: &[#(#constructs),*],
             rendered: &[#(#rendered),*],
+        }
+    };
+    match call.args {
+        None => query,
+        Some(args) if args.value.len() as u32 != params => error(
+            args.span,
+            &format!(
+                "the statement has {params} parameter(s) but {} argument(s) are given",
+                args.value.len()
+            ),
+        ),
+        Some(args) => {
+            let values = args.value.iter();
+            quote!((#query, (#(#values,)*)))
         }
     }
 }

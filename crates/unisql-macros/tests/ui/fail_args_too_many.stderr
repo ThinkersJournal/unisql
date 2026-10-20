@@ -1,0 +1,5 @@
+error: the statement has 0 parameter(s) but 1 argument(s) are given
+ --> tests/ui/fail_args_too_many.rs:3:84
+  |
+3 |     let _ = unisql_macros::sql!(source = postgres, targets = [sqlite], "SELECT 1", 7_i64);
+  |                                                                                    ^^^^^

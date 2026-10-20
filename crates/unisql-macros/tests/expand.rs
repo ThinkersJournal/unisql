@@ -63,3 +63,22 @@ fn the_crate_argument_redirects_the_expansion_path() {
     );
     assert_eq!(R.params, 0);
 }
+
+#[test]
+fn arguments_come_back_as_a_tuple_after_the_count_is_checked() {
+    let (q, (a, b)) = sql!(
+        source = postgres,
+        targets = [sqlite],
+        allow = [text_collation],
+        "SELECT a FROM t WHERE x = $1 AND y = $2",
+        7_i64,
+        "name"
+    );
+    assert_eq!((q.params, a, b), (2, 7_i64, "name"));
+    // no arguments given: the bare Query, as before
+    const BARE: Query = sql!(source = postgres, targets = [sqlite], "SELECT 1");
+    assert_eq!(BARE.params, 0);
+    // a trailing comma with no arguments is still the bare Query
+    let bare: Query = sql!(source = postgres, targets = [sqlite], "SELECT 1",);
+    assert_eq!(bare.params, 0);
+}

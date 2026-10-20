@@ -1,0 +1,5 @@
+error: the statement has 2 parameter(s) but 1 argument(s) are given
+ --> tests/ui/fail_args_count.rs:8:9
+  |
+8 |         7_i64
+  |         ^^^^^
