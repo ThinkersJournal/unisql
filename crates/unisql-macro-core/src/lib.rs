@@ -7,7 +7,9 @@
 
 use std::collections::BTreeSet;
 
-use unisql::{Allowance, Error, Options, ParamBinding};
+use unisql::{Allowance, Error, Options};
+
+pub use unisql::ParamBinding;
 
 /// What one macro call states.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

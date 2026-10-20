@@ -58,6 +58,7 @@ instead. There is no best-effort mode.
 | `unisql-dialect-mysql` | MySQL and MariaDB reader and target (+ `matrix-{mysql,mariadb}-from-*.tsv`) |
 | `unisql-macro-core` | the checks and translation behind the compile-time macros (`docs/MACROS.md`); not yet published |
 | `unisql-embed` | what the macros expand to: per-target SQL as `&'static` data, no dependencies; not yet published |
+| `unisql-macros` | `sql!`: check and translate a literal statement for named targets at build time (`docs/MACROS.md`); not yet published |
 | `unisql-differential` | tests that run the real engines and compare results; corpus runner |
 
 Dialects today: sources and targets `postgres`, `sqlite`, `mysql`, `mariadb`. Seven directions are

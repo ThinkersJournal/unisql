@@ -1,0 +1,5 @@
+error: the statement does not use the required construct `upsert`
+ --> tests/ui/fail_requires.rs:4:16
+  |
+4 |     requires = ["upsert"],
+  |                ^^^^^^^^^^

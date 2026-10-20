@@ -1,0 +1,26 @@
+[package]
+name = "unisql-macros"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "Compile-time SQL translation and checks for UniSQL: sql! embeds a statement translated for each named target."
+
+[lib]
+proc-macro = true
+
+[dependencies]
+unisql-macro-core.workspace = true
+syn = { version = "3", default-features = false, features = ["parsing", "proc-macro", "printing", "derive"] }
+quote = "1"
+proc-macro2 = "1"
+
+[dev-dependencies]
+unisql-embed.workspace = true
+unisql.workspace = true
+trybuild = "1"

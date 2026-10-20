@@ -1,0 +1,5 @@
+error: placeholders must be `$1..$n` with none skipped: the highest is $3 but only 2 distinct are used
+ --> tests/ui/fail_placeholder_gap.rs:5:5
+  |
+5 |     "SELECT a FROM t WHERE x = $1 AND y = $3"
+  |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

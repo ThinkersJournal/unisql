@@ -9,6 +9,7 @@ members = [
     "crates/unisql-dialect-mysql",
     "crates/unisql-macro-core",
     "crates/unisql-embed",
+    "crates/unisql-macros",
     "crates/unisql-differential",
 ]
 # measure/classify is a throwaway tool with its own manifest; keep it out of the workspace.
@@ -16,7 +17,7 @@ exclude = ["measure/classify"]
 
 [workspace.package]
 # One version number for every crate in this project.
-version = "0.24.13"
+version = "0.24.14"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 repository = "https://github.com/ThinkersJournal/unisql"
@@ -26,11 +27,12 @@ publish = true
 rust-version = "1.94"
 
 [workspace.dependencies]
-unisql = { path = "crates/unisql", version = "0.24.13" }
-unisql-core = { path = "crates/unisql-core", version = "0.24.13" }
-unisql-sqlparser-adapter = { path = "crates/unisql-sqlparser-adapter", version = "0.24.13" }
-unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.24.13" }
-unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.24.13" }
-unisql-dialect-mysql = { path = "crates/unisql-dialect-mysql", version = "0.24.13" }
-unisql-embed = { path = "crates/unisql-embed", version = "0.24.13" }
-unisql-macro-core = { path = "crates/unisql-macro-core", version = "0.24.13" }
+unisql = { path = "crates/unisql", version = "0.24.14" }
+unisql-core = { path = "crates/unisql-core", version = "0.24.14" }
+unisql-sqlparser-adapter = { path = "crates/unisql-sqlparser-adapter", version = "0.24.14" }
+unisql-dialect-postgres = { path = "crates/unisql-dialect-postgres", version = "0.24.14" }
+unisql-dialect-sqlite = { path = "crates/unisql-dialect-sqlite", version = "0.24.14" }
+unisql-dialect-mysql = { path = "crates/unisql-dialect-mysql", version = "0.24.14" }
+unisql-embed = { path = "crates/unisql-embed", version = "0.24.14" }
+unisql-macros = { path = "crates/unisql-macros", version = "0.24.14" }
+unisql-macro-core = { path = "crates/unisql-macro-core", version = "0.24.14" }

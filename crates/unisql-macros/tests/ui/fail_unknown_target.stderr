@@ -1,0 +1,5 @@
+error: unknown target dialect `oracle` (known: postgres, sqlite, mysql, mariadb)
+ --> tests/ui/fail_unknown_target.rs:1:81
+  |
+1 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, targets = [oracle], "SELECT 1");
+  |                                                                                 ^^^^^^^^
