@@ -78,9 +78,10 @@ Cargo features cannot choose them alone: features unify across a workspace, so a
 
 - **The call site names its targets** (`targets = [...]`). That list is the contract and is what a
   reader of the code sees.
-- Features of `unisql-macros` (`postgres`, `sqlite`, `mysql`, `mariadb`; all on by default) only decide
-  which dialect crates are *compiled into the macro*, a build-cost knob. Naming a target whose feature is
-  off is a build error.
+- Features of `unisql-macros` (`postgres`, `sqlite`, `mysql`, `mariadb`) that decide which dialect crates are
+  *compiled into the macro*, a build-cost knob, are **deferred**: `unisql` compiles all four dialects
+  unconditionally, so the macro cannot drop one until `unisql` gets the same features. Today every target is
+  available.
 - Omitting `targets` is an error in slice 1 (no hidden set). A project-wide default can come later as
   a `const`-evaluated list in the project's own macro wrapper, which is a call into `unisql-macro-core`
   and needs nothing here.

@@ -1,0 +1,5 @@
+error: unknown argument `taregts` (known: source, targets, allow, requires, forbids, crate)
+ --> tests/ui/fail_unknown_argument.rs:2:91
+  |
+2 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, targets = [sqlite], taregts = [sqlite], "SELECT 1");
+  |                                                                                           ^^^^^^^

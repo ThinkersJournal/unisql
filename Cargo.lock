@@ -433,6 +433,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
+
+[[package]]
 name = "hashbrown"
 version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1226,6 +1232,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_spanned"
+version = "1.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4e7523beb55eece201a2356bee0bbca0d1ab466c14c07703b2e0ee6d42cb0c2c"
+dependencies = [
+ "serde_core",
+]
+
+[[package]]
 name = "sha1"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1384,6 +1399,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "target-tuple"
+version = "1.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "876fef147edbcbddc8ac5cbbba92c7b86519e314e86638596c09673b2ed01e7f"
+
+[[package]]
 name = "termcolor"
 version = "1.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1483,6 +1504,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "toml"
+version = "1.1.8+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "20489e00e4d8741d6be680764cc12e270655e375a20d1011e844a9c3379e678d"
+dependencies = [
+ "indexmap",
+ "serde_core",
+ "serde_spanned",
+ "toml_datetime",
+ "toml_parser",
+ "toml_writer",
+ "winnow",
+]
+
+[[package]]
 name = "toml_datetime"
 version = "1.1.2+spec-1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1510,6 +1546,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "baa693a8032d7e1cada7d0041e96126df243179ff061456783ac7f12bda4744c"
 dependencies = [
  "winnow",
+]
+
+[[package]]
+name = "toml_writer"
+version = "1.1.3+spec-1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "06bdbd8cfc056b8d2e2e85f29b56a3bdbecb527cef81eb39e3e7b98af4652770"
+
+[[package]]
+name = "trybuild"
+version = "1.0.122"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "62db9c92d704393fbf2132041720cc80b689f2d3f28521015c2ac866223c11b8"
+dependencies = [
+ "glob",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "target-tuple",
+ "termcolor",
+ "toml",
 ]
 
 [[package]]
@@ -1553,7 +1610,7 @@ checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
 
 [[package]]
 name = "unisql"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "unisql-core",
  "unisql-dialect-mysql",
@@ -1564,11 +1621,11 @@ dependencies = [
 
 [[package]]
 name = "unisql-core"
-version = "0.24.13"
+version = "0.24.14"
 
 [[package]]
 name = "unisql-dialect-mysql"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1576,7 +1633,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-postgres"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1584,7 +1641,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-sqlite"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1592,7 +1649,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-differential"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "mysql",
  "postgres",
@@ -1603,18 +1660,31 @@ dependencies = [
 
 [[package]]
 name = "unisql-embed"
-version = "0.24.13"
+version = "0.24.14"
 
 [[package]]
 name = "unisql-macro-core"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "unisql",
 ]
 
 [[package]]
+name = "unisql-macros"
+version = "0.24.14"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
+ "trybuild",
+ "unisql",
+ "unisql-embed",
+ "unisql-macro-core",
+]
+
+[[package]]
 name = "unisql-sqlparser-adapter"
-version = "0.24.13"
+version = "0.24.14"
 dependencies = [
  "sqlparser",
  "unisql-core",

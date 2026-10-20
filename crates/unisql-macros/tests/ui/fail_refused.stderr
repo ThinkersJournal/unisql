@@ -1,0 +1,5 @@
+error: for target `sqlite`: untranslatable `fn:md5` (postgres -> sqlite): SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume [alternatives: hash in the application; register the function and use a raw(sqlite, ..) fragment]
+ --> tests/ui/fail_refused.rs:2:101
+  |
+2 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, targets = [postgres, sqlite], "SELECT md5($1)");
+  |                                                                                                     ^^^^^^^^^^^^^^^^

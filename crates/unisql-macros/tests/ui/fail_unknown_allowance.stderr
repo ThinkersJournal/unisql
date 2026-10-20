@@ -1,0 +1,5 @@
+error: unknown allowance `text_collatoin` (known: now_as_text, timestamp_as_text, epoch_whole_seconds, timestamp_whole_seconds, timestamp_millisecond_resolution, replace_is_upsert, source_collation_not_bytewise, pipes_as_logical_or, ignore_covers_only_unique_conflicts, substring_start_assumed_positive, date_as_text, like_case_sensitivity_is_connection_setting, ascii_only_case_folding, lenient_cast, division_by_zero_is_null, text_collation, boolean_as_integer, timestamp_arithmetic_as_text, json_scalar_affinity, json_representation_as_text, integer_division_assumed, upsert_any_unique_key, aggregate_string_truncation, regexp_flavor, bitwise_non_negative_integers, xor_operands_boolean, clock_is_statement_start, array_null_semantics, decimal_division_as_float, upsert_where_as_if)
+ --> tests/ui/fail_unknown_allowance.rs:5:13
+  |
+5 |     allow = [text_collatoin],
+  |             ^^^^^^^^^^^^^^^^

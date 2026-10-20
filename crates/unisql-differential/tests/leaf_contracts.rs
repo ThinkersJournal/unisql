@@ -110,5 +110,5 @@ fn every_published_crate_carries_the_root_licence_texts() {
         }
         assert!(dir.join("README.md").exists(), "{name} has no README.md");
     }
-    assert_eq!(checked, 16, "eight crates, two licence files each");
+    assert_eq!(checked, 18, "nine crates, two licence files each");
 }

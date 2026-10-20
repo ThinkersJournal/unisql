@@ -1,0 +1,5 @@
+error: missing `targets = [..]`: a call translates for exactly the targets it lists
+ --> tests/ui/fail_no_targets.rs:2:71
+  |
+2 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, "SELECT 1");
+  |                                                                       ^^^^^^^^^^

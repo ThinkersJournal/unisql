@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.14 - 2026-10-19
+
+- **New crate `unisql-macros`** (slice 2 of `docs/MACROS.md`): `sql!(source = .., targets = [..], allow = [..], requires = [..], forbids = [..], crate = path, "SQL")` expands to a `const` `unisql_embed::Query`. Syntax errors, skipped placeholders, refusals, a missing allowance, an unknown dialect or allowance name, and failed `requires`/`forbids` are compile errors pointing at the argument that is wrong (the statement literal for the SQL itself). 14 `trybuild` cases, every fail case with a passing twin. `unisql-macro-core` re-exports `ParamBinding`.
+- `docs/MACROS.md` section 4: the `unisql-macros` cargo features that gate dialects are deferred until `unisql` itself gates them (it always compiles all four today).
+
 ## 0.24.13 - 2026-10-18
 
 - **New crates, not yet published:** `unisql-macro-core` (`expand`: checks a call's source, targets, allowances, placeholders, refusals and `requires`/`forbids`, and translates for each named target) and `unisql-embed` (`Query`, `Rendered`, `Target`, `Binding`: `const`-constructible per-target SQL as `&'static` data, `no_std`). Slice 1 of `docs/MACROS.md`; no change to the existing crates.
