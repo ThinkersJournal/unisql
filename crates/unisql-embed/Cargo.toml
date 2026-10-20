@@ -1,0 +1,12 @@
+[package]
+name = "unisql-embed"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+rust-version.workspace = true
+keywords.workspace = true
+categories.workspace = true
+readme = "README.md"
+description = "The value UniSQL's compile-time macros expand to: per-target SQL text and parameter data. No dependencies."

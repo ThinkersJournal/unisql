@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.13 - 2026-10-18
+
+- **New crates, not yet published:** `unisql-macro-core` (`expand`: checks a call's source, targets, allowances, placeholders, refusals and `requires`/`forbids`, and translates for each named target) and `unisql-embed` (`Query`, `Rendered`, `Target`, `Binding`: `const`-constructible per-target SQL as `&'static` data, `no_std`). Slice 1 of `docs/MACROS.md`; no change to the existing crates.
+
 ## 0.24.12 - 2026-10-18
 
 - **Docs only.** `docs/MACROS.md`: design for compile-time translation and database-free checks as macro crates, and ROADMAP row 3 for them. No code change.
