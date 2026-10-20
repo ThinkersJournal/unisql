@@ -17,3 +17,7 @@ unisql-sqlparser-adapter.workspace = true
 unisql-dialect-postgres.workspace = true
 unisql-dialect-sqlite.workspace = true
 unisql-dialect-mysql.workspace = true
+
+[features]
+# Schema snapshot files: `Snapshot`, and serde on `Schema` and `Column`.
+serde = ["unisql-core/serde"]

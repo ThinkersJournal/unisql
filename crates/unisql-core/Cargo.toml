@@ -11,4 +11,10 @@ categories.workspace = true
 readme = "README.md"
 description = "The UniSQL core: a dialect-neutral SQL IR, tiers and reports, a shared printer and the Target hooks."
 
+[features]
+# Serialise a `Schema` and read/write schema snapshot files (`unisql_core::snapshot`).
+serde = ["dep:serde", "dep:serde_json"]
+
 [dependencies]
+serde = { version = "1", features = ["derive"], optional = true }
+serde_json = { version = "1", optional = true }

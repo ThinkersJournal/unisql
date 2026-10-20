@@ -25,6 +25,7 @@ use crate::ast::{Expr, Name, TableRef};
 /// `Boolean` should be given only when the declared type says boolean (not a `tinyint(1)`); `Other`
 /// covers dates, UUIDs, JSON, bytes and anything else without a text collation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub enum ColumnClass {
     Text,
@@ -37,12 +38,24 @@ pub enum ColumnClass {
 }
 
 /// One column: its class and, when the caller knows it, its collation (carried as given; UniSQL does
-/// not interpret it yet).
+/// not interpret it yet), its declared type text, and whether it is nullable and has a default. The
+/// last three are `None` when the caller does not know; a check that reads them must treat `None` as
+/// unknown, never as "no".
 #[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[non_exhaustive]
 pub struct Column {
     pub class: ColumnClass,
     pub collation: Option<String>,
+    /// The type as declared (`bigint`, `character varying(16)`), in the spelling the reader gives.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub declared_type: Option<String>,
+    /// `Some(false)` for `NOT NULL`, a primary key, a serial or identity column.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub nullable: Option<bool>,
+    /// `Some(true)` for a `DEFAULT`, a generated, serial, identity or auto-increment column.
+    #[cfg_attr(feature = "serde", serde(default))]
+    pub has_default: Option<bool>,
 }
 
 impl Column {
@@ -50,6 +63,9 @@ impl Column {
         Column {
             class,
             collation: None,
+            declared_type: None,
+            nullable: None,
+            has_default: None,
         }
     }
 
@@ -77,10 +93,33 @@ impl Column {
         self.collation = Some(collation.into());
         self
     }
+
+    pub fn with_declared_type(mut self, declared_type: impl Into<String>) -> Self {
+        self.declared_type = Some(declared_type.into());
+        self
+    }
+
+    pub fn with_nullable(mut self, nullable: bool) -> Self {
+        self.nullable = Some(nullable);
+        self
+    }
+
+    pub fn with_default(mut self, has_default: bool) -> Self {
+        self.has_default = Some(has_default);
+        self
+    }
 }
 
 /// Base tables and their columns.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
+#[cfg_attr(
+    feature = "serde",
+    derive(serde::Serialize, serde::Deserialize),
+    serde(
+        from = "crate::snapshot::SchemaRepr",
+        into = "crate::snapshot::SchemaRepr"
+    )
+)]
 pub struct Schema {
     tables: BTreeMap<Vec<String>, BTreeMap<String, Column>>,
     /// Unique keys (primary or unique constraint, unique index) per table, columns in key order.
@@ -187,6 +226,40 @@ impl Schema {
         )
     }
 
+    /// Say whether `column` of `table` may be NULL (a table-level `PRIMARY KEY` makes its columns
+    /// `NOT NULL`). Does nothing when the column is not registered.
+    pub fn set_nullable(&mut self, table: &Name, column: &str, nullable: bool) {
+        if let Some(c) = self
+            .tables
+            .get_mut(&table.0)
+            .and_then(|t| t.get_mut(column))
+        {
+            c.nullable = Some(nullable);
+        }
+    }
+
+    /// Say whether `column` of `table` has a default value. Does nothing when it is not registered.
+    pub fn set_has_default(&mut self, table: &Name, column: &str, has_default: bool) {
+        if let Some(c) = self
+            .tables
+            .get_mut(&table.0)
+            .and_then(|t| t.get_mut(column))
+        {
+            c.has_default = Some(has_default);
+        }
+    }
+
+    /// Every registered table, in name order, with what is known about it.
+    pub fn tables(&self) -> impl Iterator<Item = TableView<'_>> {
+        self.tables.iter().map(|(name, columns)| TableView {
+            name,
+            columns,
+            unique_keys: self.keys.get(name).map(Vec::as_slice).unwrap_or(&[]),
+            keys_unreliable: self.keys_unreliable.contains(name),
+            columns_complete: self.columns_complete.contains(name),
+        })
+    }
+
     /// The stated unique keys of `table`; `None` when none were stated or the list is unreliable.
     pub fn unique_keys(&self, table: &Name) -> Option<&[Vec<String>]> {
         if self.keys_unreliable.contains(&table.0) {
@@ -210,6 +283,21 @@ impl Schema {
     fn knows_table(&self, table: &Name) -> bool {
         self.tables.contains_key(&table.0)
     }
+}
+
+/// One registered table, as [`Schema::tables`] enumerates it.
+#[derive(Clone, Copy, Debug)]
+pub struct TableView<'a> {
+    /// The table's name as registered (`["public", "users"]`).
+    pub name: &'a [String],
+    /// Its columns by name.
+    pub columns: &'a BTreeMap<String, Column>,
+    /// The stated unique keys, columns in key order (empty when none were stated).
+    pub unique_keys: &'a [Vec<String>],
+    /// The key list must not be trusted as complete.
+    pub keys_unreliable: bool,
+    /// The column list is stated in full.
+    pub columns_complete: bool,
 }
 
 /// The tables a statement's expressions can refer to, innermost query last. Used by the printer and
@@ -328,7 +416,11 @@ impl<'a> Scopes<'a> {
                         }
                     }
                     match (found.first(), unknown) {
-                        (Some(first), false) if found.iter().all(|c| c == first) => {
+                        (Some(first), false)
+                            if found.iter().all(|c| {
+                                c.class == first.class && c.collation == first.collation
+                            }) =>
+                        {
                             return Some(*first);
                         }
                         (None, false) => continue,

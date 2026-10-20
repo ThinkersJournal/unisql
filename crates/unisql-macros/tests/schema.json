@@ -1,0 +1,16 @@
+{
+  "format": 1,
+  "schema": {
+    "tables": [
+      {
+        "name": ["kv"],
+        "columns": {
+          "k": {"class": "Text", "collation": null, "declared_type": "TEXT", "nullable": false, "has_default": false},
+          "n": {"class": "Numeric", "collation": null, "declared_type": "BIGINT", "nullable": false, "has_default": false}
+        },
+        "unique_keys": [["k"]],
+        "columns_complete": true
+      }
+    ]
+  }
+}

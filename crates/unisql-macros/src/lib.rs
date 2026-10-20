@@ -18,6 +18,9 @@
 //! * `source` and `targets` are required; there is no default set.
 //! * `allow` takes `Allowance` names; a construct that is only conditionally portable builds only when
 //!   its allowance is named here.
+//! * `schema = "file"` / `schema_ddl = ".."` give the tables the statement runs against: DDL in the
+//!   source dialect, or (a `.json` file) a schema snapshot. The path is relative to the crate's manifest
+//!   directory. A schema lets the translator and `SchemaChecker` use column facts.
 //! * `requires` / `forbids` assert construct ids (the ids a `Report` uses).
 //! * `crate = path` names the path of `unisql_embed` in the expansion (default `::unisql_embed`), so a
 //!   crate that re-exports it can point the macro at its own re-export.
@@ -239,6 +242,13 @@ fn load_schema(
             (text, p.span, Some(full.to_string_lossy().into_owned()))
         }
     };
+    // A `.json` file is a schema snapshot (`unisql::Snapshot`), not DDL.
+    if tracked.as_deref().is_some_and(|p| p.ends_with(".json")) {
+        return match unisql::Snapshot::from_json(&text) {
+            Ok(snapshot) => Ok((Some(snapshot.schema), tracked)),
+            Err(e) => Err(error(span, &e.to_string())),
+        };
+    }
     // An unknown source dialect is reported by the checks that follow; there is nothing to read with.
     if !unisql::dialects().contains(&source) {
         return Ok((None, tracked));
