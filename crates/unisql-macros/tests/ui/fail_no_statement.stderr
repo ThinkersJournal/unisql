@@ -1,7 +1,7 @@
 error: missing the statement: the last argument is a string literal
- --> tests/ui/fail_no_statement.rs:1:32
+ --> tests/ui/fail_no_statement.rs:2:32
   |
-1 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, targets = [sqlite]);
+2 | const Q: unisql_embed::Query = unisql_macros::sql!(source = postgres, targets = [sqlite]);
   |                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   |
   = note: this error originates in the macro `unisql_macros::sql` (in Nightly builds, run with -Z macro-backtrace for more info)

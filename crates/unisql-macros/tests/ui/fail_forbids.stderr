@@ -1,5 +1,5 @@
 error: the statement uses the forbidden construct `ordered_comparison`
- --> tests/ui/fail_forbids.rs:5:15
+ --> tests/ui/fail_forbids.rs:6:15
   |
-5 |     forbids = ["ordered_comparison"],
+6 |     forbids = ["ordered_comparison"],
   |               ^^^^^^^^^^^^^^^^^^^^^^

@@ -1,5 +1,5 @@
 error: the statement does not use the required construct `upsert`
- --> tests/ui/fail_requires.rs:4:16
+ --> tests/ui/fail_requires.rs:5:16
   |
-4 |     requires = ["upsert"],
+5 |     requires = ["upsert"],
   |                ^^^^^^^^^^

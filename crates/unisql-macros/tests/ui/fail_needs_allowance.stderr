@@ -1,5 +1,5 @@
 error: for target `mysql`: untranslatable `text_comparison` (postgres -> mysql): conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
- --> tests/ui/fail_needs_allowance.rs:4:5
+ --> tests/ui/fail_needs_allowance.rs:5:5
   |
-4 |     "SELECT a FROM t WHERE name < $1"
+5 |     "SELECT a FROM t WHERE name < $1"
   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
