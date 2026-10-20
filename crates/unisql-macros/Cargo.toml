@@ -16,7 +16,7 @@ proc-macro = true
 
 [dependencies]
 unisql-macro-core.workspace = true
-unisql.workspace = true
+unisql = { workspace = true, features = ["serde"] }
 syn = { version = "3", default-features = false, features = ["parsing", "proc-macro", "printing", "derive"] }
 quote = "1"
 proc-macro2 = "1"

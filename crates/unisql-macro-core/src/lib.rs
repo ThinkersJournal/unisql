@@ -11,6 +11,7 @@ use unisql::ast::{self, InsertSource};
 use unisql::{Allowance, Error, Options, Schema};
 
 pub use unisql::ParamBinding;
+pub use unisql::{SNAPSHOT_FORMAT, Snapshot, SnapshotError};
 
 /// What one macro call states.
 #[derive(Clone, Debug, Default, PartialEq, Eq)]

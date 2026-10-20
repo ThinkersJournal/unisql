@@ -10,6 +10,8 @@ pub mod print;
 pub mod report;
 pub mod rewrite;
 pub mod schema;
+#[cfg(feature = "serde")]
+pub mod snapshot;
 pub mod target;
 
 pub use print::write;
@@ -17,5 +19,5 @@ pub use report::{
     Allowance, Entry, Options, ParamBinding, Read, ReadError, ReadNote, Report, Tier, Translation,
     Untranslatable,
 };
-pub use schema::{Column, ColumnClass, Schema, is_bytewise_collation};
+pub use schema::{Column, ColumnClass, Schema, TableView, is_bytewise_collation};
 pub use target::{Ctx, Target};

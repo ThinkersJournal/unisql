@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.17 - 2026-10-20
+
+- **`Column` gains `declared_type`, `nullable` and `has_default`** (all `Option`: `None` is unknown, never "no"), filled by `schema_from_ddl` from the column definition, `ALTER COLUMN SET/DROP NOT NULL`, `SET/DROP DEFAULT`, `SET DATA TYPE` (which keeps the other two) and a table-level `PRIMARY KEY`. A serial, identity or `AUTO_INCREMENT` column has a default; `NOT NULL`, a primary key and serial columns are not nullable. `Column` equality now also compares them; the scope resolution that decides whether two same-named columns agree still compares class and collation only.
+- **`Schema::tables()`** enumerates tables as `TableView` (name, columns, unique keys, `keys_unreliable`, `columns_complete`).
+- **Feature `serde`** (`unisql`, `unisql-core`): serde on `Schema`/`Column`/`ColumnClass` and `Snapshot` / `SnapshotError` / `SNAPSHOT_FORMAT` (a JSON file with a `format` integer; a newer format is refused before its shape is read; unknown fields are ignored and missing optional ones read as unknown; a `meta` map is kept for the producer). `unisql-macro-core` and `unisql-macros` enable it; `sql!(schema = "x.json")` reads a snapshot.
+
 ## 0.24.16 - 2026-10-20
 
 - **`sql!` reads a schema** (slice 4 of `docs/MACROS.md`): `schema = "path.sql"` (DDL in the source dialect, relative to the crate's manifest directory, included so cargo rebuilds when it changes) or `schema_ddl = "CREATE TABLE .."`. It feeds the translator (a comparison on a non-text column no longer asks for `text_collation`) and `SchemaChecker`: an `INSERT` row whose width differs from its column list, a column listed twice, and, where the schema states a table's columns in full, an unknown column in `INSERT`/`UPDATE .. SET` or a row of the wrong width for an `INSERT` with no column list. It reports only what is certain; every problem is reported, not the first.

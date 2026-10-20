@@ -282,6 +282,34 @@ fn column_from_def(c: &sp::ColumnDef) -> Column {
     });
     let mut col = Column::new(class.unwrap_or(ColumnClass::Unknown));
     col.collation = collation;
+    col.declared_type = Some(c.data_type.to_string());
+    // A serial type is NOT NULL with a default (its sequence); so is an identity column.
+    let serial = matches!(
+        c.data_type.to_string().to_ascii_lowercase().as_str(),
+        "serial" | "bigserial" | "smallserial" | "serial2" | "serial4" | "serial8"
+    );
+    let mut not_null = serial;
+    let mut has_default = serial;
+    for o in &c.options {
+        match &o.option {
+            sp::ColumnOption::NotNull | sp::ColumnOption::PrimaryKey(_) => not_null = true,
+            sp::ColumnOption::Default(_)
+            | sp::ColumnOption::Generated { .. }
+            | sp::ColumnOption::Materialized(_)
+            | sp::ColumnOption::Alias(_) => has_default = true,
+            sp::ColumnOption::DialectSpecific(tokens) => {
+                let text = tokens.iter().map(|t| t.to_string()).collect::<String>();
+                if text.to_ascii_lowercase().contains("auto_increment")
+                    || text.to_ascii_lowercase().contains("autoincrement")
+                {
+                    has_default = true;
+                }
+            }
+            _ => {}
+        }
+    }
+    col.nullable = Some(!not_null);
+    col.has_default = Some(has_default);
     col
 }
 
@@ -427,9 +455,33 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
                         op: sp::AlterColumnOperation::SetDataType { data_type, .. },
                     } => {
                         let class = class_of_type(&data_type).unwrap_or(ColumnClass::Unknown);
-                        // A new type resets the collation unless the statement states one.
-                        schema.set_column(name.0.clone(), ident(&column_name), Column::new(class));
+                        let column = ident(&column_name);
+                        // A new type resets the collation unless the statement states one; whether the
+                        // column is nullable and has a default is not a property of its type.
+                        let mut new = Column::new(class);
+                        new.declared_type = Some(data_type.to_string());
+                        if let Some(old) = schema.get(&name, &column) {
+                            new.nullable = old.nullable;
+                            new.has_default = old.has_default;
+                        }
+                        schema.set_column(name.0.clone(), column, new);
                     }
+                    sp::AlterTableOperation::AlterColumn {
+                        column_name,
+                        op: sp::AlterColumnOperation::SetNotNull,
+                    } => schema.set_nullable(&name, &ident(&column_name), false),
+                    sp::AlterTableOperation::AlterColumn {
+                        column_name,
+                        op: sp::AlterColumnOperation::DropNotNull,
+                    } => schema.set_nullable(&name, &ident(&column_name), true),
+                    sp::AlterTableOperation::AlterColumn {
+                        column_name,
+                        op: sp::AlterColumnOperation::SetDefault { .. },
+                    } => schema.set_has_default(&name, &ident(&column_name), true),
+                    sp::AlterTableOperation::AlterColumn {
+                        column_name,
+                        op: sp::AlterColumnOperation::DropDefault,
+                    } => schema.set_has_default(&name, &ident(&column_name), false),
                     _ => {}
                 }
             }
@@ -472,7 +524,14 @@ fn add_constraint_key(schema: &mut Schema, table: &Name, con: &sp::TableConstrai
         _ => return,
     };
     match index_columns(cols) {
-        Some(c) => schema.add_unique_key(table.0.clone(), c),
+        Some(c) => {
+            if matches!(con, sp::TableConstraint::PrimaryKey(_)) {
+                for column in &c {
+                    schema.set_nullable(table, column, false);
+                }
+            }
+            schema.add_unique_key(table.0.clone(), c);
+        }
         None => schema.mark_keys_unreliable(table.0.clone()),
     }
 }

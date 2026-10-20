@@ -12,4 +12,4 @@ readme = "README.md"
 description = "The checks and translation behind UniSQL's compile-time macros, as a plain library."
 
 [dependencies]
-unisql.workspace = true
+unisql = { workspace = true, features = ["serde"] }
