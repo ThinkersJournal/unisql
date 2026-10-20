@@ -30,7 +30,7 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    the one used for comparisons today).
 
 3. **Compile-time macros** (`unisql-macro-core`, `unisql-macros`, `unisql-embed`; design in
-   `docs/MACROS.md`, written 2026-10-18 at 0.24.11, status: design only). A literal statement is
+   `docs/MACROS.md`, written 2026-10-18 at 0.24.11, status: slices 1 to 5 built at 0.24.18; PersistAnt's catalog `Checker` and its re-export are its own rows; dialect-feature gating decided against, with measurements, in `docs/MACROS.md` section 4). A literal statement is
    syntax-checked, placeholder-checked and translated for each named target at build time; a refusal is
    a build error; PersistAnt layers catalog checks through a `Checker` seam. Slices, each one PR and each
    checked by a `trybuild` compile-fail suite: (1) macro-core and embed, (2) bare `sql!` PostgreSQL to
