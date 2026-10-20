@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.24.15 - 2026-10-19
+
+- **`sql!` takes arguments** (slice 3 of `docs/MACROS.md`): `sql!(.., "SELECT .. $1 .. $2", a, b)` checks at build time that the count equals the statement's parameters (the error points at the arguments) and expands to `(Query, (a, b))`. Nothing is bound. With no arguments the expansion is the bare `Query`, as before. `allow`, `requires`, `forbids` and `Query::constructs` were already in 0.24.14.
+
 ## 0.24.14 - 2026-10-19
 
 - **New crate `unisql-macros`** (slice 2 of `docs/MACROS.md`): `sql!(source = .., targets = [..], allow = [..], requires = [..], forbids = [..], crate = path, "SQL")` expands to a `const` `unisql_embed::Query`. Syntax errors, skipped placeholders, refusals, a missing allowance, an unknown dialect or allowance name, and failed `requires`/`forbids` are compile errors pointing at the argument that is wrong (the statement literal for the SQL itself). 14 `trybuild` cases, every fail case with a passing twin. `unisql-macro-core` re-exports `ParamBinding`.
