@@ -383,8 +383,20 @@ impl Printer<'_> {
                 Some(a) => format!("{} AS {}", self.name(name), self.id(a)),
                 None => self.name(name),
             }),
-            TableRef::Subquery { query, alias } => {
-                Ok(format!("({}) AS {}", self.query(query, c)?, self.id(alias)))
+            TableRef::Subquery {
+                query,
+                alias,
+                lateral,
+            } => {
+                if *lateral {
+                    self.t.feature("lateral", c)?;
+                }
+                Ok(format!(
+                    "{}({}) AS {}",
+                    if *lateral { "LATERAL " } else { "" },
+                    self.query(query, c)?,
+                    self.id(alias)
+                ))
             }
             TableRef::Function { name, args, alias } => {
                 if let Some(s) = self.series_cte(name, args, alias.as_deref(), c)? {

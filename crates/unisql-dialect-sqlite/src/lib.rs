@@ -134,6 +134,13 @@ impl Target for Sqlite {
                     &["use positional arguments"],
                 ));
             }
+            "lateral" => {
+                return Err(ctx.refuse(
+                    "lateral",
+                    "SQLite has no LATERAL: a subquery in FROM cannot refer to the tables to its left",
+                    &["rewrite as a correlated subquery in the select list, or a window function over a join"],
+                ));
+            }
             _ => "",
         };
         ctx.note(name, Tier::Exact, min, None)

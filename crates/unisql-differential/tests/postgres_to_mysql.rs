@@ -758,6 +758,15 @@ fn cases(maria: bool) -> Vec<Case> {
         "escape_string_literal",
         "SELECT char_length(E'a\\nb\\t\\\\') FROM users WHERE id = 1",
     ));
+    // LATERAL: MySQL 8.0.14+ has it; MariaDB does not.
+    if maria {
+        v.push(exp(
+            c("refuse_left_join_lateral", "SELECT u.id, top.amount FROM users u LEFT JOIN LATERAL (SELECT o.amount FROM orders o WHERE o.user_id = u.id ORDER BY o.amount DESC LIMIT 1) top ON true ORDER BY u.id"),
+            Expect::Refused("lateral"),
+        ));
+    } else {
+        v.push(ord(c("left_join_lateral", "SELECT u.id, top.amount FROM users u LEFT JOIN LATERAL (SELECT o.amount FROM orders o WHERE o.user_id = u.id ORDER BY o.amount DESC LIMIT 1) top ON true ORDER BY u.id")));
+    }
     v.push(exp(
         c(
             "refuse_at_time_zone",

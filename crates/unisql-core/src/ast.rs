@@ -148,6 +148,8 @@ pub enum TableRef {
     Subquery {
         query: Box<Query>,
         alias: String,
+        /// `LATERAL (..)`: the subquery may refer to the tables to its left in the same FROM.
+        lateral: bool,
     },
     /// A table-valued function in FROM: `generate_series(1, 3) AS g`, `jsonb_object_keys(doc) AS k`.
     Function {

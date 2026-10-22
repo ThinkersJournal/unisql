@@ -114,6 +114,7 @@ construct	json_get	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;t
 construct	json_get.json_representation_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::json_nested	allowance=json_representation_as_text	postgres
 construct	json_get_text	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::json_cast_int	diverges from the strict contract unless accepted: allowance=json_scalar_affinity	postgres
 construct	json_get_text.json_scalar_affinity	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::json_cast_int	allowance=json_scalar_affinity	postgres
+construct	lateral	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_left_join_lateral	SQLite has no LATERAL: a subquery in FROM cannot refer to the tables to its left	postgres
 construct	like	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::like_case_sensitive	diverges from the strict contract unless accepted: allowance=like_case_sensitivity_is_connection_setting	postgres
 construct	like.like_case_sensitivity_is_connection_setting	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::like_case_sensitive	allowance=like_case_sensitivity_is_connection_setting	postgres
 construct	limit	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::distinct_on_limit		postgres

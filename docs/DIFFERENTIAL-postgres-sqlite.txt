@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=183
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=184
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -313,6 +313,7 @@ PASS gate_interval                refused without allowance: conditional: needs 
 PASS refuse_interval_months       refused `fn:make_interval.month_year`: make_interval(months => ..): month/year arithmetic differs between the engines
 PASS refuse_interval_positional   refused `fn:make_interval.standalone`: SQLite has no interval type; only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated
 PASS refuse_interval_standalone   refused `named_arg`: SQLite functions have no named-argument notation
+PASS refuse_left_join_lateral     refused `lateral`: SQLite has no LATERAL: a subquery in FROM cannot refer to the tables to its left
 PASS refuse_current_schema        refused `fn:current_schema`: PostgreSQL catalog/session introspection has no SQLite equivalent
 PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/session introspection has no SQLite equivalent
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume

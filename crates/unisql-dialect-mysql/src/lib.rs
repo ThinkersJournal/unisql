@@ -414,6 +414,14 @@ impl Target for Mysql {
                 "MySQL functions have no named-argument notation",
                 &[],
             )),
+            "lateral" => match self.flavor {
+                Flavor::MariaDb => Err(ctx.refuse(
+                    "lateral",
+                    "MariaDB has no LATERAL: a subquery in FROM cannot refer to the tables to its left",
+                    &["rewrite as a correlated subquery in the select list, or a window function over a join"],
+                )),
+                Flavor::MySql => ctx.note(name, Tier::Exact, "requires MySQL >= 8.0.14", None),
+            },
             _ => ctx.note(name, Tier::Exact, "", None),
         }
     }

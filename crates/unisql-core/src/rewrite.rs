@@ -132,6 +132,7 @@ pub fn distinct_on_via_window(q: &Query) -> Result<Query, Cannot> {
         distinct: Distinct::No,
         projection: outer_proj,
         from: vec![TableRef::Subquery {
+            lateral: false,
             query: Box::new(inner),
             alias: "__d".into(),
         }],

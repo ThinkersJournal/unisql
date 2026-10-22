@@ -1094,8 +1094,8 @@ fn table_factor(t: sp::TableFactor) -> R<TableRef> {
             alias,
             sample,
         } => {
-            if lateral || sample.is_some() {
-                return no("derived_option", "LATERAL / TABLESAMPLE");
+            if sample.is_some() {
+                return no("derived_option", "TABLESAMPLE");
             }
             let alias = alias_name(alias)?.ok_or_else(|| ReadError::NotInIr {
                 construct: "unaliased_subquery".into(),
@@ -1104,6 +1104,7 @@ fn table_factor(t: sp::TableFactor) -> R<TableRef> {
             Ok(TableRef::Subquery {
                 query: Box::new(query(*subquery)?),
                 alias,
+                lateral,
             })
         }
         other => no("table_factor", &head(&other)),
