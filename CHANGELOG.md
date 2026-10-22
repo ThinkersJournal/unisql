@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.2 - 2026-10-22
+
+- **`EXTRACT(DOW | ISODOW | DOY | QUARTER | WEEK FROM ts)` is translated to SQLite, MySQL and MariaDB** (was refused). MySQL/MariaDB use `DAYOFWEEK`, `WEEKDAY`, `DAYOFYEAR`, `QUARTER` and `WEEK(x, 3)` (Exact); SQLite derives them from the timestamp text (Conditional on `TimestampAsText`; the ISO week from the Thursday of its week). Differentially verified against PostgreSQL 16 on year-boundary dates (ISO weeks 53 and 1). Other fields stay refused by leaf.
+
 ## 0.25.1 - 2026-10-22
 
 - **`::regclass` is read.** `SqlType::Regclass` (leaf `regclass`) is new; PostgreSQL to PostgreSQL passes it through, and SQLite, MySQL and MariaDB refuse with the leaf `cast.to_regclass` (no catalog to resolve a relation name against). `to_regclass()` stays refused as before.

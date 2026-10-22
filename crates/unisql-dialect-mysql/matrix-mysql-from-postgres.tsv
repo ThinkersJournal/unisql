@@ -26,14 +26,19 @@ construct	division	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite
 construct	division.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=division_by_zero_is_null	postgres
 construct	division_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
 construct	division_integer.integer_division_assumed	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::int_division	allowance=integer_division_assumed	postgres
+construct	extract.century	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_extract_century	MySQL/MariaDB: no verified mapping for EXTRACT(century ..) yet	postgres
 construct	extract.day	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
-construct	extract.dow	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_extract_dow	MySQL/MariaDB: no verified mapping for EXTRACT(dow ..) yet	postgres
+construct	extract.dow	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::extract_calendar_fields		postgres
+construct	extract.doy	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::extract_calendar_fields		postgres
 construct	extract.epoch	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields	diverges from the strict contract unless accepted: allowance=epoch_whole_seconds	postgres
 construct	extract.epoch.epoch_whole_seconds	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields	allowance=epoch_whole_seconds	postgres
 construct	extract.epoch.interval	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::epoch_of_difference		postgres
 construct	extract.hour	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
+construct	extract.isodow	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::extract_calendar_fields		postgres
 construct	extract.minute	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	extract.month	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
+construct	extract.quarter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::extract_calendar_fields		postgres
+construct	extract.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::extract_calendar_fields		postgres
 construct	extract.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::extract_fields		postgres
 construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres

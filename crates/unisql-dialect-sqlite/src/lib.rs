@@ -699,10 +699,34 @@ impl Target for Sqlite {
     }
 
     /// Verified on SQLite 3.53 against PostgreSQL's results: the fields are read from the timestamp
-    /// text with `strftime`; the epoch of a timestamp is `strftime('%s')`, whole seconds. Other fields
-    /// and the epoch of an interval have no verified mapping.
+    /// text with `strftime`; the epoch of a timestamp is `strftime('%s')`, whole seconds. `dow`,
+    /// `isodow`, `doy`, `quarter` and the ISO `week` are derived from the same text (the week from the
+    /// Thursday of its ISO week). Other fields and the epoch of an interval have no verified mapping.
     fn extract(&self, field: &str, expr: &str, interval: bool, ctx: &mut Ctx) -> R<String> {
         let leaf = unisql_core::target::extract_leaf(field, interval);
+        let derived = match field {
+            "dow" => Some(format!("CAST(strftime('%w', {expr}) AS INTEGER)")),
+            "isodow" => Some(format!(
+                "((CAST(strftime('%w', {expr}) AS INTEGER) + 6) % 7 + 1)"
+            )),
+            "doy" => Some(format!("CAST(strftime('%j', {expr}) AS INTEGER)")),
+            "quarter" => Some(format!(
+                "((CAST(strftime('%m', {expr}) AS INTEGER) + 2) / 3)"
+            )),
+            "week" => Some(format!(
+                "((CAST(strftime('%j', date({expr}, 'weekday 0', '-3 days')) AS INTEGER) - 1) / 7 + 1)"
+            )),
+            _ => None,
+        };
+        if let Some(sql) = derived {
+            ctx.note(
+                leaf,
+                Tier::Conditional,
+                "the field is derived from the timestamp's text (YYYY-MM-DD HH:MM:SS, UTC)",
+                Some(Allowance::TimestampAsText),
+            )?;
+            return Ok(sql);
+        }
         let fmt = match field {
             "year" => "%Y",
             "month" => "%m",

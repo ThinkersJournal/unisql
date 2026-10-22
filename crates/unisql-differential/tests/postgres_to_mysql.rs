@@ -23,6 +23,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
+CREATE TABLE edge_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
+INSERT INTO edge_ts VALUES (1, '2020-12-31 08:30:00+00'), (2, '2021-01-01 08:30:00+00'), (3, '2021-01-04 08:30:00+00'), (4, '2018-12-31 08:30:00+00'), (5, '2016-01-03 08:30:00+00'), (6, '2024-12-30 08:30:00+00'), (7, '2027-01-01 08:30:00+00'), (8, '2019-06-30 08:30:00+00');
 INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30+00'), (2, '1999-12-31 23:59:59+00'), (3, '2024-02-29 00:00:00+00');
 INSERT INTO events VALUES (1, now() - interval '10 seconds'),(2, now() - interval '120 seconds'),(3, now() - interval '3600 seconds');
 INSERT INTO users VALUES
@@ -44,6 +46,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL, amount in
 CREATE TABLE kv (`key` varchar(64) PRIMARY KEY, value varchar(64), n integer);
 CREATE TABLE events (id integer PRIMARY KEY, at datetime NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at datetime NOT NULL);
+CREATE TABLE edge_ts (id integer PRIMARY KEY, at datetime NOT NULL);
+INSERT INTO edge_ts VALUES (1, '2020-12-31 08:30:00'), (2, '2021-01-01 08:30:00'), (3, '2021-01-04 08:30:00'), (4, '2018-12-31 08:30:00'), (5, '2016-01-03 08:30:00'), (6, '2024-12-30 08:30:00'), (7, '2027-01-01 08:30:00'), (8, '2019-06-30 08:30:00');
 INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30'), (2, '1999-12-31 23:59:59'), (3, '2024-02-29 00:00:00');
 INSERT INTO events VALUES (1, now() - interval 10 second),(2, now() - interval 120 second),(3, now() - interval 3600 second);
 INSERT INTO users VALUES
@@ -830,9 +834,9 @@ fn cases(maria: bool) -> Vec<Case> {
     }
     for (name, sql, leaf) in [
         (
-            "refuse_extract_dow",
-            "SELECT EXTRACT(DOW FROM now())",
-            "extract.dow",
+            "refuse_extract_century",
+            "SELECT EXTRACT(CENTURY FROM now())",
+            "extract.century",
         ),
         (
             "refuse_array_literal",
@@ -851,6 +855,10 @@ fn cases(maria: bool) -> Vec<Case> {
     v.push(ord(c(
         "extract_fields",
         "SELECT id, CAST(EXTRACT(YEAR FROM at) AS INTEGER), CAST(EXTRACT(MONTH FROM at) AS INTEGER), CAST(EXTRACT(DAY FROM at) AS INTEGER), CAST(EXTRACT(HOUR FROM at) AS INTEGER), CAST(EXTRACT(MINUTE FROM at) AS INTEGER) FROM fixed_ts ORDER BY id",
+    )));
+    v.push(ord(c(
+        "extract_calendar_fields",
+        "SELECT id, CAST(EXTRACT(DOW FROM at) AS INTEGER), CAST(EXTRACT(ISODOW FROM at) AS INTEGER), CAST(EXTRACT(DOY FROM at) AS INTEGER), CAST(EXTRACT(QUARTER FROM at) AS INTEGER), CAST(EXTRACT(WEEK FROM at) AS INTEGER) FROM edge_ts ORDER BY id",
     )));
     v.push(ord(c(
         "extract_epoch",
