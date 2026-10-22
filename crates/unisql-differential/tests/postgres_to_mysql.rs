@@ -689,6 +689,13 @@ fn cases(maria: bool) -> Vec<Case> {
             c("refuse_cast_uuid", "SELECT CAST(name AS UUID) FROM users"),
             Expect::Refused("cast.to_uuid"),
         ),
+        exp(
+            c(
+                "refuse_cast_regclass",
+                "SELECT CAST(name AS REGCLASS) FROM users",
+            ),
+            Expect::Refused("cast.to_regclass"),
+        ),
     ];
     if maria {
         // MariaDB >= 10.5: INSERT/DELETE .. RETURNING; UPDATE .. RETURNING is still refused.

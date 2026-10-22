@@ -2701,6 +2701,7 @@ fn data_type_to_ir(t: &sp::DataType) -> R<SqlType> {
             },
         },
         D::Uuid => SqlType::Uuid,
+        D::Regclass => SqlType::Regclass,
         D::Bytea => SqlType::Bytes,
         D::JSON => SqlType::Json,
         D::JSONB => SqlType::Jsonb,

@@ -15,6 +15,7 @@ construct	cast.to_double	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sq
 construct	cast.to_double.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast	allowance=lenient_cast	postgres
 construct	cast.to_integer	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_integer.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	allowance=lenient_cast	postgres
+construct	cast.to_regclass	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_cast_regclass	CAST to Regclass has no SQLite equivalent that preserves meaning	postgres
 construct	cast.to_text	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_text.lenient_cast	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_int_text	allowance=lenient_cast	postgres
 construct	cast.to_timestamp	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_to_timestamp	diverges from the strict contract unless accepted: allowance=lenient_cast,timestamp_as_text	postgres

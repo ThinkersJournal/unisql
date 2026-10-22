@@ -27,6 +27,7 @@ cast.to_double	CAST to a double-precision float returns the source's value; a ma
 cast.to_integer	CAST to a 32-bit integer returns the source's value; a malformed or out-of-range operand raises an error as at the source.
 cast.to_timestamp	CAST to a timestamp without time zone yields the timestamp of the operand (a timestamptz is converted to the session zone); a malformed value raises an error.
 cast.to_text	CAST to text yields the source's text form of the operand.
+cast.to_regclass	CAST to regclass resolves a relation name in the PostgreSQL catalog. Refused by every target that has no such catalog.
 cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
 array_literal	ARRAY[a, b, ...] is an array of the elements in order. Refused where there is no array type.
 extract.day	EXTRACT(DAY FROM x) is the day of the month of x.

@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.1 - 2026-10-22
+
+- **`::regclass` is read.** `SqlType::Regclass` (leaf `regclass`) is new; PostgreSQL to PostgreSQL passes it through, and SQLite, MySQL and MariaDB refuse with the leaf `cast.to_regclass` (no catalog to resolve a relation name against). `to_regclass()` stays refused as before.
+
 ## 0.25.0 - 2026-10-22
 
 - **Breaking:** `TableRef::Subquery` gained a `lateral: bool` field; code that builds or exhaustively matches it must be updated.

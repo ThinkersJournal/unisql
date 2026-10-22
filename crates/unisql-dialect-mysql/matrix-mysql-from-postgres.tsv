@@ -14,6 +14,7 @@ construct	cast.to_double	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong
 construct	cast.to_double.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast	allowance=lenient_cast	postgres
 construct	cast.to_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_integer.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
+construct	cast.to_regclass	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_cast_regclass	CAST to Regclass has no MySQL equivalent that preserves meaning	postgres
 construct	cast.to_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	diverges from the strict contract unless accepted: allowance=lenient_cast	postgres
 construct	cast.to_text.lenient_cast	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::cast_int_text	allowance=lenient_cast	postgres
 construct	cast.to_uuid	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_cast_uuid	CAST to Uuid has no MySQL equivalent that preserves meaning	postgres

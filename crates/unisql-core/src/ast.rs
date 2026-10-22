@@ -519,6 +519,8 @@ pub enum SqlType {
         with_tz: bool,
     },
     Uuid,
+    /// PostgreSQL `regclass`: a relation looked up in the catalog by name.
+    Regclass,
     Bytes,
     Json,
     Jsonb,
@@ -541,6 +543,7 @@ impl SqlType {
             SqlType::Timestamp { with_tz: false } => "timestamp",
             SqlType::Timestamp { with_tz: true } => "timestamptz",
             SqlType::Uuid => "uuid",
+            SqlType::Regclass => "regclass",
             SqlType::Bytes => "bytes",
             SqlType::Json => "json",
             SqlType::Jsonb => "jsonb",
