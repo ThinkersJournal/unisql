@@ -184,7 +184,7 @@ PASS schema_bytewise_collation_is_accepted same
 PASS schema_locale_collation_needs_its_allowance refused without allowance: conditional: needs allowance `source_collation_not_bytewise`: the column's collation `en_US` compares and orders text by locale rules; the target compares bytes
 PASS schema_text_column_still_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the target's collation (BINARY by default)
 PASS no_schema_unknown_column_is_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the target's collation (BINARY by default)
-PASS refuse_extract_dow           refused `extract.dow`: SQLite: no verified mapping for EXTRACT(dow ..) yet
+PASS refuse_extract_century       refused `extract.century`: SQLite: no verified mapping for EXTRACT(century ..) yet
 PASS extract_fields               same
        -> SELECT "id", CAST(CAST(strftime('%Y', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%m', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%d', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%H', "at") AS INTEGER) AS INTEGER), CAST(CAST(strftime('%M', "at") AS INTEGER) AS INTEGER) FROM "fixed_ts" ORDER BY "id" NULLS LAST
 PASS extract_epoch                same
@@ -202,7 +202,8 @@ PASS epoch_of_difference          same
 PASS refuse_date_trunc_week       refused `fn:date_trunc.week`: no verified mapping for date_trunc('week', ..) on SQLite yet
 PASS gen_random_uuid_v4           360 values: all v4-shaped and distinct; control rejected
        -> SELECT CAST(lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))) AS TEXT) FROM "users"
-PASS refuse_extract_week          refused `extract.week`: SQLite: no verified mapping for EXTRACT(week ..) yet
+PASS extract_calendar_fields      same
+       -> SELECT "id", CAST(CAST(strftime('%w', "at") AS INTEGER) AS INTEGER), CAST(((CAST(strftime('%w', "at") AS INTEGER) + 6) % 7 + 1) AS INTEGER), CAST(CAST(strftime('%j', "at") AS INTEGER) AS INTEGER), CAST(((CAST(strftime('%m', "at") AS INTEGER) + 2) / 3) AS INTEGER), CAST(((CAST(strftime('%j', date("at", 'weekday 0', '-3 days')) AS INTEGER) - 1) / 7 + 1) AS INTEGER) FROM "edge_ts" ORDER BY "id" NULLS LAST
 PASS table_function_series_up     same
        -> SELECT "g" FROM (WITH RECURSIVE "g" ("g") AS (SELECT 1 UNION ALL SELECT "g" + (1) FROM "g"              WHERE "g" < 5) SELECT "g" FROM "g" WHERE "g" <= 5) AS "g" ORDER BY "g" NULLS LAST
 PASS table_function_series_down_step same
@@ -320,7 +321,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 134 passing translated cases:
+MATRIX (construct, tier) from 135 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -334,11 +335,16 @@ MATRIX (construct, tier) from 134 passing translated cases:
   division                     conditional
   division_integer             exact
   extract.day                  conditional
+  extract.dow                  conditional
+  extract.doy                  conditional
   extract.epoch                conditional
   extract.epoch.interval       conditional
   extract.hour                 conditional
+  extract.isodow               conditional
   extract.minute               conditional
   extract.month                conditional
+  extract.quarter              conditional
+  extract.week                 conditional
   extract.year                 conditional
   filter_clause                exact
   fn:avg                       exact

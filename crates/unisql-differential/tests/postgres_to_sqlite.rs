@@ -20,6 +20,8 @@ CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE docs (id integer PRIMARY KEY, data jsonb);
 CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
+CREATE TABLE edge_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
+INSERT INTO edge_ts VALUES (1, '2020-12-31 08:30:00+00'), (2, '2021-01-01 08:30:00+00'), (3, '2021-01-04 08:30:00+00'), (4, '2018-12-31 08:30:00+00'), (5, '2016-01-03 08:30:00+00'), (6, '2024-12-30 08:30:00+00'), (7, '2027-01-01 08:30:00+00'), (8, '2019-06-30 08:30:00+00');
 INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30+00'), (2, '1999-12-31 23:59:59+00'), (3, '2024-02-29 00:00:00+00');
 INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"}}'),(2,'{"a":null,"n":7}');
 INSERT INTO events VALUES (1, now() - interval '10 seconds'),(2, now() - interval '120 seconds'),(3, now() - interval '3600 seconds');
@@ -43,6 +45,8 @@ CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE docs (id integer PRIMARY KEY, data text);
 CREATE TABLE events (id integer PRIMARY KEY, at text NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at text NOT NULL);
+CREATE TABLE edge_ts (id integer PRIMARY KEY, at text NOT NULL);
+INSERT INTO edge_ts VALUES (1, '2020-12-31 08:30:00'), (2, '2021-01-01 08:30:00'), (3, '2021-01-04 08:30:00'), (4, '2018-12-31 08:30:00'), (5, '2016-01-03 08:30:00'), (6, '2024-12-30 08:30:00'), (7, '2027-01-01 08:30:00'), (8, '2019-06-30 08:30:00');
 INSERT INTO fixed_ts VALUES (1, '2020-06-15 13:45:30'), (2, '1999-12-31 23:59:59'), (3, '2024-02-29 00:00:00');
 INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"}}'),(2,'{"a":null,"n":7}');
 INSERT INTO events VALUES (1, datetime('now','-10 seconds')),(2, datetime('now','-120 seconds')),(3, datetime('now','-3600 seconds'));
@@ -730,11 +734,11 @@ fn cases() -> Vec<Case> {
         // ---- forms only PostgreSQL has: each refused by leaf elsewhere, round-tripped on PostgreSQL
         exp(
             c(
-                "refuse_extract_dow",
-                "SELECT EXTRACT(DOW FROM now())",
+                "refuse_extract_century",
+                "SELECT EXTRACT(CENTURY FROM now())",
                 &[A::NowAsText],
             ),
-            Expect::Refused("extract.dow"),
+            Expect::Refused("extract.century"),
         ),
         // ---- verified mappings (fixed timestamps; fields compared with PostgreSQL's on the engine)
         ord(c(
@@ -803,14 +807,11 @@ fn cases() -> Vec<Case> {
             ),
             Expect::RandomUuidV4,
         ),
-        exp(
-            c(
-                "refuse_extract_week",
-                "SELECT EXTRACT(WEEK FROM now())",
-                &[A::NowAsText],
-            ),
-            Expect::Refused("extract.week"),
-        ),
+        ord(c(
+            "extract_calendar_fields",
+            "SELECT id, CAST(EXTRACT(DOW FROM at) AS INTEGER), CAST(EXTRACT(ISODOW FROM at) AS INTEGER), CAST(EXTRACT(DOY FROM at) AS INTEGER), CAST(EXTRACT(QUARTER FROM at) AS INTEGER), CAST(EXTRACT(WEEK FROM at) AS INTEGER) FROM edge_ts ORDER BY id",
+            &[A::LenientCast, A::TimestampAsText, A::TextCollation],
+        )),
         ord(c(
             "table_function_series_up",
             "SELECT g FROM generate_series(1, 5) AS g ORDER BY g",

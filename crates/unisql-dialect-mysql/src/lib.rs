@@ -553,6 +553,17 @@ impl Target for Mysql {
                 ctx.note(leaf, Tier::Exact, "", None)?;
                 Ok(format!("EXTRACT({} FROM {expr})", field.to_uppercase()))
             }
+            // DAYOFWEEK is 1 = Sunday, WEEKDAY is 0 = Monday; WEEK(x, 3) is the ISO 8601 week.
+            "dow" | "isodow" | "doy" | "quarter" | "week" => {
+                ctx.note(leaf, Tier::Exact, "", None)?;
+                Ok(match field {
+                    "dow" => format!("(DAYOFWEEK({expr}) - 1)"),
+                    "isodow" => format!("(WEEKDAY({expr}) + 1)"),
+                    "doy" => format!("DAYOFYEAR({expr})"),
+                    "quarter" => format!("QUARTER({expr})"),
+                    _ => format!("WEEK({expr}, 3)"),
+                })
+            }
             "epoch" if !interval => {
                 ctx.note(
                     leaf,

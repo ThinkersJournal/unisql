@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=144
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=145
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -226,11 +226,13 @@ PASS schema_numeric_column_needs_no_allowance same
        -> SELECT `id` FROM `users` WHERE (`age` > ?) AND (`age` BETWEEN 20 AND 60)
 PASS schema_text_column_still_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
 PASS no_schema_unknown_column_is_conditional refused without allowance: conditional: needs allowance `text_collation`: text comparison follows the column collation (case-insensitive by default in MySQL)
-PASS refuse_extract_dow           refused `extract.dow`: MySQL/MariaDB: no verified mapping for EXTRACT(dow ..) yet
+PASS refuse_extract_century       refused `extract.century`: MySQL/MariaDB: no verified mapping for EXTRACT(century ..) yet
 PASS refuse_array_literal         refused `array_literal`: MySQL/MariaDB has no array type
 PASS refuse_current_user          refused `fn:current_user`: no verified mapping for this function on MySQL/MariaDB yet
 PASS extract_fields               same
        -> SELECT `id`, CAST(EXTRACT(YEAR FROM `at`) AS SIGNED), CAST(EXTRACT(MONTH FROM `at`) AS SIGNED), CAST(EXTRACT(DAY FROM `at`) AS SIGNED), CAST(EXTRACT(HOUR FROM `at`) AS SIGNED), CAST(EXTRACT(MINUTE FROM `at`) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
+PASS extract_calendar_fields      same
+       -> SELECT `id`, CAST((DAYOFWEEK(`at`) - 1) AS SIGNED), CAST((WEEKDAY(`at`) + 1) AS SIGNED), CAST(DAYOFYEAR(`at`) AS SIGNED), CAST(QUARTER(`at`) AS SIGNED), CAST(WEEK(`at`, 3) AS SIGNED) FROM `edge_ts` ORDER BY (`id` IS NULL), `id`
 PASS extract_epoch                same
        -> SELECT `id`, CAST(UNIX_TIMESTAMP(`at`) AS SIGNED) FROM `fixed_ts` ORDER BY (`id` IS NULL), `id`
 PASS to_timestamp_epoch           same
@@ -259,7 +261,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 114 passing translated cases:
+MATRIX (construct, tier) from 115 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -273,12 +275,17 @@ MATRIX (construct, tier) from 114 passing translated cases:
   division                     conditional
   division_integer             conditional
   extract.day                  exact
+  extract.dow                  exact
+  extract.doy                  exact
   extract.epoch                conditional
   extract.epoch                exact
   extract.epoch.interval       exact
   extract.hour                 exact
+  extract.isodow               exact
   extract.minute               exact
   extract.month                exact
+  extract.quarter              exact
+  extract.week                 exact
   extract.year                 exact
   fn:avg                       exact
   fn:btrim                     emulated

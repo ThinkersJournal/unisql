@@ -26,14 +26,19 @@ construct	division	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	su
 construct	division.division_by_zero_is_null	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=division_by_zero_is_null	postgres
 construct	division_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	diverges from the strict contract unless accepted: allowance=integer_division_assumed	postgres
 construct	division_integer.integer_division_assumed	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::int_division	allowance=integer_division_assumed	postgres
+construct	extract.century	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_extract_century	MySQL/MariaDB: no verified mapping for EXTRACT(century ..) yet	postgres
 construct	extract.day	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
-construct	extract.dow	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_extract_dow	MySQL/MariaDB: no verified mapping for EXTRACT(dow ..) yet	postgres
+construct	extract.dow	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_calendar_fields		postgres
+construct	extract.doy	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_calendar_fields		postgres
 construct	extract.epoch	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields	diverges from the strict contract unless accepted: allowance=epoch_whole_seconds	postgres
 construct	extract.epoch.epoch_whole_seconds	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields	allowance=epoch_whole_seconds	postgres
 construct	extract.epoch.interval	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::epoch_of_difference		postgres
 construct	extract.hour	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	extract.isodow	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_calendar_fields		postgres
 construct	extract.minute	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	extract.month	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	extract.quarter	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_calendar_fields		postgres
+construct	extract.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_calendar_fields		postgres
 construct	extract.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::extract_fields		postgres
 construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres

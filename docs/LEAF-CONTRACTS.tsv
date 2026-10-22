@@ -31,9 +31,13 @@ cast.to_regclass	CAST to regclass resolves a relation name in the PostgreSQL cat
 cast.to_uuid	CAST to a UUID yields a value of a UUID type that validates its input. Refused by every target that has no such type.
 array_literal	ARRAY[a, b, ...] is an array of the elements in order. Refused where there is no array type.
 extract.day	EXTRACT(DAY FROM x) is the day of the month of x.
-extract.dow	EXTRACT(DOW FROM x) is the day of the week of x, 0 = Sunday. Refused where no mapping is verified.
-extract.week	EXTRACT(WEEK FROM x) is the ISO 8601 week number of x. Refused where no mapping is verified.
+extract.dow	EXTRACT(DOW FROM x) is the day of the week of x, 0 = Sunday.
+extract.week	EXTRACT(WEEK FROM x) is the ISO 8601 week number of x (1-53).
 extract.epoch.interval	EXTRACT(EPOCH FROM a - b) is the number of seconds between the timestamps b and a (a - b).
+extract.isodow	EXTRACT(ISODOW FROM x) is the ISO day of the week of x, 1 = Monday to 7 = Sunday.
+extract.doy	EXTRACT(DOY FROM x) is the day of the year of x (1-366).
+extract.quarter	EXTRACT(QUARTER FROM x) is the quarter (1-4) of x.
+extract.century	EXTRACT(CENTURY FROM x) is the century of x. Refused where no mapping is verified.
 extract.hour	EXTRACT(HOUR FROM x) is the hour (0-23) of x.
 extract.minute	EXTRACT(MINUTE FROM x) is the minute (0-59) of x.
 extract.month	EXTRACT(MONTH FROM x) is the month (1-12) of x.
