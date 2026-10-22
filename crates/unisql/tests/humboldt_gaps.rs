@@ -36,3 +36,23 @@ fn lateral_is_refused_where_the_target_cannot_refer_leftwards() {
         refused(LATERAL, target, "lateral");
     }
 }
+
+const CROSS_LATERAL: &str = "SELECT s.id, t.zone_id FROM students s \
+    CROSS JOIN LATERAL (SELECT n.zone_id FROM pickup_notices n WHERE n.student_id = s.id \
+    ORDER BY n.created_at DESC LIMIT 1) t";
+
+#[test]
+fn cross_join_lateral_follows_the_same_per_target_answer() {
+    for target in ["postgres", "mysql"] {
+        let t = translate(CROSS_LATERAL, "postgres", target, &all())
+            .unwrap_or_else(|e| panic!("{target}: {e:?}"));
+        assert!(
+            t.sql.contains("CROSS JOIN LATERAL ("),
+            "{target}: {}",
+            t.sql
+        );
+    }
+    for target in ["sqlite", "mariadb"] {
+        refused(CROSS_LATERAL, target, "lateral");
+    }
+}
