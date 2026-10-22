@@ -2,8 +2,9 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
-## 0.24.20 - 2026-10-22
+## 0.25.0 - 2026-10-22
 
+- **Breaking:** `TableRef::Subquery` gained a `lateral: bool` field; code that builds or exhaustively matches it must be updated.
 - **`LEFT JOIN LATERAL (subquery)` is read and translated.** `TableRef::Subquery` gained a `lateral: bool` field (source-breaking for code that builds or exhaustively matches it). PostgreSQL and MySQL >= 8.0.14 keep `LATERAL` (differentially verified against PostgreSQL 16 / MySQL 8.4); MariaDB and SQLite have no equivalent and refuse with the leaf `lateral`. `CROSS JOIN LATERAL <table function>` is still not read.
 
 ## 0.24.19 - 2026-10-20
