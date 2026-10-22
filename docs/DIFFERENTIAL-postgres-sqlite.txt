@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=184
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=185
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -229,6 +229,7 @@ PASS refuse_data_modifying_cte    refused `cte.data_modifying`: SQLite has no da
 PASS refuse_for_update            refused `row_lock`: SQLite has no row-level locks (it locks the whole database)
 PASS refuse_unmapped_fn           refused `fn:md5`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_cast_uuid             refused `cast.to_uuid`: CAST to Uuid has no SQLite equivalent that preserves meaning
+PASS refuse_cast_regclass         refused `cast.to_regclass`: CAST to Regclass has no SQLite equivalent that preserves meaning
 PASS refuse_skip_locked           refused `row_lock`: SQLite has no row-level locks (it locks the whole database)
 PASS refuse_for_share             refused `row_lock.share`: SQLite has no row-level locks (it locks the whole database)
 PASS ir_json_path_op              not in IR `binary_operator`: HashArrow (JSON/array/regex/bitwise operators are not in the IR)

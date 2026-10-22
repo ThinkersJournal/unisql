@@ -672,6 +672,7 @@ pub fn pg_type_name(ty: &SqlType) -> String {
         SqlType::Timestamp { with_tz: false } => "TIMESTAMP".into(),
         SqlType::Timestamp { with_tz: true } => "TIMESTAMPTZ".into(),
         SqlType::Uuid => "UUID".into(),
+        SqlType::Regclass => "REGCLASS".into(),
         SqlType::Bytes => "BYTEA".into(),
         SqlType::Json => "JSON".into(),
         SqlType::Jsonb => "JSONB".into(),

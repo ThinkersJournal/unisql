@@ -56,3 +56,22 @@ fn cross_join_lateral_follows_the_same_per_target_answer() {
         refused(CROSS_LATERAL, target, "lateral");
     }
 }
+
+const REGCLASS: &str = "SELECT nextval('students_id_seq'::regclass), $1::regclass";
+
+#[test]
+fn regclass_cast_stays_on_postgres() {
+    let t = translate(REGCLASS, "postgres", "postgres", &all()).unwrap();
+    assert!(
+        t.sql.contains("::regclass") || t.sql.contains("REGCLASS"),
+        "{}",
+        t.sql
+    );
+}
+
+#[test]
+fn regclass_cast_is_refused_where_there_is_no_catalog() {
+    for target in ["sqlite", "mysql", "mariadb"] {
+        refused("SELECT 'students'::regclass", target, "cast.to_regclass");
+    }
+}

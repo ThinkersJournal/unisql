@@ -935,6 +935,14 @@ fn cases() -> Vec<Case> {
             ),
             Expect::Refused("cast.to_uuid"),
         ),
+        exp(
+            c(
+                "refuse_cast_regclass",
+                "SELECT CAST(name AS REGCLASS) FROM users",
+                &[A::LenientCast],
+            ),
+            Expect::Refused("cast.to_regclass"),
+        ),
         // ---- reader: not in the IR (an error, never a pass-through)
         exp(
             c(
