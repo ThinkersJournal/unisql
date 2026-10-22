@@ -85,10 +85,11 @@ construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collatio
 construct	join:inner_join	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::cte		postgres
 construct	join:left_join	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join		postgres
 construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
+construct	lateral	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join_lateral		postgres
 construct	like	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_like_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	like	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	premise=text_collation, read from config; see the known-bad row	postgres
 construct	like.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	allowance=text_collation	postgres
-construct	limit	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
+construct	limit	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join_lateral		postgres
 construct	null_ordering	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres
 construct	offset	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::limit_offset		postgres
 construct	order_by	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_order_by_text	known-bad control: the result diverged from the source engine under this config	postgres

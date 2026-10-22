@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=142
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=143
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -217,6 +217,8 @@ PASS with_insert                  refused `with.insert`: MySQL has no WITH befor
 PASS escape_string_literal        same
        -> SELECT CHAR_LENGTH('a
 b	\\') FROM `users` WHERE `id` = 1
+PASS left_join_lateral            same
+       -> SELECT `u`.`id`, `top`.`amount` FROM `users` AS `u` LEFT JOIN LATERAL (SELECT `o`.`amount` FROM `orders` AS `o` WHERE `o`.`user_id` = `u`.`id` ORDER BY (`o`.`amount` IS NULL) DESC, `o`.`amount` DESC LIMIT 1) AS `top` ON TRUE ORDER BY (`u`.`id` IS NULL), `u`.`id`
 PASS refuse_at_time_zone          refused `at_time_zone`: MySQL/MariaDB convert zones with CONVERT_TZ, which needs loaded time-zone tables and converts from the session zone, not from timestamptz to a timestamp
 PASS refuse_array_subquery        refused `array_subquery`: MySQL/MariaDB has no array type
 PASS schema_numeric_column_needs_no_allowance same
@@ -256,7 +258,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 113 passing translated cases:
+MATRIX (construct, tier) from 114 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -309,6 +311,7 @@ MATRIX (construct, tier) from 113 passing translated cases:
   interval_arithmetic          conditional
   join:inner_join              exact
   join:left_join               exact
+  lateral                      exact
   like                         conditional
   limit                        exact
   null_ordering                emulated

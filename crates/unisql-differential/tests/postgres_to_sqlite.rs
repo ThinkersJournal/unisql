@@ -1274,6 +1274,14 @@ fn cases() -> Vec<Case> {
         ),
         // ---- loud refusals named in the corpus
         exp(
+            c(
+                "refuse_left_join_lateral",
+                "SELECT u.id, top.amount FROM users u LEFT JOIN LATERAL (SELECT o.amount FROM orders o WHERE o.user_id = u.id ORDER BY o.amount DESC LIMIT 1) top ON true ORDER BY u.id",
+                &[],
+            ),
+            Expect::Refused("lateral"),
+        ),
+        exp(
             c("refuse_current_schema", "SELECT current_schema()", &[]),
             Expect::Refused("fn:current_schema"),
         ),

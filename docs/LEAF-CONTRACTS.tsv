@@ -139,6 +139,7 @@ fn:substr.start_position	SUBSTRING(s, pos[, len]) with pos >= 1 and len >= 0 is 
 offset	OFFSET n skips the first n rows of the ordered result.
 order_by	ORDER BY orders by the keys, ascending unless stated, comparing text bytewise in the C locale.
 ordered_comparison	`<`, `<=`, `>`, `>=` and BETWEEN compare two values; text compares bytewise in the C locale.
+lateral	A `LATERAL (subquery)` in FROM sees the columns of the tables to its left, and is evaluated once per row of them. Refused by every target without LATERAL.
 recursive_cte	WITH RECURSIVE evaluates the recursive term to a fixed point and returns its rows.
 returning	RETURNING returns the affected rows after the statement's changes.
 returning.update	UPDATE ... RETURNING returns the updated rows. Refused where RETURNING is not supported on UPDATE.
