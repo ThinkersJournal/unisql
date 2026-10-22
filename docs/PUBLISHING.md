@@ -1,9 +1,15 @@
-# Publishing checklist and record (0.16.3 is published; later versions follow the same path)
+# Publishing checklist and record (0.25.1 is published; later versions follow the same path)
 
 Written 2026-10-14 at origin/main 2b663a0 (0.16.0). The manifests are ready (`publish = true` on the six crates,
 `publish = false` on `unisql-differential`) and the six crates were published at 0.16.3 on 2026-10-14 from a clean archive of f95d207 (crates.io
 read back: all six at 0.16.3, `yanked = false`). This file is the list of what must
 be true first, what was checked, and what was found.
+
+**Latest release (2026-10-22): all nine published crates at 0.25.1**, from a clean archive of a99a793 with
+`cargo publish --workspace --locked`, which orders them by dependency itself. The crates.io API was read
+back for each: version 0.25.1, `yanked = false` (control: a version that was never published, 0.99.0, is 404).
+The nine are the six of the table below plus `unisql-macro-core`, `unisql-embed` and `unisql-macros`.
+The state table and the dry-run record below are the 0.16.x history and are kept as written.
 
 ## 1. State of the names (crates.io API, read-only, 2026-10-14)
 
@@ -69,7 +75,9 @@ Dependency order (each waits for the previous one to appear in the index):
 2. `unisql-sqlparser-adapter`
 3. `unisql-dialect-postgres`, `unisql-dialect-sqlite`, `unisql-dialect-mysql`
 4. `unisql`
-5. `unisql-embed`, then `unisql-macro-core` (needs `unisql`), then `unisql-macros` (needs both). `unisql-embed` and `unisql-macro-core` are published at 0.24.13; `unisql-macros` has its 0.0.0 placeholder.
+5. `unisql-embed` (no unisql dependency), `unisql-macro-core` (needs `unisql`), then `unisql-macros` (needs `unisql-macro-core`, `unisql-embed` and `unisql`).
+
+`cargo publish --workspace --locked` publishes the nine in this order by itself; the list above is what to check against.
 
 Before each: `cargo publish --dry-run -p <crate>` (it needs its dependencies already on crates.io, so
 only step 1 can be dry-run before anything is published). After step 4: `cargo add unisql` in a scratch
