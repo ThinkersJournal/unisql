@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.4 - 2026-10-22
+
+- **`date_trunc('week' | 'quarter', ts)` is translated to SQLite, MySQL and MariaDB** (week: the Monday of the ISO week; both were refused). MySQL/MariaDB are Exact; SQLite is Conditional on `TimestampAsText`. Differentially verified against PostgreSQL 16 on year-boundary dates. Other fields (`decade`, ..) stay refused by leaf.
+
 ## 0.25.3 - 2026-10-22
 
 - **Docs only.** `docs/PUBLISHING.md` records the 0.25.1 release of all nine crates (`cargo publish --workspace --locked` orders them) and the current dependency order including `unisql-macro-core`, `unisql-embed` and `unisql-macros`.

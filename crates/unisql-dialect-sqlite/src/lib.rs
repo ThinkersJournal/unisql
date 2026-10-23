@@ -543,6 +543,8 @@ impl Target for Sqlite {
                     "day" => "%Y-%m-%d 00:00:00",
                     "hour" => "%Y-%m-%d %H:00:00",
                     "minute" => "%Y-%m-%d %H:%M:00",
+                    // The Monday of the ISO week, then the day cut; the first month of the quarter.
+                    "week" | "quarter" => "",
                     _ => {
                         return Err(ctx.refuse(
                             &format!("fn:date_trunc.{field}"),
@@ -559,7 +561,16 @@ impl Target for Sqlite {
                     "strftime cuts the timestamp text; the result is text",
                     Some(Allowance::TimestampAsText),
                 )?;
-                Ok(format!("strftime('{fmt}', {})", args[1]))
+                let ts = &args[1];
+                Ok(match field.as_str() {
+                    "week" => format!(
+                        "strftime('%Y-%m-%d 00:00:00', {ts}, '-' || ((CAST(strftime('%w', {ts}) AS INTEGER) + 6) % 7) || ' days')"
+                    ),
+                    "quarter" => format!(
+                        "(strftime('%Y-', {ts}) || printf('%02d', (CAST(strftime('%m', {ts}) AS INTEGER) + 2) / 3 * 3 - 2) || '-01 00:00:00')"
+                    ),
+                    _ => format!("strftime('{fmt}', {ts})"),
+                })
             }
             // Same construction as on MySQL, from randomblob(): verified over 2000 values.
             "gen_random_uuid" => {

@@ -66,7 +66,9 @@ fn:date_trunc.day	date_trunc('day', ts) is ts cut to the start of its day.
 fn:date_trunc.hour	date_trunc('hour', ts) is ts cut to the start of its hour.
 fn:date_trunc.minute	date_trunc('minute', ts) is ts cut to the start of its minute.
 fn:date_trunc.month	date_trunc('month', ts) is ts cut to the start of its month.
-fn:date_trunc.week	date_trunc('week', ts) is ts cut to the start of its ISO week. Refused where no mapping is verified.
+fn:date_trunc.week	date_trunc('week', ts) is ts cut to the start of its ISO week (Monday).
+fn:date_trunc.quarter	date_trunc('quarter', ts) is ts cut to the start of its quarter.
+fn:date_trunc.decade	date_trunc('decade', ts) is ts cut to the start of its decade. Refused where no mapping is verified.
 fn:date_trunc.year	date_trunc('year', ts) is ts cut to the start of its year.
 fn:gen_random_uuid	gen_random_uuid() is a random version-4 UUID in lower-case text form (8-4-4-4-12, version nibble 4, variant 8/9/a/b); two calls give different values.
 fn:coalesce	coalesce(a, b, ...) returns the first non-NULL argument.

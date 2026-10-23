@@ -51,10 +51,12 @@ construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=nati
 construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
 construct	fn:current_user	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_current_user	no verified mapping for this function on MySQL/MariaDB yet	postgres
 construct	fn:date_trunc.day	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
+construct	fn:date_trunc.decade	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_date_trunc_decade	no verified mapping for date_trunc('decade', ..) on MySQL/MariaDB yet	postgres
 construct	fn:date_trunc.hour	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	fn:date_trunc.minute	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	fn:date_trunc.month	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
-construct	fn:date_trunc.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_date_trunc_week	no verified mapping for date_trunc('week', ..) on MySQL/MariaDB yet	postgres
+construct	fn:date_trunc.quarter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
+construct	fn:date_trunc.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	fn:floor	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::ceil_floor		postgres
 construct	fn:gen_random_uuid	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::gen_random_uuid_v4		postgres

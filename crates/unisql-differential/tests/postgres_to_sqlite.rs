@@ -791,13 +791,23 @@ fn cases() -> Vec<Case> {
             "SELECT a.id, b.id, CAST(EXTRACT(EPOCH FROM (a.at - b.at)) AS BIGINT) FROM fixed_ts a JOIN fixed_ts b ON a.id < b.id ORDER BY a.id, b.id",
             &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
         )),
+        ord(c(
+            "date_trunc_week_quarter",
+            "SELECT id, CAST(EXTRACT(EPOCH FROM date_trunc('week', at)) AS BIGINT), CAST(EXTRACT(EPOCH FROM date_trunc('quarter', at)) AS BIGINT) FROM edge_ts ORDER BY id",
+            &[
+                A::LenientCast,
+                A::TimestampAsText,
+                A::EpochWholeSeconds,
+                A::TextCollation,
+            ],
+        )),
         exp(
             c(
-                "refuse_date_trunc_week",
-                "SELECT date_trunc('week', now())",
+                "refuse_date_trunc_decade",
+                "SELECT date_trunc('decade', now())",
                 &[A::NowAsText],
             ),
-            Expect::Refused("fn:date_trunc.week"),
+            Expect::Refused("fn:date_trunc.decade"),
         ),
         exp(
             c(
