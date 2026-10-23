@@ -532,6 +532,27 @@ impl Target for Sqlite {
                 )?;
                 Ok(format!("datetime({}, 'unixepoch')", args[0]))
             }
+            // to_char(ts, 'YYYY-MM-DD HH24:MI:SS' and the like): strftime with the same pieces.
+            "to_char"
+                if unisql_core::target::to_char_format(f, ["%Y", "%m", "%d", "%H", "%M", "%S"])
+                    .is_some() =>
+            {
+                let fmt =
+                    unisql_core::target::to_char_format(f, ["%Y", "%m", "%d", "%H", "%M", "%S"])
+                        .unwrap_or_default();
+                ctx.note(
+                    "fn:to_char",
+                    Tier::Conditional,
+                    "strftime formats the timestamp text; the result is text",
+                    Some(Allowance::TimestampAsText),
+                )?;
+                Ok(format!("strftime('{fmt}', {})", args[0]))
+            }
+            "to_char" => Err(ctx.refuse(
+                "fn:to_char.format",
+                "to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped",
+                &["format in the application"],
+            )),
             // date_trunc('<field>', ts): the timestamp text cut at the field.
             "date_trunc"
                 if args.len() == 2 && unisql_core::target::date_trunc_field(f).is_some() =>

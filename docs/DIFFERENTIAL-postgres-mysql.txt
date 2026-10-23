@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=148
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=150
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -243,6 +243,9 @@ PASS epoch_ms_of_clock            same
        -> SELECT (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) > 1700000000000) AND (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) < 4102444800000)
 PASS epoch_of_difference          same
        -> SELECT `a`.`id`, `b`.`id`, CAST((TIMESTAMPDIFF(MICROSECOND, `b`.`at`, `a`.`at`) / 1000000) AS SIGNED) FROM `fixed_ts` AS `a` INNER JOIN `fixed_ts` AS `b` ON `a`.`id` < `b`.`id` ORDER BY (`a`.`id` IS NULL), `a`.`id`, (`b`.`id` IS NULL), `b`.`id`
+PASS to_char_fields               same
+       -> SELECT `id`, DATE_FORMAT(`at`, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(`at`, '%d/%m/%Y'), DATE_FORMAT(`at`, '%H:%i') FROM `edge_ts` ORDER BY (`id` IS NULL), `id`
+PASS refuse_to_char_day_name      refused `fn:to_char.format`: to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped
 PASS date_part_fields             same
        -> SELECT `id`, CAST(EXTRACT(YEAR FROM `at`) AS SIGNED), CAST((DAYOFWEEK(`at`) - 1) AS SIGNED), CAST(DAYOFYEAR(`at`) AS SIGNED), CAST(WEEK(`at`, 3) AS SIGNED) FROM `edge_ts` ORDER BY (`id` IS NULL), `id`
 PASS refuse_date_part_dynamic     refused `fn:date_part`: no verified mapping for this function on MySQL/MariaDB yet
@@ -266,7 +269,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 117 passing translated cases:
+MATRIX (construct, tier) from 118 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -321,6 +324,7 @@ MATRIX (construct, tier) from 117 passing translated cases:
   fn:string_agg.order_by       exact
   fn:strpos                    conditional
   fn:sum                       exact
+  fn:to_char                   exact
   fn:to_timestamp              exact
   ilike                        conditional
   interval_arithmetic          conditional
