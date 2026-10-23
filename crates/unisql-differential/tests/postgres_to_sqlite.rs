@@ -792,6 +792,19 @@ fn cases() -> Vec<Case> {
             &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
         )),
         ord(c(
+            "to_char_fields",
+            "SELECT id, to_char(at, 'YYYY-MM-DD HH24:MI:SS'), to_char(at, 'DD/MM/YYYY'), to_char(at, 'HH24:MI') FROM edge_ts ORDER BY id",
+            &[A::TimestampAsText, A::TextCollation],
+        )),
+        exp(
+            c(
+                "refuse_to_char_day_name",
+                "SELECT to_char(now(), 'Day')",
+                &[A::NowAsText],
+            ),
+            Expect::Refused("fn:to_char.format"),
+        ),
+        ord(c(
             "date_part_fields",
             "SELECT id, CAST(date_part('year', at) AS INTEGER), CAST(date_part('dow', at) AS INTEGER), CAST(date_part('doy', at) AS INTEGER), CAST(date_part('week', at) AS INTEGER) FROM edge_ts ORDER BY id",
             &[A::LenientCast, A::TimestampAsText, A::TextCollation],

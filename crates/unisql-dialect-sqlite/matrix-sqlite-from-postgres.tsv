@@ -112,6 +112,9 @@ construct	fn:string_agg.order_by	sqlite	3.53.2	schema=none	yes		tier=native;suit
 construct	fn:strpos	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::strpos_position		postgres
 construct	fn:sum	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::aggregates		postgres
 construct	fn:sum.order_by	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
+construct	fn:to_char	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::to_char_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	fn:to_char.format	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_to_char_day_name	to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped	postgres
+construct	fn:to_char.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::to_char_fields	allowance=timestamp_as_text	postgres
 construct	fn:to_regclass	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_to_regclass	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:to_timestamp	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::to_timestamp_epoch	diverges from the strict contract unless accepted: allowance=timestamp_as_text,timestamp_whole_seconds	postgres
 construct	fn:to_timestamp.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::to_timestamp_epoch	allowance=timestamp_as_text	postgres

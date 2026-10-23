@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.6 - 2026-10-23
+
+- **`to_char(ts, fmt)` is translated to SQLite, MySQL and MariaDB for a literal format made of `YYYY`, `MM`, `DD`, `HH24`, `MI`, `SS` and the separators `- / : . ,` and space** (`DATE_FORMAT` on MySQL/MariaDB, Exact; `strftime` on SQLite, Conditional on `TimestampAsText`). Differentially verified against PostgreSQL 16. Any other format (`Day`, `Mon`, `FM..`, `AM`, numeric formats) stays refused with the leaf `fn:to_char.format`.
+
 ## 0.25.5 - 2026-10-23
 
 - **PostgreSQL `date_part('field', x)` with a literal field is read as `EXTRACT(field FROM x)`** and so translates wherever that does (year, month, day, hour, minute, epoch, dow, isodow, doy, quarter, week). The value is the same; PostgreSQL's `EXTRACT` returns numeric where `date_part` returns double precision. A field that is not a literal stays the function and is refused with the leaf `fn:date_part`.

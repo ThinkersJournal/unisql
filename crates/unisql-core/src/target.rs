@@ -716,6 +716,43 @@ pub fn date_trunc_field(f: &Function) -> Option<String> {
     }
 }
 
+/// `to_char(ts, '<format>')` with a literal format made only of `YYYY`, `MM`, `DD`, `HH24`, `MI`,
+/// `SS` and the separators `- / : . ,` and space: the format in the target's own specifiers
+/// (`[year, month, day, hour, minute, second]`). `None` for any other format, which has no verified
+/// mapping.
+pub fn to_char_format(f: &Function, spec: [&str; 6]) -> Option<String> {
+    if f.name != "to_char" || f.args.len() != 2 {
+        return None;
+    }
+    let Some(FunctionArg::Expr(Expr::Literal(Literal::String(fmt)))) = f.args.get(1) else {
+        return None;
+    };
+    let mut out = String::new();
+    let mut rest = fmt.as_str();
+    while !rest.is_empty() {
+        let tokens = [
+            ("YYYY", spec[0]),
+            ("MM", spec[1]),
+            ("DD", spec[2]),
+            ("HH24", spec[3]),
+            ("MI", spec[4]),
+            ("SS", spec[5]),
+        ];
+        if let Some((tok, s)) = tokens.iter().find(|(t, _)| rest.starts_with(t)) {
+            out.push_str(s);
+            rest = &rest[tok.len()..];
+        } else {
+            let c = rest.chars().next()?;
+            if !matches!(c, '-' | '/' | ':' | '.' | ',' | ' ') {
+                return None;
+            }
+            out.push(c);
+            rest = &rest[1..];
+        }
+    }
+    Some(out)
+}
+
 /// The leaf of `EXTRACT(field FROM x)`: `extract.<field>`, and `extract.epoch.interval` when the operand
 /// is a difference of timestamps (an interval), which is not the epoch of a timestamp.
 pub fn extract_leaf(field: &str, interval: bool) -> String {

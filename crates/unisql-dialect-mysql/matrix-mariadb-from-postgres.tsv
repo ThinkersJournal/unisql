@@ -85,6 +85,8 @@ construct	fn:strpos.text_collation	mariadb	11.4.13	collation=utf8mb4_bin;schema=
 construct	fn:substr	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_substr	start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')	postgres
 construct	fn:sum	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
 construct	fn:sum.order_by	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
+construct	fn:to_char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::to_char_fields		postgres
+construct	fn:to_char.format	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_to_char_day_name	to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped	postgres
 construct	fn:to_timestamp	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::to_timestamp_epoch		postgres
 construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=ascii_only_case_folding	postgres

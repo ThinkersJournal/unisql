@@ -108,6 +108,8 @@ fn:string_agg.order_by	string_agg(x, sep ORDER BY k) concatenates in the order g
 fn:substr	substr(s, start[, len]) is the substring from the 1-based start. Refused where start positions before 1 behave differently.
 fn:sum	sum(x) over non-NULL inputs gives the source's total and NULL over no rows.
 fn:sum.order_by	sum(x ORDER BY k): an aggregate with an ORDER BY clause. Refused by every target that cannot honour the ordering inside the aggregate.
+fn:to_char	to_char(ts, fmt) formats a timestamp as text. Translated for a literal fmt made of YYYY, MM, DD, HH24, MI, SS and the separators - / : . , and space
+fn:to_char.format	to_char(ts, fmt) with a format outside that set (a day or month name, FM, AM, a numeric format) or a non-literal format. Refused: no verified mapping.
 fn:to_regclass	to_regclass(name) resolves a relation name in the catalog. Refused where there is no such catalog.
 fn:typeof	typeof(x) names the storage class of x. Refused: no verified mapping.
 fn:to_timestamp	to_timestamp(seconds) is the timestamp that many seconds after 1970-01-01 00:00:00 UTC.
