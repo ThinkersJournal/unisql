@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=185
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> sqlite 3.53.2; cases=186
 PASS select_param                 same
        -> SELECT "id", "name" FROM "users" WHERE "id" = ?1
 PASS select_equals_text           same
@@ -199,7 +199,9 @@ PASS cast_to_timestamp            same
        -> SELECT "id", CAST(CAST(strftime('%s', CAST("at" AS TEXT)) AS INTEGER) AS INTEGER) FROM "fixed_ts" ORDER BY "id" NULLS LAST
 PASS epoch_of_difference          same
        -> SELECT "a"."id", "b"."id", CAST((CAST(strftime('%s', "a"."at") AS INTEGER) - CAST(strftime('%s', "b"."at") AS INTEGER)) AS INTEGER) FROM "fixed_ts" AS "a" INNER JOIN "fixed_ts" AS "b" ON "a"."id" < "b"."id" ORDER BY "a"."id" NULLS LAST, "b"."id" NULLS LAST
-PASS refuse_date_trunc_week       refused `fn:date_trunc.week`: no verified mapping for date_trunc('week', ..) on SQLite yet
+PASS date_trunc_week_quarter      same
+       -> SELECT "id", CAST(CAST(strftime('%s', strftime('%Y-%m-%d 00:00:00', "at", '-' || ((CAST(strftime('%w', "at") AS INTEGER) + 6) % 7) || ' days')) AS INTEGER) AS INTEGER), CAST(CAST(strftime('%s', (strftime('%Y-', "at") || printf('%02d', (CAST(strftime('%m', "at") AS INTEGER) + 2) / 3 * 3 - 2) || '-01 00:00:00')) AS INTEGER) AS INTEGER) FROM "edge_ts" ORDER BY "id" NULLS LAST
+PASS refuse_date_trunc_decade     refused `fn:date_trunc.decade`: no verified mapping for date_trunc('decade', ..) on SQLite yet
 PASS gen_random_uuid_v4           360 values: all v4-shaped and distinct; control rejected
        -> SELECT CAST(lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6))) AS TEXT) FROM "users"
 PASS extract_calendar_fields      same
@@ -321,7 +323,7 @@ PASS refuse_to_regclass           refused `fn:to_regclass`: PostgreSQL catalog/s
 PASS refuse_sha256                refused `fn:convert_to`: SQLite has no built-in hashing/encoding functions; the result would depend on a host-registered function or extension, which UniSQL cannot assume
 PASS refuse_regexp_replace        refused `fn:regexp_replace`: no built-in regular-expression or split function in SQLite
 
-MATRIX (construct, tier) from 135 passing translated cases:
+MATRIX (construct, tier) from 136 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -357,6 +359,8 @@ MATRIX (construct, tier) from 135 passing translated cases:
   fn:date_trunc.hour           conditional
   fn:date_trunc.minute         conditional
   fn:date_trunc.month          conditional
+  fn:date_trunc.quarter        conditional
+  fn:date_trunc.week           conditional
   fn:date_trunc.year           conditional
   fn:gen_random_uuid           emulated
   fn:lag                       exact

@@ -262,6 +262,8 @@ impl Target for Mysql {
                     "day" => "%Y-%m-%d 00:00:00",
                     "hour" => "%Y-%m-%d %H:00:00",
                     "minute" => "%Y-%m-%d %H:%i:00",
+                    // The Monday of the ISO week, then the day cut; the first month of the quarter.
+                    "week" | "quarter" => "",
                     _ => {
                         return Err(ctx.refuse(
                             &format!("fn:date_trunc.{field}"),
@@ -276,7 +278,16 @@ impl Target for Mysql {
                     "DATE_FORMAT then CAST AS DATETIME",
                     None,
                 )?;
-                Ok(format!("CAST(DATE_FORMAT({}, '{fmt}') AS DATETIME)", args[1]))
+                let ts = &args[1];
+                Ok(match field.as_str() {
+                    "week" => format!(
+                        "CAST(DATE_FORMAT(DATE_SUB({ts}, INTERVAL WEEKDAY({ts}) DAY), '%Y-%m-%d 00:00:00') AS DATETIME)"
+                    ),
+                    "quarter" => format!(
+                        "CAST(CONCAT(YEAR({ts}), '-', LPAD(QUARTER({ts}) * 3 - 2, 2, '0'), '-01 00:00:00') AS DATETIME)"
+                    ),
+                    _ => format!("CAST(DATE_FORMAT({ts}, '{fmt}') AS DATETIME)"),
+                })
             }
             // A MySQL/MariaDB source's own date/time functions are the identity.
             "utc_timestamp" | "utc_date" | "datediff" | "date" | "concat_ws" | "left" | "right"
