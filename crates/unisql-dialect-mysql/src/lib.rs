@@ -253,6 +253,13 @@ impl Target for Mysql {
                 ctx.note("fn:to_timestamp", Tier::Exact, "FROM_UNIXTIME", None)?;
                 Ok(format!("FROM_UNIXTIME({})", args[0]))
             }
+            // age(a, b) is an interval of years, months and days (calendar-relative); the target has
+            // no interval type to hold it, and the month-end rules differ.
+            "age" => Err(ctx.refuse(
+                "fn:age",
+                "age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value",
+                &["compute the difference in the application, or use EXTRACT(EPOCH FROM a - b)"],
+            )),
             // to_char(ts, 'YYYY-MM-DD HH24:MI:SS' and the like): DATE_FORMAT with the same pieces.
             "to_char" if unisql_core::target::to_char_format(f, ["%Y", "%m", "%d", "%H", "%i", "%s"]).is_some() => {
                 let fmt = unisql_core::target::to_char_format(f, ["%Y", "%m", "%d", "%H", "%i", "%s"])

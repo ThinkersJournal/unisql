@@ -56,6 +56,7 @@ construct	extract.week.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=con
 construct	extract.year	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
 construct	extract.year.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	allowance=timestamp_as_text	postgres
 construct	filter_clause	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
+construct	fn:age	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_age	age() returns a calendar interval (years, months, days); SQLite has no interval value	postgres
 construct	fn:avg	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast		postgres
 construct	fn:btrim	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::btrim_forms		postgres
 construct	fn:ceil	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_ceil	SQLite's ceil/floor exist only when it is built with its math functions	postgres

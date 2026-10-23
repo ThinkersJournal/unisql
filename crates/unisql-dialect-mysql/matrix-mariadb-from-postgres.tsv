@@ -41,6 +41,7 @@ construct	extract.quarter	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes	
 construct	extract.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_part_fields		postgres
 construct	extract.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_part_fields		postgres
 construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
+construct	fn:age	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_age	age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value	postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
 construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::btrim_default		postgres
 construct	fn:ceil	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres

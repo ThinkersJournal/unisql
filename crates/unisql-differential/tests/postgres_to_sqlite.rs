@@ -791,6 +791,10 @@ fn cases() -> Vec<Case> {
             "SELECT a.id, b.id, CAST(EXTRACT(EPOCH FROM (a.at - b.at)) AS BIGINT) FROM fixed_ts a JOIN fixed_ts b ON a.id < b.id ORDER BY a.id, b.id",
             &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
         )),
+        exp(
+            c("refuse_age", "SELECT age(now(), now())", &[A::NowAsText]),
+            Expect::Refused("fn:age"),
+        ),
         ord(c(
             "to_char_fields",
             "SELECT id, to_char(at, 'YYYY-MM-DD HH24:MI:SS'), to_char(at, 'DD/MM/YYYY'), to_char(at, 'HH24:MI') FROM edge_ts ORDER BY id",

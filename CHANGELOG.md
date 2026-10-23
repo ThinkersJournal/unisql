@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.7 - 2026-10-23
+
+- **`age(a, b)` is refused with a reason** (leaf `fn:age`) on SQLite, MySQL and MariaDB: it returns a calendar interval of years, months and days, which none of them can hold, and month-end rules differ. PostgreSQL to PostgreSQL is unchanged. This closes the date/time row (`date_trunc`, `EXTRACT`, `date_part`, `to_char` are translated; `age` is a typed refusal).
+
 ## 0.25.6 - 2026-10-23
 
 - **`to_char(ts, fmt)` is translated to SQLite, MySQL and MariaDB for a literal format made of `YYYY`, `MM`, `DD`, `HH24`, `MI`, `SS` and the separators `- / : . ,` and space** (`DATE_FORMAT` on MySQL/MariaDB, Exact; `strftime` on SQLite, Conditional on `TimestampAsText`). Differentially verified against PostgreSQL 16. Any other format (`Day`, `Mon`, `FM..`, `AM`, numeric formats) stays refused with the leaf `fn:to_char.format`.
