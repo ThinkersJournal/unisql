@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.9 - 2026-10-23
+
+- **Security: `ctutils` 0.4.3 to 0.4.5 in `Cargo.lock`** (RUSTSEC-2026-0385, fixed in 0.4.4). Lockfile only; no code change.
+
 ## 0.25.8 - 2026-10-23
 
 - **SQLite `INTEGER PRIMARY KEY` is read as having a default** (it is the rowid: an `INSERT` may leave it out or give it `NULL`). Before, `schema_from_ddl(.., "sqlite")` reported it `NOT NULL` with no default, so a catalog check that "an `INSERT` leaves out a NOT NULL column" would have rejected valid SQLite statements. `BIGINT PRIMARY KEY`, `TEXT PRIMARY KEY` and PostgreSQL's `integer PRIMARY KEY` are unchanged.
