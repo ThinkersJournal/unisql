@@ -1,0 +1,5 @@
+error: column `n` of `kv` is NOT NULL, but the INSERT gives it NULL
+ --> tests/ui/fail_schema_null_not_null.rs:7:9
+  |
+7 |         "INSERT INTO kv (k, n) VALUES ($1, NULL)"
+  |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

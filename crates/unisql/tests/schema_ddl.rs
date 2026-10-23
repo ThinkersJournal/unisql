@@ -359,3 +359,24 @@ fn ordering_a_bytes_column_needs_no_text_collation() {
         );
     }
 }
+
+#[test]
+fn sqlite_integer_primary_key_is_a_rowid_alias_with_a_default() {
+    // An INSERT may leave out `id INTEGER PRIMARY KEY`: SQLite assigns the rowid, so the column has
+    // a default for the purpose of a "leaves out a NOT NULL column" check. A typed key (`BIGINT`,
+    // `TEXT`) is not an alias, and neither is the same text in PostgreSQL.
+    let ddl = "CREATE TABLE a (id INTEGER PRIMARY KEY, n TEXT NOT NULL); \
+               CREATE TABLE b (id BIGINT PRIMARY KEY); CREATE TABLE c (id TEXT PRIMARY KEY);";
+    let d = schema_from_ddl(ddl, "sqlite").unwrap();
+    let get = |t: &str| d.schema.get(&Name::simple(t), "id").unwrap().clone();
+    assert_eq!(get("a").has_default, Some(true), "INTEGER PRIMARY KEY");
+    assert_eq!(get("b").has_default, Some(false), "BIGINT PRIMARY KEY");
+    assert_eq!(get("c").has_default, Some(false), "TEXT PRIMARY KEY");
+    let pg = schema_from_ddl("CREATE TABLE a (id integer PRIMARY KEY);", "postgres").unwrap();
+    let col = pg.schema.get(&Name::simple("a"), "id").unwrap();
+    assert_eq!(
+        col.has_default,
+        Some(false),
+        "PostgreSQL has no rowid alias"
+    );
+}

@@ -150,8 +150,9 @@ pub trait Checker {
 
 /// Checks that need only names: an `INSERT` row whose width differs from its column list and a column
 /// listed twice (both from the statement alone), and, where the schema states a table's column list in
-/// full, a column the table does not have and a row of the wrong width for a statement without a list. `INSERT` and
-/// `UPDATE .. SET` only; other statements are not looked at.
+/// full, a column the table does not have and a row of the wrong width for a statement without a list.
+/// Also a literal `NULL` given (an `INSERT` that names its columns, or `UPDATE .. SET`) to a column the schema
+/// states is `NOT NULL` with no default. `INSERT` and `UPDATE .. SET` only; other statements are not looked at.
 pub struct SchemaChecker;
 
 fn catalog(message: String) -> Problem {
@@ -165,6 +166,19 @@ fn catalog(message: String) -> Problem {
 /// in another case is never reported: only a name with no match at all is.
 fn unknown_column(complete: &[&str], column: &str) -> bool {
     !complete.iter().any(|c| c.eq_ignore_ascii_case(column))
+}
+
+/// True when the schema states, for certain, that `column` of `table` is `NOT NULL` and takes no
+/// value of its own: an explicit `NULL` for it is an error. An unstated flag is no claim, and a column
+/// with a default (a serial, an auto-increment, a SQLite rowid alias) may be given `NULL` to take it.
+fn rejects_null(ctx: &CheckContext<'_>, table: &ast::Name, column: &str) -> bool {
+    ctx.schema
+        .and_then(|s| s.get(table, column))
+        .is_some_and(|c| c.nullable == Some(false) && c.has_default == Some(false))
+}
+
+fn is_null(e: &ast::Expr) -> bool {
+    matches!(e, ast::Expr::Literal(ast::Literal::Null))
 }
 
 impl Checker for SchemaChecker {
@@ -195,6 +209,18 @@ impl Checker for SchemaChecker {
                     } else {
                         Some(i.columns.len())
                     };
+                    // Only with a column list: the schema does not state the declaration order, so a
+                    // positional row cannot be matched to its columns.
+                    let order: Vec<&str> = i.columns.iter().map(String::as_str).collect();
+                    for row in rows {
+                        for (name, value) in order.iter().zip(row) {
+                            if is_null(value) && rejects_null(ctx, &i.table, name) {
+                                out.push(catalog(format!(
+                                    "column `{name}` of `{table}` is NOT NULL, but the INSERT gives it NULL"
+                                )));
+                            }
+                        }
+                    }
                     if let Some(width) = width {
                         for (n, row) in rows.iter().enumerate() {
                             if row.len() != width {
@@ -209,6 +235,15 @@ impl Checker for SchemaChecker {
                 }
             }
             ast::Statement::Update(u) => {
+                for a in &u.set {
+                    if is_null(&a.value) && rejects_null(ctx, &u.table, &a.column) {
+                        out.push(catalog(format!(
+                            "column `{}` of `{}` is NOT NULL, but the UPDATE sets it to NULL",
+                            a.column,
+                            u.table.last()
+                        )));
+                    }
+                }
                 if let Some(cols) = ctx.schema.and_then(|s| s.complete_columns(&u.table)) {
                     for a in &u.set {
                         if unknown_column(&cols, &a.column) {

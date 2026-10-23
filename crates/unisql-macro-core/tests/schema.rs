@@ -112,3 +112,48 @@ fn a_checker_of_the_callers_runs_after_syntax_and_before_translation() {
     let err = expand_with(&call("DELET FROM kv"), checkers).unwrap_err();
     assert_eq!(err[0].kind, Kind::Syntax);
 }
+
+#[test]
+fn a_literal_null_for_a_not_null_column() {
+    let m = messages(&call("INSERT INTO kv (k, v, n) VALUES ($1, $2, NULL)"));
+    assert_eq!(
+        m,
+        ["column `n` of `kv` is NOT NULL, but the INSERT gives it NULL"]
+    );
+    // a nullable column takes NULL; the twin gives the NOT NULL column a value
+    assert!(expand(&call("INSERT INTO kv (k, v, n) VALUES ($1, NULL, $2)")).is_ok());
+    // without a column list the order is not stated, so nothing is claimed
+    assert!(expand(&call("INSERT INTO kv VALUES ($1, $2, NULL)")).is_ok());
+    // every row is looked at
+    let m = messages(&call("INSERT INTO kv (k, n) VALUES ($1, $2), (NULL, $3)"));
+    assert_eq!(
+        m,
+        ["column `k` of `kv` is NOT NULL, but the INSERT gives it NULL"]
+    );
+}
+
+#[test]
+fn update_set_to_null_for_a_not_null_column() {
+    let m = messages(&call("UPDATE kv SET n = NULL WHERE k = $1"));
+    assert_eq!(
+        m,
+        ["column `n` of `kv` is NOT NULL, but the UPDATE sets it to NULL"]
+    );
+    assert!(expand(&call("UPDATE kv SET v = NULL WHERE k = $1")).is_ok());
+}
+
+#[test]
+fn a_column_that_takes_a_value_for_null_is_not_reported() {
+    // A SQLite `INTEGER PRIMARY KEY` is the rowid: NULL (or leaving it out) assigns the next one.
+    let ddl = "CREATE TABLE r (id INTEGER PRIMARY KEY, x TEXT NOT NULL);";
+    let mut input = call("INSERT INTO r (id, x) VALUES (NULL, $1)");
+    input.schema = Some(unisql::schema_from_ddl(ddl, "sqlite").unwrap().schema);
+    assert!(expand(&input).is_ok());
+    // an unknown flag is no claim: a hand-built column without nullability is never reported
+    let hand = unisql::Schema::new()
+        .with_column("h", "a", unisql::Column::text())
+        .with_column("h", "b", unisql::Column::text());
+    let mut input = call("INSERT INTO h (a, b) VALUES ($1, NULL)");
+    input.schema = Some(hand);
+    assert!(expand(&input).is_ok());
+}
