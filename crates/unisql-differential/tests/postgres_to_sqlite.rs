@@ -792,6 +792,19 @@ fn cases() -> Vec<Case> {
             &[A::LenientCast, A::EpochWholeSeconds, A::TextCollation],
         )),
         ord(c(
+            "date_part_fields",
+            "SELECT id, CAST(date_part('year', at) AS INTEGER), CAST(date_part('dow', at) AS INTEGER), CAST(date_part('doy', at) AS INTEGER), CAST(date_part('week', at) AS INTEGER) FROM edge_ts ORDER BY id",
+            &[A::LenientCast, A::TimestampAsText, A::TextCollation],
+        )),
+        exp(
+            c(
+                "refuse_date_part_dynamic",
+                "SELECT date_part(city, now()) FROM users",
+                &[A::NowAsText],
+            ),
+            Expect::Refused("fn:date_part"),
+        ),
+        ord(c(
             "date_trunc_week_quarter",
             "SELECT id, CAST(EXTRACT(EPOCH FROM date_trunc('week', at)) AS BIGINT), CAST(EXTRACT(EPOCH FROM date_trunc('quarter', at)) AS BIGINT) FROM edge_ts ORDER BY id",
             &[

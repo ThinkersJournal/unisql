@@ -868,6 +868,14 @@ fn cases(maria: bool) -> Vec<Case> {
     v.push(ord(c("date_trunc_fields", "SELECT id, CAST(EXTRACT(MINUTE FROM date_trunc('hour', at)) AS INTEGER), CAST(EXTRACT(HOUR FROM date_trunc('day', at)) AS INTEGER), CAST(EXTRACT(DAY FROM date_trunc('month', at)) AS INTEGER), CAST(EXTRACT(MONTH FROM date_trunc('year', at)) AS INTEGER), CAST(EXTRACT(EPOCH FROM date_trunc('minute', at)) AS BIGINT) FROM fixed_ts ORDER BY id")));
     v.push(c("epoch_ms_of_clock", "SELECT CAST(EXTRACT(EPOCH FROM clock_timestamp()) * 1000 AS BIGINT) > 1700000000000 AND CAST(EXTRACT(EPOCH FROM clock_timestamp()) * 1000 AS BIGINT) < 4102444800000"));
     v.push(ord(c("epoch_of_difference", "SELECT a.id, b.id, CAST(EXTRACT(EPOCH FROM (a.at - b.at)) AS BIGINT) FROM fixed_ts a JOIN fixed_ts b ON a.id < b.id ORDER BY a.id, b.id")));
+    v.push(ord(c("date_part_fields", "SELECT id, CAST(date_part('year', at) AS INTEGER), CAST(date_part('dow', at) AS INTEGER), CAST(date_part('doy', at) AS INTEGER), CAST(date_part('week', at) AS INTEGER) FROM edge_ts ORDER BY id")));
+    v.push(exp(
+        c(
+            "refuse_date_part_dynamic",
+            "SELECT date_part(city, now()) FROM users",
+        ),
+        Expect::Refused("fn:date_part"),
+    ));
     v.push(ord(c("date_trunc_week_quarter", "SELECT id, CAST(EXTRACT(EPOCH FROM date_trunc('week', at)) AS BIGINT), CAST(EXTRACT(EPOCH FROM date_trunc('quarter', at)) AS BIGINT) FROM edge_ts ORDER BY id")));
     v.push(exp(
         c(
