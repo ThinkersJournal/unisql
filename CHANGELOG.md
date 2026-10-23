@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.8 - 2026-10-23
+
+- **SQLite `INTEGER PRIMARY KEY` is read as having a default** (it is the rowid: an `INSERT` may leave it out or give it `NULL`). Before, `schema_from_ddl(.., "sqlite")` reported it `NOT NULL` with no default, so a catalog check that "an `INSERT` leaves out a NOT NULL column" would have rejected valid SQLite statements. `BIGINT PRIMARY KEY`, `TEXT PRIMARY KEY` and PostgreSQL's `integer PRIMARY KEY` are unchanged.
+- **`SchemaChecker` rejects a literal `NULL` for a column the schema states is `NOT NULL` with no default**: in `INSERT (cols) VALUES (.., NULL, ..)` (every row) and `UPDATE .. SET col = NULL`. A compile error in `sql!` (`Kind::Catalog`). Only when certain: an unstated flag, a column with a default, and a positional `INSERT` (the schema does not state declaration order) are not reported.
+
 ## 0.25.7 - 2026-10-23
 
 - **`age(a, b)` is refused with a reason** (leaf `fn:age`) on SQLite, MySQL and MariaDB: it returns a calendar interval of years, months and days, which none of them can hold, and month-end rules differ. PostgreSQL to PostgreSQL is unchanged. This closes the date/time row (`date_trunc`, `EXTRACT`, `date_part`, `to_char` are translated; `age` is a typed refusal).

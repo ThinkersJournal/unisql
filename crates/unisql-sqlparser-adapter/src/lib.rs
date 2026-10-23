@@ -308,6 +308,17 @@ fn column_from_def(c: &sp::ColumnDef) -> Column {
             _ => {}
         }
     }
+    // SQLite: a column declared exactly `INTEGER PRIMARY KEY` is the rowid, and an INSERT that leaves
+    // it out (or gives it NULL) gets the next rowid. For "does this column need a value" it has a
+    // default; `BIGINT PRIMARY KEY` and the same text elsewhere do not.
+    if rules().name == "sqlite"
+        && c.data_type.to_string().eq_ignore_ascii_case("integer")
+        && c.options
+            .iter()
+            .any(|o| matches!(o.option, sp::ColumnOption::PrimaryKey(_)))
+    {
+        has_default = true;
+    }
     col.nullable = Some(!not_null);
     col.has_default = Some(has_default);
     col
