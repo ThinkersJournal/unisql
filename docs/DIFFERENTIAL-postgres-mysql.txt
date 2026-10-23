@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=146
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=148
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -243,6 +243,9 @@ PASS epoch_ms_of_clock            same
        -> SELECT (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) > 1700000000000) AND (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) < 4102444800000)
 PASS epoch_of_difference          same
        -> SELECT `a`.`id`, `b`.`id`, CAST((TIMESTAMPDIFF(MICROSECOND, `b`.`at`, `a`.`at`) / 1000000) AS SIGNED) FROM `fixed_ts` AS `a` INNER JOIN `fixed_ts` AS `b` ON `a`.`id` < `b`.`id` ORDER BY (`a`.`id` IS NULL), `a`.`id`, (`b`.`id` IS NULL), `b`.`id`
+PASS date_part_fields             same
+       -> SELECT `id`, CAST(EXTRACT(YEAR FROM `at`) AS SIGNED), CAST((DAYOFWEEK(`at`) - 1) AS SIGNED), CAST(DAYOFYEAR(`at`) AS SIGNED), CAST(WEEK(`at`, 3) AS SIGNED) FROM `edge_ts` ORDER BY (`id` IS NULL), `id`
+PASS refuse_date_part_dynamic     refused `fn:date_part`: no verified mapping for this function on MySQL/MariaDB yet
 PASS date_trunc_week_quarter      same
        -> SELECT `id`, CAST(UNIX_TIMESTAMP(CAST(DATE_FORMAT(DATE_SUB(`at`, INTERVAL WEEKDAY(`at`) DAY), '%Y-%m-%d 00:00:00') AS DATETIME)) AS SIGNED), CAST(UNIX_TIMESTAMP(CAST(CONCAT(YEAR(`at`), '-', LPAD(QUARTER(`at`) * 3 - 2, 2, '0'), '-01 00:00:00') AS DATETIME)) AS SIGNED) FROM `edge_ts` ORDER BY (`id` IS NULL), `id`
 PASS refuse_date_trunc_decade     refused `fn:date_trunc.decade`: no verified mapping for date_trunc('decade', ..) on MySQL/MariaDB yet
@@ -263,7 +266,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 116 passing translated cases:
+MATRIX (construct, tier) from 117 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional

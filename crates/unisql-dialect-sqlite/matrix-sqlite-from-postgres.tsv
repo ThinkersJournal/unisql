@@ -32,10 +32,10 @@ construct	division_integer	sqlite	3.53.2	schema=none	yes		tier=native;suite=post
 construct	extract.century	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_extract_century	SQLite: no verified mapping for EXTRACT(century ..) yet	postgres
 construct	extract.day	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
 construct	extract.day.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	allowance=timestamp_as_text	postgres
-construct	extract.dow	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
-construct	extract.dow.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	allowance=timestamp_as_text	postgres
-construct	extract.doy	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
-construct	extract.doy.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	allowance=timestamp_as_text	postgres
+construct	extract.dow	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.dow.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	allowance=timestamp_as_text	postgres
+construct	extract.doy	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.doy.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	allowance=timestamp_as_text	postgres
 construct	extract.epoch	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_to_timestamp	diverges from the strict contract unless accepted: allowance=clock_is_statement_start,epoch_whole_seconds	postgres
 construct	extract.epoch.clock_is_statement_start	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_to_timestamp	allowance=clock_is_statement_start	postgres
 construct	extract.epoch.epoch_whole_seconds	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::cast_to_timestamp	allowance=epoch_whole_seconds	postgres
@@ -51,10 +51,10 @@ construct	extract.month	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sql
 construct	extract.month.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	allowance=timestamp_as_text	postgres
 construct	extract.quarter	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
 construct	extract.quarter.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	allowance=timestamp_as_text	postgres
-construct	extract.week	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
-construct	extract.week.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_calendar_fields	allowance=timestamp_as_text	postgres
-construct	extract.year	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
-construct	extract.year.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::extract_fields	allowance=timestamp_as_text	postgres
+construct	extract.week	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.week.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	allowance=timestamp_as_text	postgres
+construct	extract.year	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
+construct	extract.year.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_part_fields	allowance=timestamp_as_text	postgres
 construct	filter_clause	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::agg_filter		postgres
 construct	fn:avg	sqlite	3.53.2	schema=none	yes		tier=native;suite=postgres-to-sqlite;test=postgres-to-sqlite::avg_cast		postgres
 construct	fn:btrim	sqlite	3.53.2	schema=none	yes		tier=emulated;suite=postgres-to-sqlite;test=postgres-to-sqlite::btrim_forms		postgres
@@ -67,6 +67,7 @@ construct	fn:current_date	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-s
 construct	fn:current_date.date_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::current_date_text	allowance=date_as_text	postgres
 construct	fn:current_schema	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_schema	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
 construct	fn:current_user	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_current_user	PostgreSQL catalog/session introspection has no SQLite equivalent	postgres
+construct	fn:date_part	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_date_part_dynamic	no verified mapping for this function on SQLite yet	postgres
 construct	fn:date_trunc.day	sqlite	3.53.2	schema=none	no	wrong	suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	diverges from the strict contract unless accepted: allowance=timestamp_as_text	postgres
 construct	fn:date_trunc.day.timestamp_as_text	sqlite	3.53.2	schema=none	yes		tier=conditional;suite=postgres-to-sqlite;test=postgres-to-sqlite::date_trunc_fields	allowance=timestamp_as_text	postgres
 construct	fn:date_trunc.decade	sqlite	3.53.2	schema=none	no	missing	suite=postgres-to-sqlite;test=postgres-to-sqlite::refuse_date_trunc_decade	no verified mapping for date_trunc('decade', ..) on SQLite yet	postgres

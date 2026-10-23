@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.25.5 - 2026-10-23
+
+- **PostgreSQL `date_part('field', x)` with a literal field is read as `EXTRACT(field FROM x)`** and so translates wherever that does (year, month, day, hour, minute, epoch, dow, isodow, doy, quarter, week). The value is the same; PostgreSQL's `EXTRACT` returns numeric where `date_part` returns double precision. A field that is not a literal stays the function and is refused with the leaf `fn:date_part`.
+
 ## 0.25.4 - 2026-10-22
 
 - **`date_trunc('week' | 'quarter', ts)` is translated to SQLite, MySQL and MariaDB** (week: the Monday of the ISO week; both were refused). MySQL/MariaDB are Exact; SQLite is Conditional on `TimestampAsText`. Differentially verified against PostgreSQL 16 on year-boundary dates. Other fields (`decade`, ..) stay refused by leaf.

@@ -62,6 +62,7 @@ table_function.generate_series	FROM generate_series(a, b[, step]) yields the int
 table_function.generate_series.args	FROM generate_series(..) whose arguments are not two or three integer literals (step not 0) is refused where it is written as a recursive CTE.
 table_function.generate_series.alias	FROM generate_series(..) with no alias is refused where it is written as a recursive CTE: its column would be named generate_series.
 fn:char_length	char_length(s) is the number of characters of s.
+fn:date_part	date_part(field, x) with a field that is not a literal. Refused: a literal field is read as EXTRACT.
 fn:date_trunc.day	date_trunc('day', ts) is ts cut to the start of its day.
 fn:date_trunc.hour	date_trunc('hour', ts) is ts cut to the start of its hour.
 fn:date_trunc.minute	date_trunc('minute', ts) is ts cut to the start of its minute.

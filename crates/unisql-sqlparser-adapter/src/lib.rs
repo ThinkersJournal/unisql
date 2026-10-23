@@ -2437,6 +2437,22 @@ fn function(f: sp::Function) -> R<Expr> {
             right: Box::new(r),
         });
     }
+    // PostgreSQL `date_part('field', x)` is `EXTRACT(field FROM x)` (the value is the same; EXTRACT
+    // returns numeric where date_part returns double precision). A field that is not a literal is
+    // left as the function, which no target maps.
+    if name == "date_part"
+        && rules().name == "postgres"
+        && out.len() == 2
+        && let FunctionArg::Expr(Expr::Literal(Literal::String(field))) = &out[0]
+    {
+        let field = field.to_ascii_lowercase();
+        if let Some(FunctionArg::Expr(x)) = out.pop() {
+            return Ok(Expr::Extract {
+                field,
+                expr: Box::new(x),
+            });
+        }
+    }
     if rules().name == "mysql" {
         match name.as_str() {
             "ifnull" => name = "coalesce".to_string(),
