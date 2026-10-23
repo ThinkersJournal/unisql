@@ -41,6 +41,7 @@ construct	extract.quarter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		ti
 construct	extract.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_part_fields		postgres
 construct	extract.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_part_fields		postgres
 construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
+construct	fn:age	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_age	age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value	postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
 construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
 construct	fn:ceil	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::ceil_floor		postgres

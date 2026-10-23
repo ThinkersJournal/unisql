@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=152
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=153
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -244,6 +244,7 @@ PASS epoch_ms_of_clock            same
        -> SELECT (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) > 1700000000000) AND (CAST(UNIX_TIMESTAMP(SYSDATE(3)) * 1000 AS SIGNED) < 4102444800000)
 PASS epoch_of_difference          same
        -> SELECT `a`.`id`, `b`.`id`, CAST((TIMESTAMPDIFF(MICROSECOND, `b`.`at`, `a`.`at`) / 1000000) AS SIGNED) FROM `fixed_ts` AS `a` INNER JOIN `fixed_ts` AS `b` ON `a`.`id` < `b`.`id` ORDER BY (`a`.`id` IS NULL), `a`.`id`, (`b`.`id` IS NULL), `b`.`id`
+PASS refuse_age                   refused `fn:age`: age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value
 PASS to_char_fields               same
        -> SELECT `id`, DATE_FORMAT(`at`, '%Y-%m-%d %H:%i:%s'), DATE_FORMAT(`at`, '%d/%m/%Y'), DATE_FORMAT(`at`, '%H:%i') FROM `edge_ts` ORDER BY (`id` IS NULL), `id`
 PASS refuse_to_char_day_name      refused `fn:to_char.format`: to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped
