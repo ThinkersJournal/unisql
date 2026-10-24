@@ -58,7 +58,7 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
 
 - **DDL translation.** Decided with PersistAnt (D6): schema management stays with the migration tool.
 - **Executing statements.** UniSQL returns text and bindings; drivers are the caller's.
-- **Publishing**: 0.16.3 is on crates.io; each later version is an ordinary bump
+- **Publishing**: all nine crates are on crates.io (0.26.0 read back 2026-10-24); each later version is an ordinary bump
   (`docs/PUBLISHING.md`).
 
 ## MySQL-source corpus: the gap list
@@ -204,3 +204,53 @@ later.
 - **Table-valued functions in FROM** are read and refused by leaf (`table_function.<name>`) on SQLite and
   MySQL/MariaDB; `generate_series` with integer literal bounds is mapped through a recursive CTE (0.24.8); other table
   functions, and non-literal bounds (which need LATERAL), remain refused.
+
+## From the docs audit (2026-10-24)
+
+Written at origin/main 33d6115 (0.26.3) by reading every spec and design document (`README.md`,
+`docs/DESIGN.md`, `docs/MACROS.md`, `docs/MEASUREMENT.md`, `docs/PUBLISHING.md`, `docs/LICENCES.md`, this file)
+against this roadmap. Each row is work a document names that no row above covers. **open** = nobody holds it;
+**held** = waiting on the named party; **done** = already shipped (the PR or version is given). Nothing here is started.
+
+- **`raw(dialect, "..")` escape hatch** (DESIGN 3.2): a typed pass-through fragment that declares its one dialect
+  and is refused by other targets at open time. No code exists. *Held: CireSnave* (does a raw tier belong in a
+  library whose rule is "no text on refusal"?).
+- **Dialects behind `unisql` cargo features** (DESIGN 2.1.4: `postgres`, `sqlite`, `mysql`): the facade has only a
+  `serde` feature and always compiles all three dialect crates. MACROS section 4 decided against gating for the macros
+  (a measured 5%). *Held: CireSnave* (amend DESIGN or build the features).
+- **`rel.*` composition with PersistAnt** (DESIGN 5.3 to 5.6): the `rel.source_dialect(d)` need, the report's
+  construct-to-capability mapping, and an optional dev-dependency drift test against `persistant-core`. `analyse`
+  already returns leaf ids (done). *Held: PersistAnt* (vocabulary and row schema are theirs).
+- **Prepare check as a shipped mechanism** (DESIGN 6.2, "the recommended first mechanism"): translate a program's
+  statement catalogue and `PREPARE`/`EXPLAIN` on each target. The differential corpus runners do it for the corpora
+  (done); a reusable harness for a consumer's catalogue does not exist. *Open.*
+- **`unisql::query!` / `sqlx::query!` hand-off** (DESIGN 6.3, D3 spike): the translate-at-build half is done as
+  `sql!` (0.24.14 to 0.24.18). Handing the source text to `sqlx::query!` for the source check, and whether that
+  works with `sqlx::Any`, is unverified. *Held: PersistAnt* (the first consumer; typed records are theirs).
+- **Integrations with Diesel and sqlx** (DESIGN section 4 table says "a `diesel` feature" and "a `sqlx` feature";
+  DESIGN 2.2 says integrations are separate crates that call `translate`). Not designed; the two passages disagree.
+  *Open:* a spike, and amend one of the passages.
+- **Search for other Rust SQL-transpile crates** (DESIGN section 4 gap: "comes before any further emitter work").
+  The claim that none ships a parser plus per-target emitters with refusal by default is still unverified. *Open.*
+- **`THIRD-PARTY-NOTICES`** (LICENCES.md, PUBLISHING 6): required in the package when anything is derived from SQLGlot;
+  belongs to the "More verified mappings" row above. *Open*, with that row. The `sqlparser` licence file at the
+  pinned tag has not been byte-read (LICENCES.md "Our own dependency"). *Open.*
+- **Column and type codec per target** (MEASUREMENT "The oracle finding": timestamp as text vs epoch, JSONB as
+  text, row-as-blob). `Schema` and the `text_collation`/`now_as_text` allowances cover part. A first-class
+  "Types" input is not built. *Open;* the consumer side is auth-framework's (proposal above).
+- **Corpus numbers regenerated, not hand-copied** (MEASUREMENT, 2026-10-12 design-phase counts that predate any
+  emitter): this is the "`corpus` runner as a CI artefact" row in Later. *Open*, same row.
+- **README example compiled** (PUBLISHING 5: "the README example is not compiled ... re-check it by hand on
+  release"). *Open*, small: a doc-test or `include_str!` check.
+- **Macros, open questions** (MACROS section 9): a `Target` enum in `unisql-embed` and a compile error for a
+  target that was not embedded (the ROADMAP's "B", *held: CireSnave*); a project-wide default `targets` list
+  (*open*, wrapper macro in the consumer, nothing in this repo); a `query_as`-style typed record (*PersistAnt's*,
+  out of UniSQL).
+- **Done, for the record:** crate names claimed and published (MACROS 2, PUBLISHING 1 and 7; all nine at 0.26.0);
+  `translate_str` (DESIGN 2.2.1, `unisql` 0.2x); first measurement deliverable (DESIGN 7, `docs/MEASUREMENT.md`);
+  per-leaf matrix files and contracts (DESIGN 2 item 6, README); logo provenance (0.26.1, `assets/PROVENANCE.md`).
+- **Stale text corrected in this change:** README status and "not yet published" lines, the `PUBLISHING` link text,
+  and the "Publishing" line above all said 0.16.x or unpublished; the crates.io API gives 0.26.0 for all four
+  crates checked. `docs/DESIGN.md` section 3.1 and 11 still call the tier table a "proposal" and
+  `RETURNING`/`ON CONFLICT .. WHERE` on SQLite "not run"; the differential suites have since run them. *Open:* a
+  pass over DESIGN's UNVERIFIED list against the matrix files.

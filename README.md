@@ -6,8 +6,8 @@
 
 Write SQL in one dialect; get it back in another. Pronounced "unicycle".
 
-**Status: pre-release (0.16.x), published to crates.io** (all six crates at 0.16.3, read back
-2026-10-14). Pre-1.0: the second number is the breaking one, and `CHANGELOG.md` states what each
+**Status: pre-release, published to crates.io** (all nine crates; the crates.io API read 2026-10-24 gives
+0.26.0 as the latest for `unisql`, `unisql-macro-core`, `unisql-embed` and `unisql-macros`). Pre-1.0: the second number is the breaking one, and `CHANGELOG.md` states what each
 version flips for a consumer. `cargo add unisql`. The release work is recorded in `docs/PUBLISHING.md`.
 
 ```rust
@@ -43,7 +43,7 @@ instead. There is no best-effort mode.
 - `docs/MEASUREMENT.md`: how much of three real codebases' SQL translates (rule-table counts).
 - `docs/DIFFERENTIAL-postgres-sqlite.txt`: the latest differential run against real engines.
 - `docs/LICENCES.md`: licences of the projects we learn from, read from their files.
-- `docs/PUBLISHING.md`: the publish checklist and its findings (nothing is published).
+- `docs/PUBLISHING.md`: the publish checklist and its findings.
 - `ROADMAP.md` and `CHANGELOG.md`: what is next, and what each version changed.
 
 ## Layout
@@ -56,9 +56,9 @@ instead. There is no best-effort mode.
 | `unisql-dialect-postgres` | PostgreSQL reader and target (+ `matrix-postgres-from-*.tsv`) |
 | `unisql-dialect-sqlite` | SQLite reader and target (+ `matrix-sqlite-from-*.tsv`) |
 | `unisql-dialect-mysql` | MySQL and MariaDB reader and target (+ `matrix-{mysql,mariadb}-from-*.tsv`) |
-| `unisql-macro-core` | the checks and translation behind the compile-time macros (`docs/MACROS.md`); not yet published |
-| `unisql-embed` | what the macros expand to: per-target SQL as `&'static` data, no dependencies; not yet published |
-| `unisql-macros` | `sql!`: check and translate a literal statement for named targets at build time (`docs/MACROS.md`); not yet published |
+| `unisql-macro-core` | the checks and translation behind the compile-time macros (`docs/MACROS.md`) |
+| `unisql-embed` | what the macros expand to: per-target SQL as `&'static` data, no dependencies |
+| `unisql-macros` | `sql!`: check and translate a literal statement for named targets at build time (`docs/MACROS.md`) |
 | `unisql-differential` | tests that run the real engines and compare results; corpus runner |
 
 Dialects today: sources and targets `postgres`, `sqlite`, `mysql`, `mariadb`. Seven directions are
