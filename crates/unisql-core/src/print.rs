@@ -1139,6 +1139,7 @@ impl Printer<'_> {
                 case_insensitive,
                 escape,
             } => {
+                self.collation_note("like", &[expr], c)?;
                 let l = self.operand(expr, c)?;
                 let r = self.operand(pattern, c)?;
                 let esc_txt = match escape {

@@ -149,6 +149,12 @@ fn a_non_bytewise_column_collation_needs_its_own_allowance_across_dialects() {
         .is_err()
     );
     assert!(run("SELECT c FROM t ORDER BY c", &ok, "mysql").is_ok());
+    // LIKE follows the column's collation on the source too (a `_ci` column matches 'Alice' for 'a%')
+    assert!(run("SELECT 1 FROM t WHERE c LIKE $1", &base, "mysql").is_err());
+    assert!(run("SELECT 1 FROM t WHERE c ILIKE $1", &base, "sqlite").is_err());
+    assert!(run("SELECT 1 FROM t WHERE c LIKE $1", &ok, "mysql").is_ok());
+    assert!(run("SELECT 1 FROM t WHERE b LIKE $1", &base, "mysql").is_ok());
+    assert!(run("SELECT 1 FROM t WHERE c LIKE $1", &base, "postgres").is_ok());
     // a bytewise collation and an unstated one (unknown, not "the default") need nothing extra
     assert!(run("SELECT 1 FROM t WHERE b = $1", &base, "sqlite").is_ok());
     assert!(run("SELECT 1 FROM t WHERE u = $1", &base, "sqlite").is_ok());
