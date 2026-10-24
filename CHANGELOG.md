@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.3 - 2026-10-24
+
+- **Lint: the two `allow(clippy::too_many_arguments)` attributes carry a `reason`.** No behaviour change.
+
 ## 0.26.2 - 2026-10-24
 
 - **CI: advisory `portfolio` job** calls a pinned reusable workflow for an extra static-analysis pass. It does not gate merges. No code change.
