@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.6 - 2026-10-24
+
+- **Docs: the ROADMAP date and time row said unbuilt; it is built.** It now lists only what stays refused. No behaviour change.
+
 ## 0.26.5 - 2026-10-24
 
 - **Docs: spec-to-roadmap audit.** `ROADMAP.md` gains a section listing the work the design documents name that no row covered, each marked open, held or done; stale 0.16.x and "not yet published" text in `README.md` and `ROADMAP.md` corrected. No code change.
