@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.1 - 2026-10-24
+
+- **Docs: `assets/PROVENANCE.md`** records each logo file's hash, first-add commit, embedded metadata and licence status. The SVG is verified against Openclipart; the maker of the three PNGs is not established and is listed as an open question. No code change.
+
 ## 0.26.0 - 2026-10-24
 
 - **Breaking: `LIKE` / `ILIKE` on a text column whose stated collation is not bytewise now needs `source_collation_not_bytewise`** when the target is another dialect, as `=`, `BETWEEN` and `ORDER BY` already did. Before, such a statement translated without naming the divergence: under a `_ci` or locale collation `name LIKE 'a%'` matches `Alice`, and the target's `LIKE` need not. A bytewise (`C`, `_bin`) or unstated collation, and a same-dialect translation, are unchanged.
