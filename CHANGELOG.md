@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.2 - 2026-10-24
+
+- **CI: advisory `portfolio` job** calls a pinned reusable workflow for an extra static-analysis pass. It does not gate merges. No code change.
+
 ## 0.26.1 - 2026-10-24
 
 - **Docs: `assets/PROVENANCE.md`** records each logo file's hash, first-add commit, embedded metadata and licence status. The SVG is verified against Openclipart; the maker of the three PNGs is not established and is listed as an open question. No code change.
