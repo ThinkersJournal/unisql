@@ -13,7 +13,7 @@ version flips for a consumer. `cargo add unisql`. The release work is recorded i
 ```rust
 use unisql::{translate, Options};
 
-let t = translate("SELECT id FROM users WHERE id = $1", "postgres", "sqlite", &Options::default())?;
+let t = translate("SELECT id FROM users WHERE id = $1", "postgres", "sqlite", &Options::default()).unwrap();
 assert_eq!(t.sql, r#"SELECT "id" FROM "users" WHERE "id" = ?1"#);
 // t.report says, per construct, whether the target gave it exactly, by emulation, or conditionally.
 // t.param_order / t.param_bindings say how the caller must bind each parameter on the target
@@ -24,7 +24,7 @@ To learn what a statement needs *without choosing a target* (for a gate that der
 from its statement catalogue):
 
 ```rust
-let a = unisql::analyse("SELECT CAST(name AS UUID) FROM users", "postgres")?;
+let a = unisql::analyse("SELECT CAST(name AS UUID) FROM users", "postgres").unwrap();
 assert!(a.constructs.contains("cast.to_uuid"));     // the leaf ids the matrix files use
 assert!(a.refused.contains("cast.to_uuid"));        // this form is refused by some target
 ```
@@ -88,7 +88,7 @@ cannot let a refused form through.
 
 They need real engines and fail (never skip) if one is unreachable:
 
-```
+```sh
 docker run -d --name unisql-pg -e POSTGRES_PASSWORD=unisql   -e POSTGRES_INITDB_ARGS="--locale=C --encoding=UTF8" -p 127.0.0.1:55432:5432 postgres:16
 docker run -d --name unisql-mysql -e MYSQL_ROOT_PASSWORD=unisql -e MYSQL_DATABASE=uni   -p 127.0.0.1:53306:3306 mysql:8.4 --character-set-server=utf8mb4 --collation-server=utf8mb4_bin
 docker run -d --name unisql-mariadb -e MARIADB_ROOT_PASSWORD=unisql -e MARIADB_DATABASE=uni   -p 127.0.0.1:53307:3306 mariadb:11.4 --character-set-server=utf8mb4 --collation-server=utf8mb4_bin

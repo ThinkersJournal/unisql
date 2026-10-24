@@ -101,8 +101,8 @@ RUSTDOCFLAGS="-D warnings" cargo doc --no-deps -p unisql -p unisql-core -p unisq
 
 `cargo doc --no-deps` with `-D warnings` is clean for all six crates at 0.16.0. The crates have no
 features, no build scripts and no network access, so the docs.rs build needs no `[package.metadata.docs.rs]`.
-The facade's crate documentation carries a doc-test; the README example is not compiled (it is the
-same text): re-check it by hand on release.
+The facade's crate documentation carries a doc-test, and both README files are compiled as doc-tests
+(`cargo test -p unisql --doc`, 0.26.7), so the README examples are checked on every CI run.
 
 ## 6. Provenance and licence
 
