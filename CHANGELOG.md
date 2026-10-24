@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.0 - 2026-10-24
+
+- **Breaking: `LIKE` / `ILIKE` on a text column whose stated collation is not bytewise now needs `source_collation_not_bytewise`** when the target is another dialect, as `=`, `BETWEEN` and `ORDER BY` already did. Before, such a statement translated without naming the divergence: under a `_ci` or locale collation `name LIKE 'a%'` matches `Alice`, and the target's `LIKE` need not. A bytewise (`C`, `_bin`) or unstated collation, and a same-dialect translation, are unchanged.
+
 ## 0.25.10 - 2026-10-24
 
 - **`schema_from_ddl` reads the columns of a view.** `CREATE [OR REPLACE] VIEW v [(a, b)] AS SELECT ..` registers `v` when every output column can be named (the view's own column list, an alias, or a bare column reference). A bare reference to a column of the query's one table keeps its class, collation and declared type, so a comparison on a text view column needs the collation allowance and one on a number does not; any other output column is registered as unknown; nullability and default are left unknown (a view's are not the table's). `SELECT *` expands over a single table with a complete column list. A set operation, a `WITH`, an unnamed expression or a wildcard it cannot expand leaves the view unregistered, and `DROP VIEW` removes it.

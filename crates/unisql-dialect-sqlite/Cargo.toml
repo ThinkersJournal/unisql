@@ -12,5 +12,5 @@ readme = "README.md"
 description = "SQLite reader and target for UniSQL, with its matrix files."
 
 [dependencies]
-unisql-core = { version = "0.25.10", path = "../unisql-core" }
+unisql-core = { version = "0.26.0", path = "../unisql-core" }
 unisql-sqlparser-adapter.workspace = true
