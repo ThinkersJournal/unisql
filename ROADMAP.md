@@ -26,7 +26,7 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
    *Verified by:* the same corpus re-run: `not_in_ir` falls, and each new form has a differential case.
 2. **Schema, what is left.** `Schema`, `schema_from_ddl` and collation interpretation are in. The live
    catalog reader is PersistAnt's, in its sqlx driver crate, after its D2-D6. Possible extensions: view
-   columns from `CREATE VIEW`, `LIKE`/`ILIKE` against a column's collation (a different allowance than
+   columns from `CREATE VIEW` (**done at 0.25.10**), `LIKE`/`ILIKE` against a column's collation (a different allowance than
    the one used for comparisons today).
 
 3. **Compile-time macros** (`unisql-macro-core`, `unisql-macros`, `unisql-embed`; design in

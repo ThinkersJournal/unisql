@@ -425,6 +425,23 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
                 add_constraint_key(schema, &name, con);
             }
         }
+        sp::Statement::CreateView(cv) => {
+            let Ok(name) = object_name(&cv.name) else {
+                return;
+            };
+            // A view that is replaced, or whose definition cannot be read, must not leave the
+            // earlier definition's columns behind.
+            if cv.if_not_exists && schema.tables().any(|t| t.name == name.0.as_slice()) {
+                return;
+            }
+            schema.drop_table(&name);
+            if let Some(cols) = view_columns(schema, &cv) {
+                schema.mark_columns_complete(name.0.clone());
+                for (column, c) in cols {
+                    schema.set_column(name.0.clone(), column, c);
+                }
+            }
+        }
         sp::Statement::CreateIndex(ci) => {
             let Ok(name) = object_name(&ci.table_name) else {
                 return;
@@ -502,7 +519,7 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
             ..
         } => schema.mark_all_keys_unreliable(),
         sp::Statement::Drop {
-            object_type: sp::ObjectType::Table,
+            object_type: sp::ObjectType::Table | sp::ObjectType::View,
             names,
             ..
         } => {
@@ -514,6 +531,87 @@ fn apply_ddl(schema: &mut Schema, st: sp::Statement) {
         }
         _ => {}
     }
+}
+
+/// The columns of a view, when its query is a plain `SELECT` whose every output column can be named:
+/// by the view's own column list, an alias, or a bare column reference. A column that is a bare
+/// reference to a column of the one table in `FROM` keeps that column's class, collation and declared
+/// type (nullability and default are left unknown: a view's are not the table's); any other column is
+/// registered as unknown. `SELECT *` is expanded only over a single table whose columns are all
+/// known. `None` (the view is left unregistered) for a set operation, a `WITH`, a wildcard it cannot
+/// expand, an output column with no name, or a view column list of another length.
+fn view_columns(schema: &Schema, cv: &sp::CreateView) -> Option<Vec<(String, Column)>> {
+    if cv.query.with.is_some() {
+        return None;
+    }
+    let sp::SetExpr::Select(sel) = cv.query.body.as_ref() else {
+        return None;
+    };
+    // The one base table of the query, when there is exactly one and no join.
+    let base = match sel.from.as_slice() {
+        [t] if t.joins.is_empty() => match &t.relation {
+            sp::TableFactor::Table { name, alias, .. } => Some((
+                object_name(name).ok()?,
+                alias.as_ref().map(|a| ident(&a.name)),
+            )),
+            _ => None,
+        },
+        _ => None,
+    };
+    let from_base = |parts: &[sp::Ident]| -> Option<Column> {
+        let (table, alias) = base.as_ref()?;
+        let (column, qualifier) = parts.split_last()?;
+        if !qualifier.is_empty() {
+            let q: Vec<String> = qualifier.iter().map(ident).collect();
+            let matches_alias = alias.as_ref().is_some_and(|a| q.len() == 1 && q[0] == *a);
+            if !matches_alias && q != table.0 {
+                return None;
+            }
+        }
+        let c = schema.get(table, &ident(column))?;
+        let mut out = Column::new(c.class);
+        out.collation = c.collation.clone();
+        out.declared_type = c.declared_type.clone();
+        Some(out)
+    };
+    let mut cols: Vec<(String, Column)> = vec![];
+    for item in &sel.projection {
+        match item {
+            sp::SelectItem::UnnamedExpr(sp::Expr::Identifier(i)) => {
+                let c = from_base(std::slice::from_ref(i)).unwrap_or_else(Column::unknown);
+                cols.push((ident(i), c));
+            }
+            sp::SelectItem::UnnamedExpr(sp::Expr::CompoundIdentifier(parts)) => {
+                let c = from_base(parts).unwrap_or_else(Column::unknown);
+                cols.push((ident(parts.last()?), c));
+            }
+            sp::SelectItem::ExprWithAlias { expr, alias } => {
+                let c = match expr {
+                    sp::Expr::Identifier(i) => from_base(std::slice::from_ref(i)),
+                    sp::Expr::CompoundIdentifier(parts) => from_base(parts),
+                    _ => None,
+                }
+                .unwrap_or_else(Column::unknown);
+                cols.push((ident(alias), c));
+            }
+            sp::SelectItem::Wildcard(opts) if *opts == sp::WildcardAdditionalOptions::default() => {
+                let (table, _) = base.as_ref()?;
+                for column in schema.complete_columns(table)? {
+                    cols.push((column.to_string(), from_base(&[sp::Ident::new(column)])?));
+                }
+            }
+            _ => return None,
+        }
+    }
+    if !cv.columns.is_empty() {
+        if cv.columns.len() != cols.len() {
+            return None;
+        }
+        for (c, v) in cols.iter_mut().zip(&cv.columns) {
+            c.0 = ident(&v.name);
+        }
+    }
+    Some(cols)
 }
 
 /// The column names of an index definition when every part is a plain column.

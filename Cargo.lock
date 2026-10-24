@@ -1610,7 +1610,7 @@ checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
 
 [[package]]
 name = "unisql"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "unisql-core",
  "unisql-dialect-mysql",
@@ -1621,7 +1621,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-core"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "serde",
  "serde_json",
@@ -1629,7 +1629,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-mysql"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1637,7 +1637,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-postgres"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1645,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-sqlite"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1653,7 +1653,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-differential"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "mysql",
  "postgres",
@@ -1664,18 +1664,18 @@ dependencies = [
 
 [[package]]
 name = "unisql-embed"
-version = "0.25.9"
+version = "0.25.10"
 
 [[package]]
 name = "unisql-macro-core"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "unisql",
 ]
 
 [[package]]
 name = "unisql-macros"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1688,7 +1688,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-sqlparser-adapter"
-version = "0.25.9"
+version = "0.25.10"
 dependencies = [
  "sqlparser",
  "unisql-core",
