@@ -6,7 +6,7 @@ text and a report out.
 ```rust
 use unisql::{translate, Options};
 
-let t = translate("SELECT id FROM users WHERE id = $1", "postgres", "sqlite", &Options::default())?;
+let t = translate("SELECT id FROM users WHERE id = $1", "postgres", "sqlite", &Options::default()).unwrap();
 assert_eq!(t.sql, r#"SELECT "id" FROM "users" WHERE "id" = ?1"#);
 // t.report says, per construct (leaf id), whether the target gave it exactly, by emulation, or
 // conditionally, and which named allowance a conditional form needs.

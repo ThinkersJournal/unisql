@@ -15,6 +15,15 @@
 
 use std::fmt;
 
+// Compiles the README examples as doc-tests, so a change to the API that breaks them fails `cargo test`.
+#[cfg(doctest)]
+mod readme_doctests {
+    #[doc = include_str!("../README.md")]
+    struct CrateReadme;
+    #[doc = include_str!("../../../README.md")]
+    struct RootReadme;
+}
+
 pub use unisql_core::ast;
 #[cfg(feature = "serde")]
 pub use unisql_core::snapshot::{SNAPSHOT_FORMAT, Snapshot, SnapshotError};

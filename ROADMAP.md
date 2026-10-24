@@ -241,8 +241,8 @@ against this roadmap. Each row is work a document names that no row above covers
   "Types" input is not built. *Open;* the consumer side is auth-framework's (proposal above).
 - **Corpus numbers regenerated, not hand-copied** (MEASUREMENT, 2026-10-12 design-phase counts that predate any
   emitter): this is the "`corpus` runner as a CI artefact" row in Later. *Open*, same row.
-- **README example compiled** (PUBLISHING 5: "the README example is not compiled ... re-check it by hand on
-  release"). *Open*, small: a doc-test or `include_str!` check.
+- **README example compiled** (PUBLISHING 5). *Done* in 0.26.7: both README files are `include_str!`-ed as
+  doc-tests in `crates/unisql/src/lib.rs`.
 - **Macros, open questions** (MACROS section 9): a `Target` enum in `unisql-embed` and a compile error for a
   target that was not embedded (the ROADMAP's "B", *held: CireSnave*); a project-wide default `targets` list
   (*open*, wrapper macro in the consumer, nothing in this repo); a `query_as`-style typed record (*PersistAnt's*,
