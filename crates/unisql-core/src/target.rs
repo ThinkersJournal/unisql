@@ -492,7 +492,7 @@ pub trait Target {
     }
 
     /// The whole `ON CONFLICT ..` clause. `set` and `where_` are printed; `columns` are quoted.
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, reason = "each argument is a distinct clause of the ON CONFLICT form; a parameter struct would only rename them")]
     fn upsert_clause(
         &self,
         conflict_cols: &[String],

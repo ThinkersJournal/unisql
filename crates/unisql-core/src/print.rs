@@ -771,7 +771,7 @@ impl Printer<'_> {
 
     /// The `WHERE [ORDER BY] [LIMIT]` tail of an UPDATE or DELETE. Without ORDER BY and LIMIT it is
     /// the plain WHERE; otherwise the target's [`DmlLimit`] form.
-    #[allow(clippy::too_many_arguments)]
+    #[allow(clippy::too_many_arguments, reason = "each argument is a distinct clause of the statement; a parameter struct would only rename them")]
     fn dml_filter(
         &self,
         leaf: &str,
