@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.4 - 2026-10-24
+
+- **Internal: `check_dialect` in `unisql-macro-core` no longer returns a `bool` that no caller read.** No behaviour change.
+
 ## 0.26.3 - 2026-10-24
 
 - **Lint: the two `allow(clippy::too_many_arguments)` attributes carry a `reason`.** No behaviour change.
