@@ -15,6 +15,10 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  portfolio:
+    permissions:
+      contents: read
+    uses: ciresnave/coderipper/.github/workflows/portfolio.yml@d14a22b67e5533d0188f067e01693878065ca071
   build-test:
     name: Build, test, clippy, fmt (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
