@@ -380,3 +380,49 @@ fn sqlite_integer_primary_key_is_a_rowid_alias_with_a_default() {
         "PostgreSQL has no rowid alias"
     );
 }
+
+#[test]
+fn view_columns_come_from_the_view_query() {
+    let ddl = r#"
+CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL COLLATE "C", age integer);
+CREATE VIEW names AS SELECT id, name AS who, age + 1 AS next_age FROM users;
+CREATE VIEW everything AS SELECT * FROM users;
+CREATE VIEW renamed (a, b) AS SELECT u.id, u.name FROM users u;
+CREATE VIEW joined AS SELECT users.id, users.name FROM users JOIN users u2 ON u2.id = users.id;
+CREATE VIEW unnamed AS SELECT age + 1 FROM users;
+CREATE VIEW combined AS SELECT id FROM users UNION SELECT id FROM users;
+CREATE VIEW gone AS SELECT id FROM users;
+DROP VIEW gone;
+"#;
+    let d = schema_from_ddl(ddl, "postgres").unwrap();
+    assert!(d.skipped.is_empty(), "{:?}", d.skipped);
+    let class = |t: &str, c: &str| d.schema.get(&Name::simple(t), c).map(|c| c.class);
+    assert_eq!(class("names", "id"), Some(ColumnClass::Numeric));
+    assert_eq!(class("names", "who"), Some(ColumnClass::Text));
+    assert_eq!(class("names", "name"), None);
+    assert_eq!(class("names", "next_age"), Some(ColumnClass::Unknown));
+    assert_eq!(
+        d.schema
+            .get(&Name::simple("names"), "who")
+            .unwrap()
+            .collation
+            .as_deref(),
+        Some("C")
+    );
+    // a view's nullability and default are not the table's
+    assert_eq!(
+        d.schema
+            .get(&Name::simple("names"), "who")
+            .unwrap()
+            .nullable,
+        None
+    );
+    assert_eq!(class("everything", "age"), Some(ColumnClass::Numeric));
+    assert_eq!(class("renamed", "a"), Some(ColumnClass::Numeric));
+    assert_eq!(class("renamed", "b"), Some(ColumnClass::Text));
+    assert_eq!(class("joined", "name"), Some(ColumnClass::Unknown));
+    // a view whose columns cannot all be named, a set operation, a dropped view: not registered
+    assert_eq!(class("unnamed", "age"), None);
+    assert_eq!(class("combined", "id"), None);
+    assert_eq!(class("gone", "id"), None);
+}

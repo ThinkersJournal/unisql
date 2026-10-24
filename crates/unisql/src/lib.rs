@@ -96,7 +96,7 @@ pub struct DdlSchema {
 
 /// Fill a [`Schema`] from a DDL script (for example a project's `migrations/*.sql` concatenated, in
 /// order) written in `dialect`. Reading only: DDL is not translated and nothing is written out.
-/// `CREATE TABLE`, `ALTER TABLE .. ADD|DROP|ALTER COLUMN .. TYPE` and `DROP TABLE` are applied in
+/// `CREATE TABLE`, `ALTER TABLE .. ADD|DROP|ALTER COLUMN .. TYPE` `CREATE VIEW` (its columns, where every one can be named) and `DROP TABLE`/`DROP VIEW` are applied in
 /// order; table names are kept exactly as written (see [`Schema`]). A column whose declared type is not
 /// classified is registered as unknown, never omitted. A column's collation is only what the DDL states
 /// on the column (`COLLATE x`): no collation is guessed from the database default.
