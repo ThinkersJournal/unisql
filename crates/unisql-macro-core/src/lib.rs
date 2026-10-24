@@ -118,9 +118,9 @@ fn known_allowances() -> String {
         .join(", ")
 }
 
-fn check_dialect(kind: Kind, role: &str, name: &str, out: &mut Vec<Problem>) -> bool {
+fn check_dialect(kind: Kind, role: &str, name: &str, out: &mut Vec<Problem>) {
     if unisql::dialects().contains(&name) {
-        return true;
+        return;
     }
     out.push(problem(
         kind,
@@ -129,7 +129,6 @@ fn check_dialect(kind: Kind, role: &str, name: &str, out: &mut Vec<Problem>) -> 
             unisql::dialects().join(", ")
         ),
     ));
-    false
 }
 
 /// What a [`Checker`] is told besides the statement. Non-exhaustive: more is added as checks need it.
