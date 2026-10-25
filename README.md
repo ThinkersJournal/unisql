@@ -84,6 +84,16 @@ partial forms (`cast.to_uuid`, `upsert.no_conflict_key`, `returning.update`, `tr
 `fn:<agg>.order_by`, `distinct_on.star_projection`), so a gate that looks only at `constructs`
 cannot let a refused form through.
 
+## Checking your own statements on every target (the prepare check)
+
+`unisql-differential` (not published; it links database drivers, which the library never does) has
+`prepare_check(&mut engines, source, &targets, &options, &catalogue)`: it translates each `(id, sql)` of your
+statement catalogue for each target and `PREPARE`s the text on a real engine opened with your target schema,
+returning one row per statement and target (`Prepared`, `Refused(reason)` or `Rejected { sql, error }`).
+Nothing is executed. `crates/unisql-differential/tests/prepare_check.rs` is the worked example. Because the
+crate is not on crates.io, copy that function and `Engines::prepares` (about 60 lines) into your own test crate
+with the drivers you already use; asserting that every row is `Prepared` is the whole check.
+
 ## Running the differential tests
 
 They need real engines and fail (never skip) if one is unreachable:

@@ -205,6 +205,25 @@ impl Engines {
         Ok(e)
     }
 
+    /// Does the engine for `target` (`postgres`, `sqlite`, or `mysql`/`mariadb` for whichever server this
+    /// was opened with) accept `sql` at `PREPARE`? Nothing is executed; the error is the engine's own text.
+    pub fn prepares(&mut self, target: &str, sql: &str) -> Result<(), String> {
+        use mysql::prelude::Queryable;
+        match target {
+            "postgres" => self.pg.prepare(sql).map(|_| ()).map_err(|e| e.to_string()),
+            "sqlite" => self
+                .lite
+                .prepare(sql)
+                .map(|_| ())
+                .map_err(|e| e.to_string()),
+            "mysql" | "mariadb" => match self.mysql.as_mut() {
+                Some(c) => c.prep(sql).map(|_| ()).map_err(|e| e.to_string()),
+                None => Err("no MySQL/MariaDB engine was opened".into()),
+            },
+            other => Err(format!("unknown target `{other}`")),
+        }
+    }
+
     /// The server's default collation for `utf8mb4` (what a table gets when nobody says otherwise).
     pub fn mysql_default_collation(&mut self) -> String {
         use mysql::prelude::Queryable;
@@ -533,6 +552,57 @@ fn sqlite_row(r: &rusqlite::Row, n: usize) -> Result<Vec<Cell>, String> {
 
 /// Compare result sets. `ordered` = the statement defines an order; otherwise rows are compared as
 /// multisets.
+/// What the prepare check found for one statement on one target.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum PrepareOutcome {
+    /// Translated, and the target engine accepted the text.
+    Prepared,
+    /// UniSQL refused (or could not read) the statement; no text was produced.
+    Refused(String),
+    /// UniSQL produced `sql`, and the engine rejected it with `error`.
+    Rejected { sql: String, error: String },
+}
+
+/// One row of a [`prepare_check`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct PrepareResult {
+    pub id: String,
+    pub target: String,
+    pub outcome: PrepareOutcome,
+}
+
+/// The prepare check (DESIGN.md section 6.2): translate every `(id, sql)` of a program's statement
+/// catalogue from `source` to each of `targets` with `opts`, and `PREPARE` the result on that target's
+/// engine in `e`, against whatever schema the engine was opened with. Returns one row per statement and
+/// target, catalogue order then target order. Nothing is executed, so no fixture data is needed, only the
+/// tables. A consumer calls this from a test, with the catalogue its program already holds.
+pub fn prepare_check(
+    e: &mut Engines,
+    source: &str,
+    targets: &[&str],
+    opts: &Options,
+    catalogue: &[(&str, &str)],
+) -> Vec<PrepareResult> {
+    let mut out = Vec::new();
+    for (id, sql) in catalogue {
+        for target in targets {
+            let outcome = match unisql::translate(sql, source, target, opts) {
+                Err(err) => PrepareOutcome::Refused(err.to_string()),
+                Ok(t) => match e.prepares(target, &t.sql) {
+                    Ok(()) => PrepareOutcome::Prepared,
+                    Err(error) => PrepareOutcome::Rejected { sql: t.sql, error },
+                },
+            };
+            out.push(PrepareResult {
+                id: (*id).to_string(),
+                target: (*target).to_string(),
+                outcome,
+            });
+        }
+    }
+    out
+}
+
 pub fn rows_equal(a: &Rows, b: &Rows, ordered: bool) -> bool {
     if a.len() != b.len() {
         return false;

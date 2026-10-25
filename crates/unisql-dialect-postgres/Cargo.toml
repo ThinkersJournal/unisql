@@ -13,4 +13,4 @@ description = "PostgreSQL reader and target for UniSQL, with its matrix files."
 
 [dependencies]
 unisql-sqlparser-adapter.workspace = true
-unisql-core = { version = "0.27.0", path = "../unisql-core" }
+unisql-core = { version = "0.27.1", path = "../unisql-core" }

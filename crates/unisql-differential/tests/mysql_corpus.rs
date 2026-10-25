@@ -167,10 +167,10 @@ fn mysql_source_corpus() {
         for target in ["postgres", "sqlite", "mariadb"] {
             let (mut v, sql) = verdict(unisql::translate(&s.sql, "mysql", target, &opts));
             if let Some(sql) = sql {
+                // the mariadb target column is judged by translation alone here, as before
                 let ok = match target {
-                    "postgres" => e.pg.prepare(&sql).map(|_| ()).map_err(|e| e.to_string()),
-                    "sqlite" => e.lite.prepare(&sql).map(|_| ()).map_err(|e| e.to_string()),
-                    _ => Ok(()),
+                    "mariadb" => Ok(()),
+                    _ => e.prepares(target, &sql),
                 };
                 if ok.is_err() {
                     v = format!("invalid_output|{v}");
