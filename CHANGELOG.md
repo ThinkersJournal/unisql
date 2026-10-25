@@ -2,6 +2,15 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.6 - 2026-10-25
+
+- **Fix: `date_trunc('week' | 'quarter', x)` to MySQL and MariaDB bound a parameter wrongly.** The mapping writes `x` several times; with a positional `?`
+  that is several placeholders, but `param_order` listed the parameter once, so a caller bound too few values (and with a later `$2`, bound them to the wrong
+  placeholders). It is now refused when `x` contains a parameter (leaf `fn:date_trunc.parameter`); a literal or column timestamp is unchanged. SQLite is not affected (`?1` is
+  written twice and means the same parameter). **Known defect in every earlier release that has the week/quarter mapping, including 0.27.0 and 0.27.5's tree; fixed in 0.27.6.**
+- New test `unisql/tests/param_binding.rs`: for about 80 statements with a parameter in each argument position, on every target, the placeholders in the text must be
+  accounted for in `param_order` (red before the fix, on exactly these cases). It found no other mapping with the problem.
+
 ## 0.27.5 - 2026-10-25
 
 - **PostgreSQL `reverse`, `repeat`, `concat_ws`, `left`/`right` (literal count >= 0) and `lpad`/`rpad` (literal length >= 0, literal non-empty pad) are translated to MySQL and MariaDB** (all Exact; verified by

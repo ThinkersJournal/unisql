@@ -199,6 +199,13 @@ fn cases(maria: bool) -> Vec<Case> {
             ),
             Expect::Refused("fn:lpad.args"),
         ),
+        exp(
+            c(
+                "refuse_date_trunc_week_param",
+                "SELECT date_trunc('week', $1::timestamp)",
+            ),
+            Expect::Refused("fn:date_trunc.parameter"),
+        ),
         c(
             "strpos_position",
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
