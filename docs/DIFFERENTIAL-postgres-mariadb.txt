@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=160
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=163
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -31,6 +31,10 @@ PASS refuse_left_column           refused `fn:left.length`: a negative count mea
 PASS refuse_right_negative        refused `fn:right.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
 PASS refuse_lpad_empty_pad        refused `fn:lpad.args`: a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)
 PASS refuse_date_trunc_week_param refused `fn:date_trunc.parameter`: the week and quarter forms repeat the timestamp, which contains a parameter that a positional ? binds once
+PASS split_part_literal           same
+       -> SELECT `id`, IF(1 > (CHAR_LENGTH(`email`) - CHAR_LENGTH(REPLACE(`email`, '@', ''))) / CHAR_LENGTH('@') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`email`, '@', 1), '@', -1)), IF(2 > (CHAR_LENGTH(`email`) - CHAR_LENGTH(REPLACE(`email`, '@', ''))) / CHAR_LENGTH('@') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`email`, '@', 2), '@', -1)), IF(3 > (CHAR_LENGTH(`email`) - CHAR_LENGTH(REPLACE(`email`, '@', ''))) / CHAR_LENGTH('@') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`email`, '@', 3), '@', -1)), IF(2 > (CHAR_LENGTH(`name`) - CHAR_LENGTH(REPLACE(`name`, 'a', ''))) / CHAR_LENGTH('a') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`name`, 'a', 2), 'a', -1)), IF(1 > (CHAR_LENGTH(`name`) - CHAR_LENGTH(REPLACE(`name`, 'zz', ''))) / CHAR_LENGTH('zz') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`name`, 'zz', 1), 'zz', -1)), IF(4 > (CHAR_LENGTH(`city`) - CHAR_LENGTH(REPLACE(`city`, 'ab', ''))) / CHAR_LENGTH('ab') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`city`, 'ab', 4), 'ab', -1)), IF(3 > (CHAR_LENGTH('a,b,,d') - CHAR_LENGTH(REPLACE('a,b,,d', ',', ''))) / CHAR_LENGTH(',') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('a,b,,d', ',', 3), ',', -1)), IF(5 > (CHAR_LENGTH('a,b,,d') - CHAR_LENGTH(REPLACE('a,b,,d', ',', ''))) / CHAR_LENGTH(',') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('a,b,,d', ',', 5), ',', -1)), IF(1 > (CHAR_LENGTH('') - CHAR_LENGTH(REPLACE('', ',', ''))) / CHAR_LENGTH(',') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('', ',', 1), ',', -1)), IF(2 > (CHAR_LENGTH('héllo') - CHAR_LENGTH(REPLACE('héllo', 'é', ''))) / CHAR_LENGTH('é') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('héllo', 'é', 2), 'é', -1)), IF(2 > (CHAR_LENGTH('aaa') - CHAR_LENGTH(REPLACE('aaa', 'aa', ''))) / CHAR_LENGTH('aa') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('aaa', 'aa', 2), 'aa', -1)) FROM `users`
+PASS refuse_split_part_zero       refused `fn:split_part.args`: a zero or negative field, or an empty delimiter, behaves differently (PostgreSQL error or counts from the end)
+PASS refuse_split_part_param      refused `fn:split_part.parameter`: the string is written three times, and a positional ? binds once
 PASS strpos_position              same
        -> SELECT `id`, INSTR(`name`, 'a'), INSTR(`name`, 'a'), INSTR(`name`, 'zzz'), INSTR(`name`, '') FROM `users`
 PASS in_list                      same
@@ -279,7 +283,7 @@ PASS table_function_series_alias_refused refused `table_function.generate_series
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 118 passing translated cases:
+MATRIX (construct, tier) from 119 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -337,6 +341,7 @@ MATRIX (construct, tier) from 118 passing translated cases:
   fn:right                     exact
   fn:row_number                exact
   fn:rpad                      exact
+  fn:split_part                exact
   fn:string_agg                conditional
   fn:string_agg.order_by       exact
   fn:strpos                    conditional

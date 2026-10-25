@@ -418,6 +418,39 @@ impl Target for Mysql {
                 "a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)",
                 &["use a literal non-negative length and a literal non-empty pad"],
             )),
+            // PostgreSQL gives '' past the last field; SUBSTRING_INDEX gives the last field, so the
+            // field count is compared first. The string is written three times, so it may not hold a
+            // positional `?` (it would be bound once).
+            "split_part"
+                if args.len() == 3
+                    && unisql_core::target::literal_count(f, 2).is_some_and(|k| k >= 1)
+                    && unisql_core::target::literal_nonempty_string(f, 1) =>
+            {
+                let (s, d, k) = (&args[0], &args[1], &args[2]);
+                if s.contains('?') {
+                    return Err(ctx.refuse(
+                        "fn:split_part.parameter",
+                        "the string is written three times, and a positional ? binds once",
+                        &["split a column or a literal, or split in the application"],
+                    ));
+                }
+                // REPLACE and SUBSTRING_INDEX match bytewise whatever the collation (observed under
+                // utf8mb4_0900_ai_ci and utf8mb4_general_ci), as PostgreSQL's does.
+                ctx.note(
+                    "fn:split_part",
+                    Tier::Exact,
+                    "literal field >= 1 and literal non-empty delimiter",
+                    None,
+                )?;
+                Ok(format!(
+                    "IF({k} > (CHAR_LENGTH({s}) - CHAR_LENGTH(REPLACE({s}, {d}, ''))) / CHAR_LENGTH({d}) + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX({s}, {d}, {k}), {d}, -1))"
+                ))
+            }
+            "split_part" => Err(ctx.refuse(
+                "fn:split_part.args",
+                "a zero or negative field, or an empty delimiter, behaves differently (PostgreSQL error or counts from the end)",
+                &["use a literal field >= 1 and a literal non-empty delimiter"],
+            )),
             other => Err(ctx.refuse(
                 &format!("fn:{other}"),
                 "no verified mapping for this function on MySQL/MariaDB yet",

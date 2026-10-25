@@ -207,6 +207,24 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("fn:date_trunc.parameter"),
         ),
         c(
+            "split_part_literal",
+            "SELECT id, split_part(email, '@', 1), split_part(email, '@', 2), split_part(email, '@', 3), split_part(name, 'a', 2), split_part(name, 'zz', 1), split_part(city, 'ab', 4), split_part('a,b,,d', ',', 3), split_part('a,b,,d', ',', 5), split_part('', ',', 1), split_part('h\u{e9}llo', '\u{e9}', 2), split_part('aaa', 'aa', 2) FROM users",
+        ),
+        exp(
+            c(
+                "refuse_split_part_zero",
+                "SELECT split_part(email, '@', 0) FROM users",
+            ),
+            Expect::Refused("fn:split_part.args"),
+        ),
+        exp(
+            c(
+                "refuse_split_part_param",
+                "SELECT split_part($1::text, ',', 2)",
+            ),
+            Expect::Refused("fn:split_part.parameter"),
+        ),
+        c(
             "strpos_position",
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
         ),
