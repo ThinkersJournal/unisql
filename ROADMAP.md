@@ -254,5 +254,5 @@ against this roadmap. Each row is work a document names that no row above covers
 - **Stale text corrected in this change:** README status and "not yet published" lines, the `PUBLISHING` link text,
   and the "Publishing" line above all said 0.16.x or unpublished; the crates.io API gives 0.26.0 for all four
   crates checked. `docs/DESIGN.md` section 3.1 and 11 still call the tier table a "proposal" and
-  `RETURNING`/`ON CONFLICT .. WHERE` on SQLite "not run"; the differential suites have since run them. *Open:* a
-  pass over DESIGN's UNVERIFIED list against the matrix files.
+  `RETURNING`/`ON CONFLICT .. WHERE` on SQLite "not run"; the differential suites have since run them. *Done* in 0.27.2: the
+  pass over DESIGN's UNVERIFIED list against the matrix files (rows without a leaf stay unverified).

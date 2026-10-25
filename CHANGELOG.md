@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.2 - 2026-10-25
+
+- **Docs: `DESIGN.md` section 3.1 and 11 checked against the matrix files.** Rows the matrices cover now cite their leaves; the rest stay marked unverified. No behaviour change.
+
 ## 0.27.1 - 2026-10-25
 
 - **Internal: `unisql-differential::prepare_check` and `Engines::prepares`** (unpublished crate): translate a statement
