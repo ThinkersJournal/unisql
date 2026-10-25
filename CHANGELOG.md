@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.5 - 2026-10-25
+
+- **PostgreSQL `reverse`, `repeat`, `concat_ws`, `left`/`right` (literal count >= 0) and `lpad`/`rpad` (literal length >= 0, literal non-empty pad) are translated to MySQL and MariaDB** (all Exact; verified by
+  differential cases against live PostgreSQL 16, MySQL 8.4 and MariaDB 11.4). A non-literal or negative count (`fn:left.length`, `fn:right.length`) and an empty or non-literal pad (`fn:lpad.args`) are refused: the engines differ there.
+  Mapped from the engines' documented and observed behaviour, not from SQLGlot, so no third-party notice applies.
+
 ## 0.27.4 - 2026-10-25
 
 - **Docs: the two SQLGlot ports' source read** (`polyglot-sql` warns and continues by default; `sqlglot-rust` validates a short list), recorded in `docs/DESIGN.md` section 4. No behaviour change.

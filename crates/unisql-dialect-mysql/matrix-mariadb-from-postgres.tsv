@@ -48,6 +48,7 @@ construct	fn:ceil	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=na
 construct	fn:char_length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::escape_string_literal		postgres
 construct	fn:coalesce	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
 construct	fn:concat	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
+construct	fn:concat_ws	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_functions		postgres
 construct	fn:count	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::aggregates		postgres
 construct	fn:current_date	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::current_date_text		postgres
 construct	fn:current_user	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_current_user	no verified mapping for this function on MySQL/MariaDB yet	postgres
@@ -62,7 +63,11 @@ construct	fn:date_trunc.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	y
 construct	fn:date_trunc.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	fn:floor	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
 construct	fn:gen_random_uuid	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::gen_random_uuid_v4		postgres
+construct	fn:left	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::left_right		postgres
+construct	fn:left.length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_left_column	a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL	postgres
 construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:lpad	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::lpad_rpad		postgres
+construct	fn:lpad.args	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_lpad_empty_pad	a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)	postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
 construct	fn:make_interval	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
@@ -76,8 +81,13 @@ construct	fn:min.text_collation	mariadb	11.4.13	collation=utf8mb4_bin;schema=non
 construct	fn:now	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
 construct	fn:now.now_as_text	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours	allowance=now_as_text	postgres
 construct	fn:nullif	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
+construct	fn:repeat	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_functions		postgres
 construct	fn:replace	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:reverse	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_functions		postgres
+construct	fn:right	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::left_right		postgres
+construct	fn:right.length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_right_negative	a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL	postgres
 construct	fn:row_number	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
+construct	fn:rpad	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::lpad_rpad		postgres
 construct	fn:string_agg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	postgres
 construct	fn:string_agg.aggregate_string_truncation	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls	allowance=aggregate_string_truncation	postgres
 construct	fn:string_agg.order_by	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::agg_order_default_nulls		postgres

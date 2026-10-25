@@ -363,6 +363,52 @@ impl Target for Mysql {
                 "only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated",
                 &[],
             )),
+            // PostgreSQL text functions whose result agrees with MySQL's for the forms below
+            // (differential cases `string_functions`, `left_right`, `lpad_rpad`).
+            "reverse" if args.len() == 1 => {
+                ctx.note("fn:reverse", Tier::Exact, "", None)?;
+                Ok(call(n, args))
+            }
+            "repeat" if args.len() == 2 => {
+                ctx.note("fn:repeat", Tier::Exact, "", None)?;
+                Ok(call(n, args))
+            }
+            "concat_ws" if args.len() >= 2 => {
+                ctx.note("fn:concat_ws", Tier::Exact, "", None)?;
+                Ok(call(n, args))
+            }
+            // A negative count means "all but the last |n|" in PostgreSQL and '' in MySQL.
+            "left" | "right"
+                if args.len() == 2 && unisql_core::target::literal_count(f, 1).is_some() =>
+            {
+                ctx.note(format!("fn:{n}"), Tier::Exact, "literal count >= 0", None)?;
+                Ok(call(n, args))
+            }
+            "left" | "right" if args.len() == 2 => Err(ctx.refuse(
+                &format!("fn:{n}.length"),
+                "a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL",
+                &["use a literal non-negative count"],
+            )),
+            // A negative length is '' in PostgreSQL and NULL in MySQL; an empty pad pads nothing in
+            // PostgreSQL and gives NULL in MySQL.
+            "lpad" | "rpad"
+                if args.len() == 3
+                    && unisql_core::target::literal_count(f, 1).is_some()
+                    && unisql_core::target::literal_nonempty_string(f, 2) =>
+            {
+                ctx.note(
+                    format!("fn:{n}"),
+                    Tier::Exact,
+                    "literal length >= 0 and literal non-empty pad",
+                    None,
+                )?;
+                Ok(call(n, args))
+            }
+            "lpad" | "rpad" => Err(ctx.refuse(
+                "fn:lpad.args",
+                "a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)",
+                &["use a literal non-negative length and a literal non-empty pad"],
+            )),
             other => Err(ctx.refuse(
                 &format!("fn:{other}"),
                 "no verified mapping for this function on MySQL/MariaDB yet",
