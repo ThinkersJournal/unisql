@@ -113,6 +113,30 @@ fn a_checker_of_the_callers_runs_after_syntax_and_before_translation() {
     assert_eq!(err[0].kind, Kind::Syntax);
 }
 
+struct WantsTypes;
+
+impl Checker for WantsTypes {
+    fn check(&self, _: &Statement, ctx: &CheckContext<'_>) -> Vec<Problem> {
+        match ctx.param_types {
+            Some(t) => vec![Problem {
+                kind: Kind::Catalog,
+                message: format!("$1 is {}, {} declared", t[0], t.len()),
+            }],
+            None => vec![],
+        }
+    }
+}
+
+#[test]
+fn a_checker_is_told_the_declared_parameter_types() {
+    let checkers: &[&dyn Checker] = &[&WantsTypes];
+    let mut c = call("SELECT k FROM kv WHERE k = $1 AND n = $2");
+    assert!(expand_with(&c, checkers).is_ok()); // control: none declared, nothing reported
+    c.param_types = Some(vec!["i64".into(), "String".into()]);
+    let err = expand_with(&c, checkers).unwrap_err();
+    assert_eq!(err[0].message, "$1 is i64, 2 declared");
+}
+
 #[test]
 fn a_literal_null_for_a_not_null_column() {
     let m = messages(&call("INSERT INTO kv (k, v, n) VALUES ($1, $2, NULL)"));

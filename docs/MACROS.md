@@ -70,6 +70,9 @@ in the macro crate, so `unisql-embed` stays dependency-free.
 
 Argument checking is a second form, `sql!(.., "…", a, b)`, which yields `(Query, (A, B))` after checking
 `PARAMS == 2`; it binds nothing (drivers are the caller's). The first slice ships the bare form only.
+`params = (i64, String)` (0.27.0) declares the Rust type of each `$n`; the count must equal `PARAMS` and the
+trailing arguments. UniSQL checks only the count and hands the types, as token text, to a `Checker` in
+`CheckContext::param_types`; mapping them to column classes is the checker's (PersistAnt's) job.
 
 ## 4. Choosing targets
 

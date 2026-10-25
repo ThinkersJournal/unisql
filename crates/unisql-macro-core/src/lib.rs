@@ -31,6 +31,9 @@ pub struct Input {
     /// from a file, so this crate does no I/O. With a schema the translator stops treating comparisons
     /// on non-text columns as text, and [`SchemaChecker`] runs.
     pub schema: Option<Schema>,
+    /// The Rust types the caller declares for `$1..$n` (the macro's `params = (..)`), as token text in
+    /// order. A [`Checker`] reads them through [`CheckContext::param_types`]; this crate does not interpret them.
+    pub param_types: Option<Vec<String>>,
 }
 
 /// One target's translation.
@@ -138,6 +141,9 @@ pub struct CheckContext<'a> {
     /// The dialect the statement is written in.
     pub source: &'a str,
     pub schema: Option<&'a Schema>,
+    /// The declared Rust type of each parameter, `$1` first, as token text (`"i64"`, `"Option < String >"`);
+    /// `None` when the call declares none. Mapping a type to a column class is the checker's job.
+    pub param_types: Option<&'a [String]>,
 }
 
 /// A check over the parsed source statement, run after syntax and before translation. It reports every
@@ -324,6 +330,7 @@ pub fn expand_with(input: &Input, checkers: &[&dyn Checker]) -> Result<Expansion
     let ctx = CheckContext {
         source: &input.source,
         schema: input.schema.as_ref(),
+        param_types: input.param_types.as_deref(),
     };
     let mut found: Vec<Problem> = SchemaChecker.check(&stmt, &ctx);
     for checker in checkers {
