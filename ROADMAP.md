@@ -234,7 +234,7 @@ against this roadmap. Each row is work a document names that no row above covers
   *Open:* a spike, and amend one of the passages.
 - **Search for other Rust SQL-transpile crates** (DESIGN section 4 gap: "comes before any further emitter work").
   *Done* 2026-10-25 at README level (DESIGN section 4): no fail-closed multi-target crate found; `sqlt` is best-effort
-  with warnings, `sqlquack` is fail-closed for DuckDB only. The source of `sqlglot-rust` and `polyglot-sql` was not read (*open*, small).
+  with warnings, `sqlquack` is fail-closed for DuckDB only. The source of `sqlglot-rust` and `polyglot-sql` was read 2026-10-25 (spot check): both best-effort by default.
 - **`THIRD-PARTY-NOTICES`** (LICENCES.md, PUBLISHING 6): required in the package when anything is derived from SQLGlot;
   belongs to the "More verified mappings" row above. *Open*, with that row. The `sqlparser` licence file was
   byte-read 2026-10-25 and equals upstream's at `v0.63.0` (LICENCES.md "Our own dependency"). *Done.*

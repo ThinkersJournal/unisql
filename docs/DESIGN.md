@@ -268,7 +268,17 @@ warning to stderr", `--strict` makes a warning fatal, README states RETURNING to
 renderer, README only skimmed), `sqlout` 0.1.0 (its README returned AccessDenied), `papera` 0.2.0 (Trino/Redshift to DuckDB).
 So the claim narrows to: **no crate found that is fail-closed across PostgreSQL, SQLite and MySQL/MariaDB**; the closest
 (`sqlquack`) is fail-closed for one target and the multi-target ones read are best-effort or silent. This is still
-README-level: the source of `sqlglot-rust` and `polyglot-sql` was not read, so their behaviour on an unsupported construct is open.
+README-level for the crates above, **except the two SQLGlot ports, whose source was read the same day** (crates.io tarballs;
+read, not built or run; a spot check of the unsupported-construct paths, not a full audit):
+`polyglot-sql` 0.13.4 copies SQLGlot's `unsupported_level` (`Ignore`, `Warn`, `Raise`, `Immediate`) and **defaults to `Warn`**
+(`generator.rs`, `TranspileOptions::default()`): it collects a diagnostic, still emits SQL (sometimes with an `/* .. */`
+comment in the text), and refuses only when the caller opts in or for a few hard-coded cases (pgvector operators to SQLite,
+HANA sources). It rewrites `ILIKE` to `LOWER(a) LIKE LOWER(b)` for SQLite and MySQL without a condition. `sqlglot-rust`
+0.10.33 has one pre-generation check (`validate_dialect_support`, `lib.rs`) that errors on a short list (temporal table
+clauses on a target that lacks them, a few others); other constructs are rewritten or printed as written (`ILIKE` becomes
+`LOWER() LIKE LOWER()`; `RETURNING` is written for every target but T-SQL, with no check that the target has it). So the
+narrowed claim stands on source for these two: **best-effort by default, refusal opt-in or partial**, which is the opposite
+of UniSQL's default.
 
 ## 5. Composition with PersistAnt's `rel.*` vocabulary
 
