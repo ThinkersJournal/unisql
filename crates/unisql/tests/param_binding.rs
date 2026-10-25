@@ -143,20 +143,105 @@ const STATEMENTS: &[&str] = &[
     "SELECT concat($1, $2)",
 ];
 
+/// Statements in the MySQL dialect (positional `?`: each is parameter 1, 2, ... in order).
+const MYSQL_STATEMENTS: &[&str] = &[
+    "SELECT IFNULL(?, ?), NULLIF(?, ?)",
+    "SELECT CONCAT(?, ?), CONCAT_WS('-', ?, ?)",
+    "SELECT LOCATE(?, ?), INSTR(?, ?)",
+    "SELECT LEFT(?, 2), RIGHT(?, 2), LPAD(?, 5, 'x'), RPAD(?, 5, 'y'), REPEAT(?, 2), REVERSE(?)",
+    "SELECT SUBSTRING(?, 2, 3), SUBSTR(?, ?)",
+    "SELECT TRIM(?), LTRIM(?), RTRIM(?), LOWER(?), UPPER(?), LENGTH(?), CHAR_LENGTH(?)",
+    "SELECT REPLACE(?, ?, ?)",
+    "SELECT IF(?, ?, ?)",
+    "SELECT CASE WHEN ? > 0 THEN ? ELSE ? END",
+    "SELECT ? LIKE ?, ? NOT LIKE ?, ? REGEXP ?",
+    "SELECT ? BETWEEN ? AND ?, ? IN (?, ?)",
+    "SELECT ? <=> ?",
+    "SELECT CEIL(?), FLOOR(?), MOD(?, ?), ABS(?)",
+    "SELECT GREATEST(?, ?), LEAST(?, ?)",
+    "SELECT CAST(? AS SIGNED), CAST(? AS CHAR), CAST(? AS DATETIME)",
+    "SELECT DATE(?), YEAR(?), MONTH(?), DAY(?), HOUR(?), MINUTE(?)",
+    "SELECT UNIX_TIMESTAMP(?), FROM_UNIXTIME(?)",
+    "SELECT DATE_ADD(?, INTERVAL 1 DAY), DATE_SUB(?, INTERVAL 1 DAY), DATEDIFF(?, ?)",
+    "SELECT EXTRACT(YEAR FROM ?), EXTRACT(MONTH FROM ?)",
+    "SELECT MD5(?), UUID()",
+    "SELECT JSON_EXTRACT(?, '$.a'), JSON_UNQUOTE(JSON_EXTRACT(?, '$.a'))",
+    "SELECT a FROM t WHERE a = ? ORDER BY b LIMIT ? OFFSET ?",
+    "SELECT a FROM t ORDER BY ?",
+    "SELECT a FROM t WHERE a > ? FOR UPDATE",
+    "SELECT a FROM t WHERE a > ? FOR UPDATE SKIP LOCKED",
+    "SELECT GROUP_CONCAT(a SEPARATOR ?) FROM t",
+    "SELECT GROUP_CONCAT(a ORDER BY b SEPARATOR ?) FROM t",
+    "SELECT COUNT(DISTINCT a), SUM(a), AVG(a), MAX(a), MIN(a) FROM t WHERE b = ?",
+    "SELECT a FROM t WHERE EXISTS (SELECT 1 FROM u WHERE u.x = t.a AND u.y = ?)",
+    "SELECT a FROM t WHERE a IN (SELECT x FROM u WHERE y = ?)",
+    "WITH c AS (SELECT a FROM t WHERE b = ?) SELECT a FROM c WHERE a > ?",
+    "SELECT a FROM t UNION SELECT x FROM u WHERE y = ?",
+    "INSERT INTO t (a, b) VALUES (?, ?)",
+    "INSERT INTO t (a, b) VALUES (?, ?), (?, ?)",
+    "INSERT IGNORE INTO t (a, b) VALUES (?, ?)",
+    "INSERT INTO t (a, b) VALUES (?, ?) ON DUPLICATE KEY UPDATE b = VALUES(b)",
+    "INSERT INTO t (a, b) VALUES (?, ?) ON DUPLICATE KEY UPDATE b = ?, c = c + ?",
+    "REPLACE INTO t (a, b) VALUES (?, ?)",
+    "UPDATE t SET a = ?, b = b + ? WHERE c = ?",
+    "DELETE FROM t WHERE a = ? AND b < ?",
+    "SELECT COALESCE(?, ?)",
+];
+
+/// Statements in the SQLite dialect (numbered `?n` and bare `?`).
+const SQLITE_STATEMENTS: &[&str] = &[
+    "SELECT coalesce(?1, ?2), ifnull(?1, ?2), nullif(?1, ?2)",
+    "SELECT ?1 || ?2, ?1 || ?1",
+    "SELECT instr(?1, ?2)",
+    "SELECT substr(?1, 2, 3), substr(?1, ?2), substring(?1, ?2, ?3)",
+    "SELECT trim(?1), ltrim(?1), rtrim(?1), trim(?1, ?2)",
+    "SELECT lower(?1), upper(?1), length(?1), replace(?1, ?2, ?3)",
+    "SELECT abs(?1), min(?1, ?2), max(?1, ?2)",
+    "SELECT typeof(?1), CAST(?1 AS INTEGER), CAST(?1 AS TEXT), CAST(?1 AS REAL)",
+    "SELECT date(?1), time(?1), datetime(?1), strftime('%Y', ?1), strftime('%m', ?1)",
+    "SELECT datetime(?1, '+1 day'), julianday(?1), unixepoch(?1)",
+    "SELECT ?1 LIKE ?2, ?1 GLOB ?2, ?1 NOT LIKE ?2",
+    "SELECT ?1 IS ?2, ?1 IS NOT ?2, ?1 BETWEEN ?2 AND ?3, ?1 IN (?2, ?3)",
+    "SELECT CASE WHEN ?1 > 0 THEN ?2 ELSE ?3 END",
+    "SELECT a FROM t WHERE a = ?1 ORDER BY b LIMIT ?2 OFFSET ?3",
+    "SELECT a FROM t ORDER BY ?1 NULLS FIRST",
+    "SELECT group_concat(a, ?1) FROM t",
+    "SELECT count(*), sum(a), avg(a), total(a) FROM t WHERE b = ?1",
+    "SELECT a FROM t WHERE EXISTS (SELECT 1 FROM u WHERE u.x = t.a AND u.y = ?1)",
+    "WITH c AS (SELECT a FROM t WHERE b = ?1) SELECT a FROM c WHERE a > ?2",
+    "SELECT a FROM t UNION SELECT x FROM u WHERE y = ?1",
+    "INSERT INTO t (a, b) VALUES (?1, ?2) RETURNING a",
+    "INSERT INTO t (a, b) VALUES (?1, ?2), (?3, ?1)",
+    "INSERT OR IGNORE INTO t (a, b) VALUES (?1, ?2)",
+    "INSERT INTO t (a, b) VALUES (?1, ?2) ON CONFLICT (a) DO UPDATE SET b = excluded.b",
+    "INSERT INTO t (a, b) VALUES (?1, ?2) ON CONFLICT (a) DO UPDATE SET b = ?2 WHERE t.b < ?3",
+    "INSERT INTO t (a, b) VALUES (?1, ?2) ON CONFLICT DO NOTHING",
+    "UPDATE t SET a = ?1, b = b + ?2 WHERE c = ?3 RETURNING a",
+    "DELETE FROM t WHERE a = ?1 AND b < ?2 RETURNING a",
+    "SELECT json_extract(?1, '$.a'), ?1 -> '$.a', ?1 ->> '$.b'",
+    "SELECT hex(?1), randomblob(?1), zeroblob(?1)",
+    "SELECT row_number() OVER (PARTITION BY a ORDER BY b), lag(a, ?1) OVER (ORDER BY b) FROM t",
+    "SELECT ?, ?",
+];
+
 fn all_allowances() -> Options {
     Allowance::ALL
         .iter()
         .fold(Options::default(), |o, a| o.with(*a))
 }
 
-#[test]
-fn every_placeholder_in_the_text_is_accounted_for_in_param_order() {
+/// Translate every statement from `source` to every other target; returns the number of
+/// translations checked and the ones whose placeholders are not accounted for.
+fn sweep(source: &str, statements: &[&str]) -> (usize, Vec<String>) {
     let opts = all_allowances();
     let mut checked = 0usize;
     let mut bad = Vec::new();
-    for sql in STATEMENTS {
+    for sql in statements {
         for target in ["postgres", "sqlite", "mysql", "mariadb"] {
-            let Ok(t) = translate(sql, "postgres", target, &opts) else {
+            if target == source {
+                continue; // a dialect to itself is the identity
+            }
+            let Ok(t) = translate(sql, source, target, &opts) else {
                 continue; // a refusal binds nothing wrongly
             };
             checked += 1;
@@ -180,11 +265,34 @@ fn every_placeholder_in_the_text_is_accounted_for_in_param_order() {
             }
         }
     }
+    (checked, bad)
+}
+
+fn assert_accounted(source: &str, statements: &[&str], at_least: usize) {
+    let (checked, bad) = sweep(source, statements);
     // control: the sweep reached most translations, so a green result is not an empty loop
-    assert!(checked > 150, "only {checked} translations were checked");
+    assert!(
+        checked >= at_least,
+        "{source}: only {checked} translations were checked (want {at_least})"
+    );
     assert!(
         bad.is_empty(),
-        "placeholders not accounted for:\n{}",
+        "{source}: placeholders not accounted for:\n{}",
         bad.join("\n")
     );
+}
+
+#[test]
+fn every_placeholder_in_the_text_is_accounted_for_in_param_order() {
+    assert_accounted("postgres", STATEMENTS, 150);
+}
+
+#[test]
+fn the_same_holds_for_mysql_source_statements() {
+    assert_accounted("mysql", MYSQL_STATEMENTS, 80);
+}
+
+#[test]
+fn the_same_holds_for_sqlite_source_statements() {
+    assert_accounted("sqlite", SQLITE_STATEMENTS, 55);
 }

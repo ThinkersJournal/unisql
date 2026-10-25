@@ -192,6 +192,12 @@ each is named and why they should be granted one by one. UniSQL is pre-1.0 and h
 auth-framework would be the first, so an API change in either direction is cheap now and expensive
 later.
 
+## Binding invariant sweep
+
+- **Placeholders vs `param_order`** (0.27.6 fixed a mapping that wrote a parameter twice): `crates/unisql/tests/param_binding.rs` checks a statement list per
+  source dialect (PostgreSQL about 80, MySQL about 40, SQLite about 30). *Done* for the three sources at 0.27.7. A new mapping that
+  repeats an argument must add a statement with a parameter in that argument to the list; the list covers the mappings that existed at 0.27.7 and is not generated from the mapping table.
+
 ## Known gaps (documented, not planned)
 
 - **`ON CONFLICT (cols) WHERE <index predicate> DO ...`** (a partial unique index as the arbiter):
