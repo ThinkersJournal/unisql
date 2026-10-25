@@ -128,6 +128,9 @@ fn:right.length	RIGHT(s, n) with a negative or non-literal n is refused: the eng
 fn:lpad	LPAD(s, n, pad) is s padded on the left with pad up to n characters, or cut to its first n. Mapped for a literal n >= 0 and a literal non-empty pad.
 fn:lpad.args	LPAD/RPAD with a negative or non-literal length or an empty or non-literal pad is refused: the engines differ.
 fn:rpad	RPAD(s, n, pad) is s padded on the right with pad up to n characters, or cut to its first n. Same domain as LPAD.
+fn:split_part	split_part(s, d, n) is the n-th field of s split on d, or '' past the last field. Mapped for a literal n >= 1 and a literal non-empty d, as an IF over a field count and SUBSTRING_INDEX;
+fn:split_part.args	split_part with a zero, negative or non-literal field or an empty or non-literal delimiter is refused: the engines differ.
+fn:split_part.parameter	split_part(s, d, n) where s contains a parameter is refused on MySQL and MariaDB: the mapping writes s three times and a positional ? binds once.
 fn:repeat	REPEAT(s, n) is s concatenated n times; the empty string for n <= 0, NULL for a NULL argument.
 fn:reverse	REVERSE(s) is s with its characters in reverse order.
 fn:upper	upper(s) maps every character of s to upper case.

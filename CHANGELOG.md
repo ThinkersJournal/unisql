@@ -2,6 +2,13 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.9 - 2026-10-25
+
+- **PostgreSQL `split_part(s, d, n)` to MySQL and MariaDB** for a literal `n >= 1` and a literal non-empty `d` (Exact): `IF(n > field count, '', SUBSTRING_INDEX(SUBSTRING_INDEX(s, d, n), d, -1))`, so a
+  field past the last is `''` as in PostgreSQL. Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4 (differential case `split_part_literal`); `REPLACE` and `SUBSTRING_INDEX` match bytewise
+  under non-binary collations too. Refused: a zero, negative or non-literal field or an empty or non-literal delimiter (`fn:split_part.args`), and a string containing a parameter, because the
+  mapping writes it three times and a positional `?` binds once (`fn:split_part.parameter`). Previously every `split_part` to MySQL/MariaDB was refused.
+
 ## 0.27.8 - 2026-10-25
 
 - **Docs: patent sweep record** `docs/PATENT-SWEEP.md` for the 0.27.x line (12 ideas, 13 queries, 8 closest hits read, the two active patents' independent claims verbatim; no `needs-review`). `docs/PUBLISHING.md` requires the record before a publish. Due-diligence read, not legal advice. No behaviour change.
