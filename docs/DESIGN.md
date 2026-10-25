@@ -188,15 +188,15 @@ best-effort translation", and only `unsupported_level` set to `RAISE` or `IMMEDI
 safety-relevant records that default is the wrong one. UniSQL's default is SQLGlot's strict mode, and
 relaxing it is per-construct and named.
 
-### 3.1 What is in each tier (classification is a proposal; each row needs the differential test)
+### 3.1 What is in each tier (a proposal; rows checked against the matrix files on 2026-10-25 say so, and the matrix files, not this table, are authoritative)
 
 | Area | Examples | Tier, Postgres to SQLite | Why |
 |---|---|---|---|
-| Core DML | `SELECT`/`INSERT`/`UPDATE`/`DELETE`, joins, `GROUP BY`, `LIMIT/OFFSET`, `RETURNING` | Exact (`RETURNING` needs SQLite 3.35+) | |
-| Upsert | `ON CONFLICT … DO UPDATE` | Exact; `… WHERE` form UNVERIFIED on SQLite | sea-query shows upsert is dialect-rendered: `ON DUPLICATE KEY UPDATE` on MySQL (fetch-tool rendering) |
+| Core DML | `SELECT`/`INSERT`/`UPDATE`/`DELETE`, joins, `GROUP BY`, `LIMIT/OFFSET`, `RETURNING` | Exact (`RETURNING`: leaves `returning`, `returning.update` native, run on SQLite 3.53.2; the 3.35 floor is not run) | |
+| Upsert | `ON CONFLICT … DO UPDATE` | Exact, `… WHERE` form too (leaves `upsert`, `upsert_where` native, SQLite 3.53.2) | sea-query shows upsert is dialect-rendered: `ON DUPLICATE KEY UPDATE` on MySQL (fetch-tool rendering) |
 | Placeholders, quoting | `$1`, `"ident"` vs `` `ident` `` vs `[ident]` | Exact | mechanical |
-| Boolean, concat, casts | `true`, `||`, `::int` | Emulated | rewritten forms, per target |
-| `DISTINCT ON`, `FOR UPDATE OF`, `ILIKE` | | `DISTINCT ON` Emulated (window function); `ILIKE` Conditional (collation); row locks **Refused** on SQLite | SQLite has no row locks (`DESIGN-KINDS §2.2`, `rel.row_lock` row) |
+| Boolean, concat, casts | `true`, `||`, `::int` | `\|\|` native (`concat`); `true` and `::int` Conditional (allowances `boolean_as_integer`, `lenient_cast`) | rewritten forms, per target |
+| `DISTINCT ON`, `FOR UPDATE OF`, `ILIKE` | | `DISTINCT ON` Emulated (window function; refused with a `*` projection); `ILIKE` Conditional (`ascii_only_case_folding`, `like_case_sensitivity_is_connection_setting`); row locks (`row_lock`, `row_lock.share`) **Refused** on SQLite | SQLite has no row locks (`DESIGN-KINDS §2.2`, `rel.row_lock` row) |
 | Case/collation, `NULL` ordering, integer division, `NULL` in concatenation, empty-string-as-`NULL` on Oracle | | **Conditional** at best | same text, different result; silent drift is the failure to avoid |
 | Types | `JSONB`, `TEXT[]`, `INET`, `TIMESTAMPTZ`, `NUMERIC` precision | `JSONB`/arrays Refused or Emulated-by-text; `TIMESTAMPTZ` Conditional | SQLite has storage classes, not these types |
 | Transactions and isolation | `REPEATABLE READ READ ONLY`, savepoints, advisory locks | Isolation and advisory locks **Refused**; savepoints Exact | engine semantics, not syntax |
@@ -404,8 +404,11 @@ invocation.
 - That nothing else in the Rust ecosystem already does per-target emission with refusal by default
   (section 4 gap). Only six projects were read, at README level.
 - jOOQ's translating parser's actual behaviour (the page named it only in link text).
-- Whether `ON CONFLICT … DO UPDATE … WHERE`, `RETURNING`, and each Exact/Emulated cell in 3.1 holds
-  on SQLite at the version we would require: not run. 3.1's tiers are a **proposal**, not a result.
+- Whether each cell in 3.1 holds on SQLite *at the minimum version we would require*. Checked
+  2026-10-25 against the matrix files (SQLite 3.53.2 only): upsert and `… WHERE`, `RETURNING`, `DISTINCT ON`,
+  `ILIKE`, row locks, concat, boolean and integer casts hold as the table now states. **Still not run:** older SQLite
+  versions (the 3.35 `RETURNING` floor), and the rows with no leaf in the matrices (savepoints, isolation levels,
+  advisory locks, type rows such as `INET`, DDL). The tiers for those remain a **proposal**.
 - That `query!` does not work with `sqlx::Any` (third-party source), and whether a macro can use
   `sqlx::query!` for checking only (section 6.3).
 - The "roughly 90% single-table CRUD" figure is PersistAnt's estimate in `DESIGN-KINDS §4.2`, not a
