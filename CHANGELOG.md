@@ -2,6 +2,13 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.0 - 2026-10-25
+
+- **`sql!` takes `params = (T1, T2, ..)`**, the declared Rust type of each `$n` (count checked against the statement and the
+  trailing arguments). `unisql_macro_core::Input` gains `param_types: Option<Vec<String>>` and `CheckContext`
+  (non-exhaustive) gains `param_types: Option<&[String]>`, so a `Checker` can compare them with the catalog.
+  **Breaking:** `Input` is a plain struct, so a caller that builds it without `..Default::default()` must add the field.
+
 ## 0.26.8 - 2026-10-25
 
 - **Docs: `sqlparser` 0.63.0 licence byte-read** (identical to upstream's `LICENSE.TXT` at `v0.63.0`; no NOTICE file) recorded in `docs/LICENCES.md`; ROADMAP row closed. No behaviour change.

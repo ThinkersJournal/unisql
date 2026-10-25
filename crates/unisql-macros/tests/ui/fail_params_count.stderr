@@ -1,0 +1,5 @@
+error: the statement has 2 parameter(s) but `params` declares 1
+ --> tests/ui/fail_params_count.rs:7:18
+  |
+7 |         params = (i64),
+  |                  ^^^^^

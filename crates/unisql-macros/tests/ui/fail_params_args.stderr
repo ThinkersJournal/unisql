@@ -1,0 +1,5 @@
+error: `params` declares 2 type(s) but 1 argument(s) are given
+ --> tests/ui/fail_params_args.rs:9:9
+  |
+9 |         7_i64
+  |         ^^^^^

@@ -21,6 +21,9 @@
 //! * `schema = "file"` / `schema_ddl = ".."` give the tables the statement runs against: DDL in the
 //!   source dialect, or (a `.json` file) a schema snapshot. The path is relative to the crate's manifest
 //!   directory. A schema lets the translator and `SchemaChecker` use column facts.
+//! * `params = (i64, String)` declares the Rust type of each `$n`, in order. The count must equal the
+//!   statement's parameters (and the trailing arguments, when given); a [`Checker`](unisql_macro_core::Checker)
+//!   reads the types as `CheckContext::param_types`. UniSQL checks only the count.
 //! * `requires` / `forbids` assert construct ids (the ids a `Report` uses).
 //! * `crate = path` names the path of `unisql_embed` in the expansion (default `::unisql_embed`), so a
 //!   crate that re-exports it can point the macro at its own re-export.
@@ -62,6 +65,7 @@ struct Call {
     forbids: Option<Spanned<Vec<String>>>,
     schema: Option<Spanned<String>>,
     schema_ddl: Option<Spanned<String>>,
+    params: Option<Spanned<Vec<String>>>,
     embed: Option<Path>,
     sql: Option<Spanned<String>>,
     args: Option<Spanned<Vec<Expr>>>,
@@ -143,6 +147,18 @@ impl Parse for Call {
                     }
                     call.allow = Some(idents(input)?);
                 }
+                "params" => {
+                    if call.params.is_some() {
+                        return Err(dup("params"));
+                    }
+                    let content;
+                    let paren = syn::parenthesized!(content in input);
+                    let list = Punctuated::<syn::Type, Token![,]>::parse_terminated(&content)?;
+                    call.params = Some(Spanned {
+                        value: list.iter().map(|t| quote!(#t).to_string()).collect(),
+                        span: paren.span.join(),
+                    });
+                }
                 "requires" => {
                     if call.requires.is_some() {
                         return Err(dup("requires"));
@@ -180,7 +196,7 @@ impl Parse for Call {
                     return Err(syn::Error::new(
                         key.span(),
                         format!(
-                            "unknown argument `{other}` (known: source, targets, allow, requires, forbids, schema, schema_ddl, crate)"
+                            "unknown argument `{other}` (known: source, targets, allow, requires, forbids, schema, schema_ddl, params, crate)"
                         ),
                     ));
                 }
@@ -329,6 +345,7 @@ fn run(call: Call) -> TokenStream2 {
             .map(|a| a.value.clone())
             .unwrap_or_default(),
         sql: sql.value,
+        param_types: call.params.as_ref().map(|p| p.value.clone()),
     };
     let e = match expand(&input) {
         Ok(e) => e,
@@ -389,6 +406,29 @@ fn run(call: Call) -> TokenStream2 {
             }
         }
     };
+    if let Some(p) = &call.params {
+        if p.value.len() as u32 != params {
+            return error(
+                p.span,
+                &format!(
+                    "the statement has {params} parameter(s) but `params` declares {}",
+                    p.value.len()
+                ),
+            );
+        }
+        if let Some(args) = &call.args
+            && args.value.len() != p.value.len()
+        {
+            return error(
+                args.span,
+                &format!(
+                    "`params` declares {} type(s) but {} argument(s) are given",
+                    p.value.len(),
+                    args.value.len()
+                ),
+            );
+        }
+    }
     match call.args {
         None => query,
         Some(args) if args.value.len() as u32 != params => error(
