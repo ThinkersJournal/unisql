@@ -223,8 +223,9 @@ against this roadmap. Each row is work a document names that no row above covers
   construct-to-capability mapping, and an optional dev-dependency drift test against `persistant-core`. `analyse`
   already returns leaf ids (done). *Held: PersistAnt* (vocabulary and row schema are theirs).
 - **Prepare check as a shipped mechanism** (DESIGN 6.2, "the recommended first mechanism"): translate a program's
-  statement catalogue and `PREPARE`/`EXPLAIN` on each target. The differential corpus runners do it for the corpora
-  (done); a reusable harness for a consumer's catalogue does not exist. *Open.*
+  statement catalogue and `PREPARE`/`EXPLAIN` on each target. *Done by recipe* (0.27.1, PM ruling 2026-10-25):
+  `unisql_differential::prepare_check` plus the README recipe; a published crate with driver dependencies is
+  revisited only if two consumers ask.
 - **`unisql::query!` / `sqlx::query!` hand-off** (DESIGN 6.3, D3 spike): the translate-at-build half is done as
   `sql!` (0.24.14 to 0.24.18). Handing the source text to `sqlx::query!` for the source check, and whether that
   works with `sqlx::Any`, is unverified. *Held: PersistAnt* (the first consumer; typed records are theirs).

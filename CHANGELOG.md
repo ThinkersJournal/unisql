@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.1 - 2026-10-25
+
+- **Internal: `unisql-differential::prepare_check` and `Engines::prepares`** (unpublished crate): translate a statement
+  catalogue for each target and `PREPARE` it on a real engine; the MySQL corpus runner uses `prepares`. README gains the
+  recipe. No change to any published crate's behaviour.
+
 ## 0.27.0 - 2026-10-25
 
 - **`sql!` takes `params = (T1, T2, ..)`**, the declared Rust type of each `$n` (count checked against the statement and the
