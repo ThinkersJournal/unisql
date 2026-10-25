@@ -298,6 +298,15 @@ impl Target for Mysql {
                     None,
                 )?;
                 let ts = &args[1];
+                // The week and quarter forms write the timestamp more than once; a positional `?` is
+                // bound once, so a parameter there would leave a placeholder unbound.
+                if matches!(field.as_str(), "week" | "quarter") && ts.contains('?') {
+                    return Err(ctx.refuse(
+                        "fn:date_trunc.parameter",
+                        "the week and quarter forms repeat the timestamp, which contains a parameter that a positional ? binds once",
+                        &["cast the parameter in a subquery, or truncate in the application"],
+                    ));
+                }
                 Ok(match field.as_str() {
                     "week" => format!(
                         "CAST(DATE_FORMAT(DATE_SUB({ts}, INTERVAL WEEKDAY({ts}) DAY), '%Y-%m-%d 00:00:00') AS DATETIME)"

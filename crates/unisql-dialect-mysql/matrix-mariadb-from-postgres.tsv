@@ -58,6 +58,7 @@ construct	fn:date_trunc.decade	mariadb	11.4.13	collation=utf8mb4_bin;schema=none
 construct	fn:date_trunc.hour	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	fn:date_trunc.minute	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
 construct	fn:date_trunc.month	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:date_trunc.parameter	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_date_trunc_week_param	the week and quarter forms repeat the timestamp, which contains a parameter that a positional ? binds once	postgres
 construct	fn:date_trunc.quarter	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres

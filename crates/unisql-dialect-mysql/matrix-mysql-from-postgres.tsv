@@ -58,6 +58,7 @@ construct	fn:date_trunc.decade	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no
 construct	fn:date_trunc.hour	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	fn:date_trunc.minute	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	fn:date_trunc.month	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
+construct	fn:date_trunc.parameter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_date_trunc_week_param	the week and quarter forms repeat the timestamp, which contains a parameter that a positional ? binds once	postgres
 construct	fn:date_trunc.quarter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=159
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=160
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -30,6 +30,7 @@ PASS lpad_rpad                    same
 PASS refuse_left_column           refused `fn:left.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
 PASS refuse_right_negative        refused `fn:right.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
 PASS refuse_lpad_empty_pad        refused `fn:lpad.args`: a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)
+PASS refuse_date_trunc_week_param refused `fn:date_trunc.parameter`: the week and quarter forms repeat the timestamp, which contains a parameter that a positional ? binds once
 PASS strpos_position              same
        -> SELECT `id`, INSTR(`name`, 'a'), INSTR(`name`, 'a'), INSTR(`name`, 'zzz'), INSTR(`name`, '') FROM `users`
 PASS in_list                      same

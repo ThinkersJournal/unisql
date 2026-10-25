@@ -67,6 +67,7 @@ fn:date_trunc.day	date_trunc('day', ts) is ts cut to the start of its day.
 fn:date_trunc.hour	date_trunc('hour', ts) is ts cut to the start of its hour.
 fn:date_trunc.minute	date_trunc('minute', ts) is ts cut to the start of its minute.
 fn:date_trunc.month	date_trunc('month', ts) is ts cut to the start of its month.
+fn:date_trunc.parameter	date_trunc('week' | 'quarter', x) where x contains a parameter is refused on MySQL and MariaDB: the mapping writes x several times and a positional ? binds once.
 fn:date_trunc.week	date_trunc('week', ts) is ts cut to the start of its ISO week (Monday).
 fn:date_trunc.quarter	date_trunc('quarter', ts) is ts cut to the start of its quarter.
 fn:date_trunc.decade	date_trunc('decade', ts) is ts cut to the start of its decade. Refused where no mapping is verified.
