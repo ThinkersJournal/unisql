@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=153
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=159
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -21,6 +21,15 @@ PASS ceil_floor                   same
        -> SELECT `id`, CEIL(`score`), CEIL(`score`), FLOOR(`score`), FLOOR(-`score`) FROM `users`
 PASS mod_function                 same
        -> SELECT `id`, `age` % 7, (-`age`) % 7 FROM `users`
+PASS string_functions             same
+       -> SELECT `id`, REVERSE(`name`), REPEAT(`name`, 2), REPEAT(`name`, 0), REPEAT(`name`, -1), REVERSE(`email`), CONCAT_WS('-', `name`, `city`, `email`), CONCAT_WS(NULL, `name`, `city`), CONCAT_WS('', `name`), REVERSE('héllo'), REPEAT(`email`, `id`) FROM `users`
+PASS left_right                   same
+       -> SELECT `id`, LEFT(`name`, 2), RIGHT(`name`, 2), LEFT(`name`, 0), RIGHT(`name`, 0), LEFT(`name`, 100), RIGHT(`name`, 100), LEFT(`email`, 3), LEFT('héllo', 2), RIGHT('héllo', 2) FROM `users`
+PASS lpad_rpad                    same
+       -> SELECT `id`, LPAD(`name`, 8, '*'), RPAD(`name`, 8, 'ab'), LPAD(`name`, 3, '*'), RPAD(`name`, 0, 'x'), LPAD(`city`, 6, 'xy'), LPAD('é', 3, 'ü'), RPAD(`email`, 4, '.') FROM `users`
+PASS refuse_left_column           refused `fn:left.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
+PASS refuse_right_negative        refused `fn:right.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
+PASS refuse_lpad_empty_pad        refused `fn:lpad.args`: a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)
 PASS strpos_position              same
        -> SELECT `id`, INSTR(`name`, 'a'), INSTR(`name`, 'a'), INSTR(`name`, 'zzz'), INSTR(`name`, '') FROM `users`
 PASS in_list                      same
@@ -269,7 +278,7 @@ PASS table_function_series_alias_refused refused `table_function.generate_series
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 115 passing translated cases:
+MATRIX (construct, tier) from 118 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -300,6 +309,7 @@ MATRIX (construct, tier) from 115 passing translated cases:
   fn:ceil                      exact
   fn:char_length               emulated
   fn:coalesce                  exact
+  fn:concat_ws                 exact
   fn:count                     exact
   fn:current_date              exact
   fn:date_trunc.day            exact
@@ -311,15 +321,21 @@ MATRIX (construct, tier) from 115 passing translated cases:
   fn:date_trunc.year           exact
   fn:floor                     exact
   fn:gen_random_uuid           emulated
+  fn:left                      exact
   fn:length                    emulated
+  fn:lpad                      exact
   fn:ltrim                     exact
   fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
   fn:now                       conditional
   fn:nullif                    exact
+  fn:repeat                    exact
   fn:replace                   exact
+  fn:reverse                   exact
+  fn:right                     exact
   fn:row_number                exact
+  fn:rpad                      exact
   fn:string_agg                conditional
   fn:string_agg.order_by       exact
   fn:strpos                    conditional

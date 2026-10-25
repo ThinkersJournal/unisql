@@ -173,6 +173,33 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id, mod(age, 7), mod(-age, 7) FROM users",
         ),
         c(
+            "string_functions",
+            "SELECT id, reverse(name), repeat(name, 2), repeat(name, 0), repeat(name, -1), reverse(email), concat_ws('-', name, city, email), concat_ws(NULL, name, city), concat_ws('', name), reverse('h\u{e9}llo'), repeat(email, id) FROM users",
+        ),
+        c(
+            "left_right",
+            "SELECT id, left(name, 2), right(name, 2), left(name, 0), right(name, 0), left(name, 100), right(name, 100), left(email, 3), left('h\u{e9}llo', 2), right('h\u{e9}llo', 2) FROM users",
+        ),
+        c(
+            "lpad_rpad",
+            "SELECT id, lpad(name, 8, '*'), rpad(name, 8, 'ab'), lpad(name, 3, '*'), rpad(name, 0, 'x'), lpad(city, 6, 'xy'), lpad('\u{e9}', 3, '\u{fc}'), rpad(email, 4, '.') FROM users",
+        ),
+        exp(
+            c("refuse_left_column", "SELECT left(name, age) FROM users"),
+            Expect::Refused("fn:left.length"),
+        ),
+        exp(
+            c("refuse_right_negative", "SELECT right(name, -1) FROM users"),
+            Expect::Refused("fn:right.length"),
+        ),
+        exp(
+            c(
+                "refuse_lpad_empty_pad",
+                "SELECT lpad(name, 5, '') FROM users",
+            ),
+            Expect::Refused("fn:lpad.args"),
+        ),
+        c(
             "strpos_position",
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
         ),

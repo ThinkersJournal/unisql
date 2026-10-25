@@ -123,11 +123,12 @@ fn:concat_ws	CONCAT_WS(sep, a, b, ...) is the non-NULL arguments joined by sep; 
 fn:left	LEFT(s, n) is the first n characters of s (all of s when n exceeds its length). Mapped for a literal n >= 0.
 fn:left.length	LEFT(s, n) with a negative or non-literal n is refused: the engines differ for a negative n.
 fn:right	RIGHT(s, n) is the last n characters of s (all of s when n exceeds its length). Mapped for a literal n >= 0.
-fn:lpad	LPAD(s, n, pad) is s padded on the left with pad up to n characters, or cut to its first n. Mapped for a literal n >= 0 and a literal non-empty pad. Refused where no mapping is verified.
+fn:right.length	RIGHT(s, n) with a negative or non-literal n is refused: the engines differ for a negative n.
+fn:lpad	LPAD(s, n, pad) is s padded on the left with pad up to n characters, or cut to its first n. Mapped for a literal n >= 0 and a literal non-empty pad.
 fn:lpad.args	LPAD/RPAD with a negative or non-literal length or an empty or non-literal pad is refused: the engines differ.
-fn:rpad	RPAD(s, n, pad) is s padded on the right with pad up to n characters, or cut to its first n. Same domain as LPAD. Refused where no mapping is verified.
-fn:repeat	REPEAT(s, n) is s concatenated n times, for a literal n >= 0.
-fn:reverse	REVERSE(s) is s with its characters in reverse order. Refused where no mapping is verified.
+fn:rpad	RPAD(s, n, pad) is s padded on the right with pad up to n characters, or cut to its first n. Same domain as LPAD.
+fn:repeat	REPEAT(s, n) is s concatenated n times; the empty string for n <= 0, NULL for a NULL argument.
+fn:reverse	REVERSE(s) is s with its characters in reverse order.
 fn:upper	upper(s) maps every character of s to upper case.
 ilike	`a ILIKE p` is a case-insensitive LIKE with `%` and `_` wildcards.
 interval_arithmetic	`ts +/- make_interval(secs => n)` shifts a timestamp by n seconds.

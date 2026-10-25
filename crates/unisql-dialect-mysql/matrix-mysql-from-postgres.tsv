@@ -48,6 +48,7 @@ construct	fn:ceil	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=nativ
 construct	fn:char_length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::escape_string_literal		postgres
 construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
 construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
+construct	fn:concat_ws	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_functions		postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
 construct	fn:current_user	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_current_user	no verified mapping for this function on MySQL/MariaDB yet	postgres
@@ -62,7 +63,11 @@ construct	fn:date_trunc.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes	
 construct	fn:date_trunc.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
 construct	fn:floor	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::ceil_floor		postgres
 construct	fn:gen_random_uuid	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::gen_random_uuid_v4		postgres
+construct	fn:left	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_right		postgres
+construct	fn:left.length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_left_column	a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL	postgres
 construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:lpad	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lpad_rpad		postgres
+construct	fn:lpad.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_lpad_empty_pad	a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)	postgres
 construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
@@ -76,8 +81,13 @@ construct	fn:min.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	y
 construct	fn:now	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
 construct	fn:now.now_as_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=now_as_text	postgres
 construct	fn:nullif	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
+construct	fn:repeat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_functions		postgres
 construct	fn:replace	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:reverse	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_functions		postgres
+construct	fn:right	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_right		postgres
+construct	fn:right.length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_right_negative	a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL	postgres
 construct	fn:row_number	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
+construct	fn:rpad	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lpad_rpad		postgres
 construct	fn:string_agg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	diverges from the strict contract unless accepted: allowance=aggregate_string_truncation	postgres
 construct	fn:string_agg.aggregate_string_truncation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls	allowance=aggregate_string_truncation	postgres
 construct	fn:string_agg.order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::agg_order_default_nulls		postgres

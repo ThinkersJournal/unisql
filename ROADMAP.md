@@ -45,7 +45,7 @@ and a CHANGELOG entry; a form with no verified mapping is refused, never guessed
   `age` refused with a reason; per-leaf matrices). What stays refused: `fn:date_trunc.decade`, `extract.century`,
   `fn:age` (a calendar interval no target can hold) and `to_char` formats outside the supported pieces
   (`fn:to_char.format`). A new field or format is a new leaf with a verified mapping, not a gap in this row.
-- **More verified mappings**, derived from SQLGlot only with a file+SHA trace and its MIT notice kept
+- **More verified mappings** (0.27.5 added reverse/repeat/concat_ws/left/right/lpad/rpad to MySQL and MariaDB from engine behaviour, no SQLGlot; `split_part`, regexp and the JSON paths remain), derived from SQLGlot only with a file+SHA trace and its MIT notice kept
   (`docs/LICENCES.md`): string and regexp functions, JSON paths for MySQL (`json_get_text` is refused
   there today), `substring`/`position` families.
 - **Source dialects beyond the four** (SQL Server, Oracle), once target coverage for them is planned:
