@@ -56,8 +56,12 @@ licensed here. As the goal is to glean concepts from a Java codebase, the practi
 
 ## Our own dependency, for completeness
 
-`sqlparser` 0.63.0: Apache-2.0 (crates.io API, 2026-10-12; DESIGN.md section 4). Its licence file at the
-tag was **not** byte-read in this pass; do that before shipping a binary that links it.
+`sqlparser` 0.63.0: Apache-2.0 (crates.io API, 2026-10-12; DESIGN.md section 4). Byte-read 2026-10-25:
+the crate as `cargo` unpacks it (`sqlparser-0.63.0/LICENSE.TXT`, 10847 bytes, sha256
+`a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2`, git blob `16fe87b06e802f094b3fbb0894b137bca2b16ef1`)
+is byte-identical to `LICENSE.TXT` at upstream tag `v0.63.0` (commit `85b1a6f2223bf95d98cf1bc504971abd191dc869`,
+same blob SHA and sha256, from `apache/datafusion-sqlparser-rs`): the Apache License 2.0 text. The tag's root has no
+`NOTICE` file, so there is no NOTICE to carry. We link it unmodified. Re-read when the pin moves.
 
 ## Summary
 
