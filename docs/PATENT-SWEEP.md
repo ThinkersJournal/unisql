@@ -1,7 +1,7 @@
 # Patent sweep: UniSQL 0.27.x @ 7692be8
 
-Date: 2026-10-25; Run by: Claude Sonnet 5.5 for the maintainers; Method: AI-assisted web search of Google Patents and read of the closest
-hits through a summarising page-fetch tool; **NOT legal advice; NOT a freedom-to-operate opinion.**
+Date: 2026-10-25; Run by: Claude Sonnet 5.5 for the maintainers; Method: AI-assisted web search of Google Patents; the independent claims of the two active hits were then read **verbatim** from Google Patents'
+public page text (a small script that prints the claim text of a Google Patents page), the other hits through a summarising page-fetch tool; **NOT legal advice; NOT a freedom-to-operate opinion.**
 Covers: the workspace at version line **0.27.x** (swept at commit `7692be8`, 0.27.7). Re-sweep when a new family of capability is added, and at least yearly.
 
 ## Ideas swept
@@ -46,8 +46,15 @@ All on Google Patents through a web-search tool (US-only results), 2026-10-25. T
 | Q8 | 8 | `patent database schema aware SQL translation column types change comparison semantics collation conversion between database systems` |
 | Q9 | 9 | `patent upsert merge statement conversion between database systems ON CONFLICT ON DUPLICATE KEY emulation translating insert-or-update` |
 
-Ideas 4, 10, 11 and 12 had no query of their own: 4 and 10 are about this project's test and reporting artefacts, 11 is covered by Q3/Q4 results, 12 is a
-data table of observed engine behaviour. **A later pass should add queries for them.**
+| Q10 | 4 | `patent matrix of supported features per database backend version generated from automated test results compatibility matrix` |
+| Q11 | 10 | `patent analyzing SQL statement to determine required database features without executing, listing constructs unsupported by target databases compatibility check` |
+| Q12 | 11 | `patent validating translated SQL statements by preparing them on target database without executing, migration statement catalogue verification` |
+| Q13 | 12 | `patent function mapping table between database systems string functions equivalent argument conditions lpad substr behavior differences conversion` |
+
+Q10 to Q13 found no patent claiming the idea. Closest: US12210442B2 (automated testing of database commands; not a feature matrix), US9430505B2 (data-warehouse
+migration validation by running validation SQL in the target; executes, the opposite of a prepare-only check), US20140244680A1 and US5956727A (hits 7 and 8 below).
+Academic work (SQLancer++, arXiv 2503.21424 and 2505.02012; RISE, arXiv 2601.05579) infers or checks dialect support by running statements; it is prior art in the
+literature, not a patent.
 
 ## Hits
 
@@ -56,12 +63,15 @@ steps are paraphrased). Status is Google Patents' listing and is an assumption, 
 
 | # | patent | title | assignee | status | claim(s) read | overlap | our difference | verdict |
 |---|---|---|---|---|---|---|---|---|
-| 1 | US9582500B2 (pub. US20140280259A1) | Run-time SQL language translation | Oracle International Corp | granted 2017-02-28; listed active, adjusted expiry 2034-12-19 | independent 1 (method), 9 (system), 17 (medium), summarised: intercept a query containing dynamically generated SQL in a foreign dialect "incompatible" with the native database, at run time; exclude literals, match the rest against canonical templates, translate with the templates, reinsert the literals, before returning results | idea 1 (translate SQL between dialects), partly 6 | UniSQL is a library call or build-time macro on a given statement; it does not intercept an application's queries on a database session, has no canonical-template lookup and no literal removal/reinsertion, and refuses rather than falling back to a look-up table | clear on the independent claims as summarised (provisional: claim text not read verbatim) |
-| 2 | US10216826B2 (pub. US20160063063A1) | Database query system | Salesforce Inc | granted 2019-02-26; listed active, adjusted expiry 2037-10-08 | independent 1 (system), 6 (method), 14 (medium), summarised: a statement mapping database of first/second-database statements; receive a user query containing a second-database statement; parse it, transform to a tree, generate (unparse) the first-database statement; display portions in real time with each keystroke; execute in the first database | idea 1 (parse to tree, unparse to a target) | UniSQL has no statement-mapping database, no keystroke-time display and no execution (it returns text); its refusal and report steps are not recited | clear on the independent claims as summarised (provisional) |
+| 1 | US9582500B2 (pub. US20140280259A1) | Run-time SQL language translation | Oracle International Corp | granted 2017-02-28; listed active, adjusted expiry 2034-12-19 | independent 1 (method), 9 (system), 17 (medium), verbatim; in short: intercept a query containing dynamically generated SQL in a foreign dialect "incompatible" with the native database, at run time; exclude literals, match the rest against canonical templates, translate with the templates, reinsert the literals, before returning results | idea 1 (translate SQL between dialects), partly 6 | UniSQL is a library call or build-time macro on a given statement; it does not intercept an application's queries on a database session, has no canonical-template lookup and no literal removal/reinsertion, and refuses rather than falling back to a look-up table | **clear.** Claims 1, 9 and 17 (read verbatim) each require, among other things, that the query be "intercepted" and translated "prior to returning results of the query to the application", and the steps "excluding literal values", "identifying one or more canonical templates" and "inserting the literal values". UniSQL does none of these |
+| 2 | US10216826B2 (pub. US20160063063A1) | Database query system | Salesforce Inc | granted 2019-02-26; listed active, adjusted expiry 2037-10-08 | independent 1 (system), 6 (method), 14 (medium), verbatim; in short: a statement mapping database of first/second-database statements; receive a user query containing a second-database statement; parse it, transform to a tree, generate (unparse) the first-database statement; display portions in real time with each keystroke; execute in the first database | idea 1 (parse to tree, unparse to a target) | UniSQL has no statement-mapping database, no keystroke-time display and no execution (it returns text); its refusal and report steps are not recited | **clear.** Claims 1, 6 and 14 (read verbatim) each require a "statement mapping database", displaying the statement "in real-time with each keystroke", and "executing" it "within the first database". UniSQL has none of these |
 | 3 | US7664795B2 (pub. US20050149537A1) | Apparatus and method for database migration | Microsoft Corp | granted 2010-02-16; listed **expired** (adjusted expiry 2025-03-02) | independent 1, 9, 13, summarised: migrate a database (schema, stored-procedure SQL to trees to target dialect) and install a converter wrapper on the target driver; middleware with a cache of converted statements | idea 1 | expired; UniSQL also migrates no schema and has no driver wrapper or statement cache | clear (expired) |
 | 4 | US8108415B2 (pub. US20090063441A1) | Query transformation | IBM, later SAP SE | granted 2012-01-31; listed expired (fee related) | independent 1, 11, 16, summarised: rewrite a query with control breaks (OVER (PARTITION BY) aggregates) into a derived table with GROUP BY so a target can compute it | idea 9 (rewriting a construct the target lacks) | different construct (control-break aggregates); UniSQL's emulations (DISTINCT ON, NULLS ordering, upsert WHERE, strftime) are not recited | clear (expired; different construct) |
 | 5 | US6535874B2 (pub. US20010013038A1) | Technique for providing a universal query for multiple different databases | IBM | granted 2003-03-18; listed expired (adjusted expiry 2017-11-01) | independent 1, 7, summarised: one query sent to servers for several databases, each server builds a database-specific query | idea 1 | expired; federated query fan-out, not a dialect translator | clear (expired) |
 | 6 | US8645346B2 (pub. US20120323956A1) | Composable SQL query generation | Microsoft Corp | granted 2014-02-04; listed expired (lapsed for fees, 2026-02-04) | independent 1, 11, 14, summarised: operator graph from a data model to composable SQL, remotable to a target source, streamed results; dependent claims 13 and 17 add post-processing of operations the source lacks | idea 9, 2 (refusing vs post-processing) | expired; UniSQL builds no operator graph from a data model, executes nothing and does no post-processing | clear (expired) |
+
+| 7 | US20140244680A1 | SQL query parsing and translation | SAP SE (original: individual) | **abandoned** 2017-04-04 (failure to respond to an office action); never granted | claim 1 (storage medium), verbatim: split a first database's SQL into tokens, create a "current parser" per keyword token that stores table and column names, store the token before an open parenthesis as a function name, consolidate the parsers' names, replace table, column and function names with names compatible with a second database, generate a result | idea 1, 12 (replacing function names) | an abandoned application, not an enforceable right; UniSQL reads into an AST through `sqlparser` (no per-keyword parser objects) and refuses rather than renaming when the meaning differs | clear (abandoned) |
+| 8 | US5956727A | Heterogeneous database system with data source extensibility and alteration of database functions | IBM | granted 1999-09-21; listed **expired** (fee lapse 2003; term to 2017-09-15) | claim 1, verbatim: a system manager with "a catalogue of functions that are supportable by various databases" and an "entry matrix" through which a user alters a matrix of functional capabilities | idea 4 (per-backend capability matrix), 12 | expired; a federated-database manager with a user-edited capability matrix, not generated per-version test evidence | clear (expired) |
 
 Seen and set aside without reading claims (different subject): US20190243831A1 (natural-language query translation), EP1759315B1 / US20050289125A1
 (XQuery to SQL AST conversion), US8463801B2, US7120645B2 (XML/XQuery rewriting), US7912834B2 / US8103689B2 (materialized-view rewrite of rank and row_number
@@ -71,18 +81,17 @@ The multi-tenant family and US6877000B2 are the likeliest to deserve a claim-lev
 
 ## Needs review (to the maintainers)
 
-None from this pass. Hits 1 and 2 are **active** patents whose independent claims share the broad theme of "translate SQL between dialects"; the differences above are
-real on the summaries I could read, but a full-text read of their independent claims by someone who can reproduce the claim language is the one step that would
-move them from "clear (provisional)" to "clear".
+None from this pass. Hits 1 and 2 are the **active** patents; both share the broad theme of "translate SQL between dialects", and their independent claims, read
+verbatim, each carry limiting elements UniSQL does not have (quoted in the table). A claim-by-claim comparison by counsel is still the proper step if either
+becomes closer to our design (for example if UniSQL ever intercepted a live session or matched statements against stored templates).
 
 ## Limitations
 
 - AI-assisted search and read, by a model; not legal advice and not a freedom-to-operate opinion. A lawyer's review is a separate purchase.
-- Nine queries on one source (Google Patents through a snippet-returning search tool, US-only results). No USPTO full-text, EPO/Espacenet or WIPO queries; no
+- Thirteen queries on one source (Google Patents through a snippet-returning search tool, US-only results). No USPTO full-text, EPO/Espacenet or WIPO queries; no
   non-English patents beyond what Google returned; no classification-code search (for example CPC G06F 16/24 and 16/25).
-- Claims were read through a summarising fetch tool, not as verbatim text, so verdicts on the two active patents (hits 1 and 2) are provisional. For hits 1 to 4 the
-  page text was longer than the tool read (about the last 5 to 20 per cent was not read); for hit 6 the claims section was read in a second call.
-- Ideas 4, 10, 11 and 12 were not searched separately (see above). Open-source and academic prior art (SQLGlot and the like) is covered by `docs/DESIGN.md`
+- The claims of hits 1, 2, 7 and 8 were read verbatim from Google Patents' machine-converted page text; hits 3 to 6 only through a summarising fetch tool (they are
+  expired, so the risk is low). Google's text can differ from the official record. Dependent claims were not compared. Open-source and academic prior art (SQLGlot and the like) is covered by `docs/DESIGN.md`
   section 4 and `docs/LICENCES.md`, not here.
 - The search found nothing that claims a refusal-by-default translator with a per-construct fidelity report or named allowances; absence from these nine
   queries is not proof that none exists.
