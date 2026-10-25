@@ -69,6 +69,9 @@ cannot select `unisql-core ^0.16.1` (the registry has 0.0.0) until it is publish
 
 ## 4. Order and checks
 
+Before step 1: `docs/PATENT-SWEEP.md` exists and its "Covers" line names the version line being published (first record 2026-10-25, covers 0.27.x; re-sweep when a new family of capability is added, and at least yearly).
+
+
 Dependency order (each waits for the previous one to appear in the index):
 
 1. `unisql-core`

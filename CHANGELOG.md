@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.8 - 2026-10-25
+
+- **Docs: patent sweep record** `docs/PATENT-SWEEP.md` for the 0.27.x line (12 ideas, 13 queries, 8 closest hits read, the two active patents' independent claims verbatim; no `needs-review`). `docs/PUBLISHING.md` requires the record before a publish. Due-diligence read, not legal advice. No behaviour change.
+
 ## 0.27.7 - 2026-10-25
 
 - **Test: the placeholder-accounting sweep (`unisql/tests/param_binding.rs`) now also covers MySQL-source (about 40) and SQLite-source (about 30) statements** to every other target
