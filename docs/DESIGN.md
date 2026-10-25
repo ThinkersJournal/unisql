@@ -257,6 +257,19 @@ ships both a Rust parser and per-target emitters with a refusal-by-default polic
 it is only "not found in the six read". Searching for others (other Rust SQL-transpile crates,
 `prql`-style languages, the dialect handling inside `datafusion`) comes before any further emitter work.
 
+**Search, 2026-10-25 (crates.io search API, README level only; versions as listed that day).** Queries: "sql transpile",
+"sql transpiler", "sql dialect translate", "sqlglot", "sql dialect convert", "postgres to sqlite sql". Found and read:
+`sqlglot-rust` 0.10.33 and `polyglot-sql` 0.13.4 (30+ dialects each; their READMEs say nothing about what happens to a
+construct the target lacks: 0 hits for refuse/unsupported/lossy in the first, validation options only in the second);
+`sqlt` 0.3.5 (MySQL, MariaDB, PostgreSQL, T-SQL, SQLite; **best-effort by default**: "emits the closest equivalent and prints a
+warning to stderr", `--strict` makes a warning fatal, README states RETURNING to MySQL as the example); `sqlquack` 0.1.0
+(**fail-closed**, but DuckDB output only and "not a broad N x N dialect transpiler"); `sqlemit` 0.0.1 (emits from
+`sqlparser` AST types per target; ClickHouse in its example; refusal policy not stated). Not read: `squonk` 3.0.0 (parser and
+renderer, README only skimmed), `sqlout` 0.1.0 (its README returned AccessDenied), `papera` 0.2.0 (Trino/Redshift to DuckDB).
+So the claim narrows to: **no crate found that is fail-closed across PostgreSQL, SQLite and MySQL/MariaDB**; the closest
+(`sqlquack`) is fail-closed for one target and the multi-target ones read are best-effort or silent. This is still
+README-level: the source of `sqlglot-rust` and `polyglot-sql` was not read, so their behaviour on an unsupported construct is open.
+
 ## 5. Composition with PersistAnt's `rel.*` vocabulary
 
 PersistAnt is early in its development, so its relational bits can change where they do not mesh with

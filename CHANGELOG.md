@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.3 - 2026-10-25
+
+- **Docs: search for other Rust SQL-transpile crates recorded** in `docs/DESIGN.md` section 4 (README level); ROADMAP row closed. No behaviour change.
+
 ## 0.27.2 - 2026-10-25
 
 - **Docs: `DESIGN.md` section 3.1 and 11 checked against the matrix files.** Rows the matrices cover now cite their leaves; the rest stay marked unverified. No behaviour change.
