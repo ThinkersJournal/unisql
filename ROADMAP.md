@@ -234,8 +234,8 @@ against this roadmap. Each row is work a document names that no row above covers
 - **Search for other Rust SQL-transpile crates** (DESIGN section 4 gap: "comes before any further emitter work").
   The claim that none ships a parser plus per-target emitters with refusal by default is still unverified. *Open.*
 - **`THIRD-PARTY-NOTICES`** (LICENCES.md, PUBLISHING 6): required in the package when anything is derived from SQLGlot;
-  belongs to the "More verified mappings" row above. *Open*, with that row. The `sqlparser` licence file at the
-  pinned tag has not been byte-read (LICENCES.md "Our own dependency"). *Open.*
+  belongs to the "More verified mappings" row above. *Open*, with that row. The `sqlparser` licence file was
+  byte-read 2026-10-25 and equals upstream's at `v0.63.0` (LICENCES.md "Our own dependency"). *Done.*
 - **Column and type codec per target** (MEASUREMENT "The oracle finding": timestamp as text vs epoch, JSONB as
   text, row-as-blob). `Schema` and the `text_collation`/`now_as_text` allowances cover part. A first-class
   "Types" input is not built. *Open;* the consumer side is auth-framework's (proposal above).

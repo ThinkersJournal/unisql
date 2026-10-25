@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.26.8 - 2026-10-25
+
+- **Docs: `sqlparser` 0.63.0 licence byte-read** (identical to upstream's `LICENSE.TXT` at `v0.63.0`; no NOTICE file) recorded in `docs/LICENCES.md`; ROADMAP row closed. No behaviour change.
+
 ## 0.26.7 - 2026-10-24
 
 - **Internal: the README examples are compiled as doc-tests** (`crates/unisql/src/lib.rs`, `cfg(doctest)`); their `?` became `.unwrap()` and the `docker` block is tagged `sh`. No behaviour change.
