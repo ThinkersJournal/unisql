@@ -21,6 +21,8 @@ CREATE TABLE users (id integer PRIMARY KEY, name text NOT NULL, email text, age 
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES users(id),
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
+CREATE TABLE docs (id integer PRIMARY KEY, data jsonb);
+INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"},"s":"null","f":1.5,"l":[1,2]}'),(2,'{"a":null,"n":7,"e":""}'),(3,'[1,2]'),(4,'"str"'),(5,NULL);
 CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
 CREATE TABLE edge_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
@@ -44,6 +46,8 @@ CREATE TABLE users (id integer PRIMARY KEY, name varchar(64) NOT NULL, email var
 CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL, amount integer NOT NULL, status varchar(16) NOT NULL,
                      FOREIGN KEY (user_id) REFERENCES users(id));
 CREATE TABLE kv (`key` varchar(64) PRIMARY KEY, value varchar(64), n integer);
+CREATE TABLE docs (id integer PRIMARY KEY, data json);
+INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"},"s":"null","f":1.5,"l":[1,2]}'),(2,'{"a":null,"n":7,"e":""}'),(3,'[1,2]'),(4,'"str"'),(5,NULL);
 CREATE TABLE events (id integer PRIMARY KEY, at datetime NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at datetime NOT NULL);
 CREATE TABLE edge_ts (id integer PRIMARY KEY, at datetime NOT NULL);
@@ -205,6 +209,34 @@ fn cases(maria: bool) -> Vec<Case> {
                 "SELECT date_trunc('week', $1::timestamp)",
             ),
             Expect::Refused("fn:date_trunc.parameter"),
+        ),
+        ord(c(
+            "json_get_text",
+            "SELECT id, data->>'a', data->>'n', data->>'t', data->>'o', data->>'s', data->>'f', data->>'l', data->>'e', data->>'zz' FROM docs ORDER BY id",
+        )),
+        ord(c(
+            "json_get",
+            "SELECT id, (data->'a')::text, (data->'n')::text, (data->'t')::text, (data->'o')::text, (data->'s')::text, (data->'f')::text, (data->'l')::text, (data->'e')::text, (data->'zz')::text FROM docs ORDER BY id",
+        )),
+        ord(c(
+            "json_nested",
+            "SELECT id, data->'o'->>'k', (data->'o'->'k')::text, data->'l'->>'x' FROM docs ORDER BY id",
+        )),
+        ord(c(
+            "json_in_where",
+            "SELECT id FROM docs WHERE data->>'a' = 'x' OR data->>'n' = '7' ORDER BY id",
+        )),
+        exp(
+            c("refuse_json_index", "SELECT data->0 FROM docs"),
+            Expect::Refused("json_get.key"),
+        ),
+        exp(
+            c("refuse_json_key_param", "SELECT data->>$1 FROM docs"),
+            Expect::Refused("json_get_text.key"),
+        ),
+        exp(
+            c("refuse_json_doc_param", "SELECT $1->>'a'"),
+            Expect::Refused("json_get_text.parameter"),
         ),
         c(
             "split_part_literal",
@@ -712,8 +744,8 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("filter_clause"),
         ),
         exp(
-            c("refuse_json", "SELECT id, data->>'a' FROM users"),
-            Expect::Refused("json_get_text"),
+            c("refuse_json", "SELECT id, data->>city FROM docs, users"),
+            Expect::Refused("json_get_text.key"),
         ),
         exp(
             c("refuse_substr", "SELECT substr(name, 0, 3) FROM users"),

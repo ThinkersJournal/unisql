@@ -110,7 +110,11 @@ construct	interval_arithmetic	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	
 construct	interval_arithmetic.timestamp_arithmetic_as_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=timestamp_arithmetic_as_text	postgres
 construct	join:inner_join	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::cte		postgres
 construct	join:left_join	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join		postgres
-construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented	postgres
+construct	json_get	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::json_get		postgres
+construct	json_get.key	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json_index	only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path	postgres
+construct	json_get_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::json_get_text		postgres
+construct	json_get_text.key	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json	only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path	postgres
+construct	json_get_text.parameter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_json_doc_param	the document is written twice, and a positional ? binds once	postgres
 construct	lateral	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_join_lateral		postgres
 construct	like	mysql	8.4.11	collation=utf8mb4_0900_ai_ci;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::known_bad::known_bad_like_text	known-bad control: the result diverged from the source engine under this config	postgres
 construct	like	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::like_case_sensitive	premise=text_collation, read from config; see the known-bad row	postgres

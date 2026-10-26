@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=161
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=168
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -31,6 +31,17 @@ PASS refuse_left_column           refused `fn:left.length`: a negative count mea
 PASS refuse_right_negative        refused `fn:right.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
 PASS refuse_lpad_empty_pad        refused `fn:lpad.args`: a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)
 PASS refuse_date_trunc_week_param refused `fn:date_trunc.parameter`: the week and quarter forms repeat the timestamp, which contains a parameter that a positional ? binds once
+PASS json_get_text                same
+       -> SELECT `id`, IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."a"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."a"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."n"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."n"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."t"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."t"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."o"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."o"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."s"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."s"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."f"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."f"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."l"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."l"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."e"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."e"'))), IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."zz"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."zz"'))) FROM `docs` ORDER BY (`id` IS NULL), `id`
+PASS json_get                     same
+       -> SELECT `id`, CAST(JSON_EXTRACT(`data`, '$."a"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."n"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."t"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."o"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."s"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."f"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."l"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."e"') AS CHAR), CAST(JSON_EXTRACT(`data`, '$."zz"') AS CHAR) FROM `docs` ORDER BY (`id` IS NULL), `id`
+PASS json_nested                  same
+       -> SELECT `id`, IF(JSON_TYPE(JSON_EXTRACT((JSON_EXTRACT(`data`, '$."o"')), '$."k"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT((JSON_EXTRACT(`data`, '$."o"')), '$."k"'))), CAST(JSON_EXTRACT((JSON_EXTRACT(`data`, '$."o"')), '$."k"') AS CHAR), IF(JSON_TYPE(JSON_EXTRACT((JSON_EXTRACT(`data`, '$."l"')), '$."x"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT((JSON_EXTRACT(`data`, '$."l"')), '$."x"'))) FROM `docs` ORDER BY (`id` IS NULL), `id`
+PASS json_in_where                same
+       -> SELECT `id` FROM `docs` WHERE ((IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."a"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."a"')))) = 'x') OR ((IF(JSON_TYPE(JSON_EXTRACT(`data`, '$."n"')) = 'NULL', NULL, JSON_UNQUOTE(JSON_EXTRACT(`data`, '$."n"')))) = '7') ORDER BY (`id` IS NULL), `id`
+PASS refuse_json_index            refused `json_get.key`: only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path
+PASS refuse_json_key_param        refused `json_get_text.key`: only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path
+PASS refuse_json_doc_param        refused `json_get_text.parameter`: the document is written twice, and a positional ? binds once
 PASS split_part_literal           same
        -> SELECT `id`, IF(1 > (CHAR_LENGTH(`email`) - CHAR_LENGTH(REPLACE(`email`, '@', ''))) / CHAR_LENGTH('@') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`email`, '@', 1), '@', -1)), IF(2 > (CHAR_LENGTH(`email`) - CHAR_LENGTH(REPLACE(`email`, '@', ''))) / CHAR_LENGTH('@') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`email`, '@', 2), '@', -1)), IF(3 > (CHAR_LENGTH(`email`) - CHAR_LENGTH(REPLACE(`email`, '@', ''))) / CHAR_LENGTH('@') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`email`, '@', 3), '@', -1)), IF(2 > (CHAR_LENGTH(`name`) - CHAR_LENGTH(REPLACE(`name`, 'a', ''))) / CHAR_LENGTH('a') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`name`, 'a', 2), 'a', -1)), IF(1 > (CHAR_LENGTH(`name`) - CHAR_LENGTH(REPLACE(`name`, 'zz', ''))) / CHAR_LENGTH('zz') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`name`, 'zz', 1), 'zz', -1)), IF(4 > (CHAR_LENGTH(`city`) - CHAR_LENGTH(REPLACE(`city`, 'ab', ''))) / CHAR_LENGTH('ab') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX(`city`, 'ab', 4), 'ab', -1)), IF(3 > (CHAR_LENGTH('a,b,,d') - CHAR_LENGTH(REPLACE('a,b,,d', ',', ''))) / CHAR_LENGTH(',') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('a,b,,d', ',', 3), ',', -1)), IF(5 > (CHAR_LENGTH('a,b,,d') - CHAR_LENGTH(REPLACE('a,b,,d', ',', ''))) / CHAR_LENGTH(',') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('a,b,,d', ',', 5), ',', -1)), IF(1 > (CHAR_LENGTH('') - CHAR_LENGTH(REPLACE('', ',', ''))) / CHAR_LENGTH(',') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('', ',', 1), ',', -1)), IF(2 > (CHAR_LENGTH('héllo') - CHAR_LENGTH(REPLACE('héllo', 'é', ''))) / CHAR_LENGTH('é') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('héllo', 'é', 2), 'é', -1)), IF(2 > (CHAR_LENGTH('aaa') - CHAR_LENGTH(REPLACE('aaa', 'aa', ''))) / CHAR_LENGTH('aa') + 1, '', SUBSTRING_INDEX(SUBSTRING_INDEX('aaa', 'aa', 2), 'aa', -1)) FROM `users`
 PASS refuse_split_part_zero       refused `fn:split_part.args`: a zero or negative field, or an empty delimiter, behaves differently (PostgreSQL error or counts from the end)
@@ -212,7 +223,7 @@ PASS diverge_bad_cast             diverges: postgres errors (prepare: db error);
        -> SELECT CAST('abc' AS SIGNED)
 PASS refuse_upsert_where_two_columns refused `upsert_where.two_columns`: the WHERE reads more than one column the upsert sets; MySQL assigns left to right, so no order keeps each condition on the old row
 PASS refuse_filter                refused `filter_clause`: MySQL has no FILTER (WHERE ..) on aggregates
-PASS refuse_json                  refused `json_get_text`: MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented
+PASS refuse_json                  refused `json_get_text.key`: only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path
 PASS refuse_substr                refused `fn:substr`: start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')
 PASS refuse_concat_fn             refused `fn:concat`: PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL
 PASS refuse_trim_set              refused `trim.multi_char`: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character
@@ -284,7 +295,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 122 passing translated cases:
+MATRIX (construct, tier) from 126 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -353,6 +364,8 @@ MATRIX (construct, tier) from 122 passing translated cases:
   interval_arithmetic          conditional
   join:inner_join              exact
   join:left_join               exact
+  json_get                     exact
+  json_get_text                exact
   lateral                      exact
   like                         conditional
   limit                        exact
