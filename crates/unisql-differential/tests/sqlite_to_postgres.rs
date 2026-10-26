@@ -76,6 +76,16 @@ fn exp(mut x: Case, e: Expect) -> Case {
     x
 }
 
+fn kv_schema() -> unisql::Schema {
+    let mut s = unisql::Schema::new()
+        .with_column("kv", "key", unisql::Column::text())
+        .with_column("kv", "value", unisql::Column::text())
+        .with_column("kv", "n", unisql::Column::numeric())
+        .with_unique_key("kv", &["key"]);
+    s.mark_columns_complete(vec!["kv".to_string()]);
+    s
+}
+
 fn cases() -> Vec<Case> {
     let like = [A::LikeCaseSensitivityIsConnectionSetting];
     let kvs = "SELECT key, value, n FROM kv ORDER BY key";
@@ -439,10 +449,30 @@ fn cases() -> Vec<Case> {
             c("refuse_strftime", "SELECT strftime('%Y', 'now')", &[]),
             Expect::Refused("fn:strftime"),
         ),
+        // ---- INSERT OR REPLACE: read as REPLACE INTO; an upsert over every column when the schema
+        // states the table and its one unique key
+        Case {
+            schema: Some(kv_schema()),
+            after: Some("SELECT key, value, n FROM kv ORDER BY key"),
+            ..c(
+                "or_replace_existing",
+                "INSERT OR REPLACE INTO kv (key, value, n) VALUES ('a', 'rep', 9)",
+                &[A::ReplaceIsUpsert],
+            )
+        },
+        Case {
+            schema: Some(kv_schema()),
+            after: Some("SELECT key, value, n FROM kv ORDER BY key"),
+            ..c(
+                "or_replace_new",
+                "INSERT OR REPLACE INTO kv (key, value, n) VALUES ('fresh', 'x', 9)",
+                &[A::ReplaceIsUpsert],
+            )
+        },
         // ---- not in the IR
         exp(
             c(
-                "ir_insert_or_replace",
+                "refuse_or_replace_no_schema",
                 "INSERT OR REPLACE INTO kv (key, value) VALUES ('a', 'b')",
                 &[],
             ),
