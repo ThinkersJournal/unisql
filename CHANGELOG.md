@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.11 - 2026-10-26
+
+- **Test and docs: SQLite `INSERT OR REPLACE` is read as `REPLACE INTO` (since 0.18.0) and now has differential cases.** With a schema that states the table and its one unique key it
+  translates to PostgreSQL as an upsert over every column (allowance `replace_is_upsert`) and matches SQLite's result on an existing and a new key; without one it is refused (`replace_into`).
+  The roadmap's "not in the IR" known gap was stale and is removed. No behaviour change.
+
 ## 0.27.10 - 2026-10-26
 
 - **PostgreSQL `doc -> 'key'` and `doc ->> 'key'` to MySQL and MariaDB** for a plain literal key (letters, digits, `_`, `-`, space), Exact: `JSON_EXTRACT(doc, '$."key"')`, and for `->>`

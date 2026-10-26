@@ -1,4 +1,4 @@
-sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=64
+sqlite 3.53.2 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=66
 PASS hex_literal_compare          same
        -> SELECT "id", '\x41'::bytea = '\x41'::bytea, '\x41'::bytea = '\x42'::bytea, '\x4142'::bytea = '\x4142'::bytea FROM "users"
 PASS ph_question                  same
@@ -115,10 +115,14 @@ PASS diverge_bad_cast             diverges: sqlite returns [[Int(0)]]; postgres 
 PASS refuse_random                refused `fn:random`: no verified mapping for this function on PostgreSQL yet
 PASS refuse_typeof                refused `fn:typeof`: no verified mapping for this function on PostgreSQL yet
 PASS refuse_strftime              refused `fn:strftime`: no verified mapping for this function on PostgreSQL yet
-PASS ir_insert_or_replace         refused `replace_into`: REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key
+PASS or_replace_existing          same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('a', 'rep', 9) ON CONFLICT ("key") DO UPDATE SET "n" = EXCLUDED."n", "value" = EXCLUDED."value"
+PASS or_replace_new               same
+       -> INSERT INTO "kv" ("key", "value", "n") VALUES ('fresh', 'x', 9) ON CONFLICT ("key") DO UPDATE SET "n" = EXCLUDED."n", "value" = EXCLUDED."value"
+PASS refuse_or_replace_no_schema  refused `replace_into`: REPLACE INTO deletes conflicting rows; this target has no such statement. It can be written as an upsert only when the schema states the table's complete column list and exactly one unique key
 PASS ir_glob                      not in IR `binary_operator`: Glob (JSON/array/regex/bitwise operators are not in the IR)
 
-MATRIX (construct, tier) from 54 passing translated cases:
+MATRIX (construct, tier) from 56 passing translated cases:
   bitwise                      conditional
   cast.to_integer              conditional
   cast.to_text                 conditional

@@ -206,7 +206,8 @@ later.
   (open) and its fix [#2627](https://github.com/apache/datafusion-sqlparser-rs/pull/2627) (open PR).
   Once released, bump the pin, add `OnConflict.target_where` to the IR (PostgreSQL and SQLite write it;
   MySQL refuses it by leaf) and a differential case. Nothing to do on our side until then.
-- **`INSERT OR REPLACE`** (SQLite replace semantics with no conflict key): not in the IR.
+- **`INSERT OR REPLACE`** is read as `REPLACE INTO` (see the 0.18.0 reader row) and, with a schema stating the one unique key, translates to PostgreSQL as an upsert
+  (`replace_is_upsert`; differential cases `or_replace_existing`, `or_replace_new`, 0.27.11). Still open: SQLite replace semantics with no conflict key, which has no schema to name.
 - **Table-valued functions in FROM** are read and refused by leaf (`table_function.<name>`) on SQLite and
   MySQL/MariaDB; `generate_series` with integer literal bounds is mapped through a recursive CTE (0.24.8); other table
   functions, and non-literal bounds (which need LATERAL), remain refused.
