@@ -614,11 +614,42 @@ impl Target for Mysql {
         Ok(Some(out))
     }
 
-    fn json_access(&self, text: bool, _lhs: &str, _rhs: &str, ctx: &mut Ctx) -> R<String> {
-        Err(ctx.refuse(
-            if text { "json_get_text" } else { "json_get" },
-            "MySQL JSON access uses path expressions ('$.key'); translating a key to a path is not implemented",
-            &[],
+    fn json_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        let leaf = if text { "json_get_text" } else { "json_get" };
+        // Only a plain literal key becomes a path ('$."key"'). An integer index differs (MySQL
+        // reads `$[0]` of an object as the object itself), and a parameter is no path.
+        let key = rhs
+            .strip_prefix('\'')
+            .and_then(|r| r.strip_suffix('\''))
+            .filter(|k| {
+                !k.is_empty()
+                    && k.chars()
+                        .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | ' ' | '-'))
+            });
+        let Some(key) = key else {
+            return Err(ctx.refuse(
+                &format!("{leaf}.key"),
+                "only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path",
+                &["use a literal key such as data->'name'"],
+            ));
+        };
+        let extract = format!("JSON_EXTRACT({lhs}, '$.\"{key}\"')");
+        if !text {
+            ctx.note(leaf, Tier::Exact, "", None)?;
+            return Ok(extract);
+        }
+        // A JSON null is SQL NULL under PostgreSQL's ->> but the text 'null' after JSON_UNQUOTE; the
+        // document is therefore written twice, so it may not hold a positional `?`.
+        if lhs.contains('?') {
+            return Err(ctx.refuse(
+                "json_get_text.parameter",
+                "the document is written twice, and a positional ? binds once",
+                &["extract from a column, or in the application"],
+            ));
+        }
+        ctx.note(leaf, Tier::Exact, "", None)?;
+        Ok(format!(
+            "IF(JSON_TYPE({extract}) = 'NULL', NULL, JSON_UNQUOTE({extract}))"
         ))
     }
 

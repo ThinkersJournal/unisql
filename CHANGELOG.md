@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.10 - 2026-10-26
+
+- **PostgreSQL `doc -> 'key'` and `doc ->> 'key'` to MySQL and MariaDB** for a plain literal key (letters, digits, `_`, `-`, space), Exact: `JSON_EXTRACT(doc, '$."key"')`, and for `->>`
+  `IF(JSON_TYPE(x) = 'NULL', NULL, JSON_UNQUOTE(x))` so a JSON null is SQL NULL as in PostgreSQL (plain `JSON_UNQUOTE` gives the text `'null'`). Checked live on PostgreSQL 16, MySQL 8.4 and
+  MariaDB 11.4 over strings, numbers, booleans, JSON null, the string `"null"`, nested objects, arrays, a missing key and non-object documents. Refused: an integer index, a parameter or any
+  non-literal key (`json_get.key`, `json_get_text.key`; MySQL reads `$[0]` of an object as the object itself) and a document holding a parameter under `->>` (`json_get_text.parameter`: it is written twice and a positional `?` binds once).
+  Previously every JSON access to MySQL/MariaDB was refused.
+
 ## 0.27.9 - 2026-10-25
 
 - **PostgreSQL `split_part(s, d, n)` to MySQL and MariaDB** for a literal `n >= 1` and a literal non-empty `d` (Exact): `IF(n > field count, '', SUBSTRING_INDEX(SUBSTRING_INDEX(s, d, n), d, -1))`, so a

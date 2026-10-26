@@ -56,7 +56,7 @@ user_variable	expression	curated	ok	ok	not_in_ir:binary_operator	not_in_ir:binar
 null_safe	expression	curated	ok	ok	translated	translated	translated
 is_true	expression	curated	ok	ok	translated	translated	translated
 json_extract	json	curated	ok	ok	refused:fn:json_extract	refused:fn:json_extract	refused:fn:json_extract
-json_arrow	json	curated	ok	rejected	translated	conditional:json_representation_as_text+json_scalar_affinity	refused:json_get
+json_arrow	json	curated	ok	rejected	translated	conditional:json_representation_as_text+json_scalar_affinity	refused:json_get.key
 json_unquote	json	curated	ok	ok	refused:fn:json_extract	refused:fn:json_extract	refused:fn:json_extract
 json_object	json	curated	ok	ok	refused:fn:json_object	refused:fn:json_object	refused:fn:json_object
 json_array_agg	json	curated	ok	ok	refused:fn:json_arrayagg	refused:fn:json_arrayagg	refused:fn:json_arrayagg
