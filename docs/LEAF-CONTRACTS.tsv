@@ -140,8 +140,9 @@ join:inner_join	INNER JOIN returns the pairs of rows satisfying the condition.
 join:left_join	LEFT JOIN returns every left row, with NULLs where no right row matches.
 json_get	`doc -> key` yields the JSON value at key.
 json_get_text	`doc ->> key` yields the value at key as text, NULL when absent.
-json_get.key	`doc -> key` with a key that is not a plain literal (an integer index, a parameter, an expression) is refused on MySQL and MariaDB: it has no path form that keeps the meaning.
+json_get.key	`doc -> key` with a key that is neither a plain literal nor an integer literal index (a parameter, an expression) is refused on MySQL and MariaDB: it has no path form that keeps the meaning.
 json_get_text.key	`doc ->> key` with a key that is not a plain literal is refused on MySQL and MariaDB.
+json_get.parameter	`doc -> index` where doc contains a parameter is refused on MySQL and MariaDB: the mapping writes doc more than once and a positional ? binds once.
 json_get_text.parameter	`doc ->> key` where doc contains a parameter is refused on MySQL and MariaDB: the mapping writes doc twice and a positional ? binds once.
 regexp	`a REGEXP p` / `a ~ p` is true when the regular expression p matches anywhere in a (unanchored), false when it does not, NULL when either side is NULL. Sound only for patterns in the syntax the engines share (literals, `.`, `^`, `$`, `*`, `+`, `?`, `[...]`, `|`, `()`); classes, lookaround and flags differ.
 bitwise	`a & b`, `a | b`, `a ^ b` (PostgreSQL `#`), `a << b`, `a >> b` act on the integer operands bit by bit. Sound for non-negative operands and shift counts below the integer width; negative values and wider shifts differ between MySQL (unsigned 64-bit) and the others (signed).

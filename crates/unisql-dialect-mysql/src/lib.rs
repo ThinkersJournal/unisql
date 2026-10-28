@@ -616,8 +616,15 @@ impl Target for Mysql {
 
     fn json_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
         let leaf = if text { "json_get_text" } else { "json_get" };
-        // Only a plain literal key becomes a path ('$."key"'). An integer index differs (MySQL
-        // reads `$[0]` of an object as the object itself), and a parameter is no path.
+        // A document holding a positional `?` cannot be written more than once.
+        let refuse_param = |ctx: &mut Ctx| {
+            ctx.refuse(
+                &format!("{leaf}.parameter"),
+                "the document is written twice, and a positional ? binds once",
+                &["extract from a column, or in the application"],
+            )
+        };
+        // A plain literal key becomes a path ('$."key"'); a parameter is no path.
         let key = rhs
             .strip_prefix('\'')
             .and_then(|r| r.strip_suffix('\''))
@@ -626,30 +633,59 @@ impl Target for Mysql {
                     && k.chars()
                         .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | ' ' | '-'))
             });
-        let Some(key) = key else {
+        // An integer literal index: PostgreSQL gives NULL on an object, counts a negative index from
+        // the end, and reads a scalar as a one-element array (index 0 or -1 is the scalar itself).
+        // MySQL reads `$[0]` of an object as the object, so the type is tested first.
+        let signed = rhs
+            .strip_prefix('(')
+            .and_then(|r| r.strip_suffix(')'))
+            .unwrap_or(rhs);
+        let index = signed
+            .strip_prefix('-')
+            .unwrap_or(signed)
+            .chars()
+            .all(|c| c.is_ascii_digit())
+            .then(|| signed.parse::<i64>().ok())
+            .flatten()
+            .filter(|n| n.abs() < 1_000_000_000);
+        let value = if let Some(key) = key {
+            format!("JSON_EXTRACT({lhs}, '$.\"{key}\"')")
+        } else if let Some(n) = index {
+            if lhs.contains('?') {
+                return Err(refuse_param(ctx));
+            }
+            let path = match n {
+                0.. => format!("$[{n}]"),
+                -1 => "$[last]".to_string(),
+                _ => format!("$[last-{}]", -n - 1),
+            };
+            let array = format!("JSON_EXTRACT({lhs}, '{path}')");
+            if matches!(n, 0 | -1) {
+                format!(
+                    "CASE JSON_TYPE({lhs}) WHEN 'ARRAY' THEN {array} WHEN 'OBJECT' THEN NULL ELSE {lhs} END"
+                )
+            } else {
+                format!("IF(JSON_TYPE({lhs}) = 'ARRAY', {array}, NULL)")
+            }
+        } else {
             return Err(ctx.refuse(
                 &format!("{leaf}.key"),
-                "only a literal key of letters, digits, '_', '-' and spaces is translated to a MySQL path",
+                "only a literal key of letters, digits, '_', '-' and spaces, or an integer literal index, is translated to a MySQL path",
                 &["use a literal key such as data->'name'"],
             ));
         };
-        let extract = format!("JSON_EXTRACT({lhs}, '$.\"{key}\"')");
         if !text {
             ctx.note(leaf, Tier::Exact, "", None)?;
-            return Ok(extract);
+            return Ok(value);
         }
         // A JSON null is SQL NULL under PostgreSQL's ->> but the text 'null' after JSON_UNQUOTE; the
         // document is therefore written twice, so it may not hold a positional `?`.
         if lhs.contains('?') {
-            return Err(ctx.refuse(
-                "json_get_text.parameter",
-                "the document is written twice, and a positional ? binds once",
-                &["extract from a column, or in the application"],
-            ));
+            return Err(refuse_param(ctx));
         }
         ctx.note(leaf, Tier::Exact, "", None)?;
         Ok(format!(
-            "IF(JSON_TYPE({extract}) = 'NULL', NULL, JSON_UNQUOTE({extract}))"
+            "IF(JSON_TYPE({value}) = 'NULL', NULL, JSON_UNQUOTE({value}))"
         ))
     }
 

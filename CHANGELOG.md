@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.12 - 2026-10-27
+
+- **PostgreSQL `doc -> n` and `doc ->> n` with an integer literal index to MySQL and MariaDB** (Exact), a negative index counting from the end (`$[last]`, `$[last-k]`). PostgreSQL gives NULL
+  on an object and reads a scalar as a one-element array (index 0 or -1 is the scalar itself), while MySQL reads `$[0]` of an object as the object, so the document type is tested first:
+  `CASE JSON_TYPE(doc) WHEN 'ARRAY' THEN JSON_EXTRACT(doc, '$[0]') WHEN 'OBJECT' THEN NULL ELSE doc END` (other indexes: `IF(JSON_TYPE(doc) = 'ARRAY', ..., NULL)`); `->>` maps a JSON null to SQL NULL
+  as for a key. Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4 over arrays, objects, scalars, JSON null, SQL NULL, out-of-range and negative indexes. The document is written more than once,
+  so a document holding a parameter is refused (`json_get.parameter`, `json_get_text.parameter`); a non-literal index stays refused. Write a negative index as `doc-> -1` (the parser reads `->-` as one operator).
+
 ## 0.27.11 - 2026-10-26
 
 - **Test and docs: SQLite `INSERT OR REPLACE` is read as `REPLACE INTO` (since 0.18.0) and now has differential cases.** With a schema that states the table and its one unique key it
