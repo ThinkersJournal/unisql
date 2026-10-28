@@ -138,7 +138,7 @@ const STATEMENTS: &[&str] = &[
     "SELECT array_agg($1)",
     "SELECT regexp_replace($1, $2, $3)",
     "SELECT split_part($1, ',', 2)",
-    "SELECT data->>'a', data->'b' FROM docs WHERE id = $1",
+    "SELECT data->>'a', data->'b', data->0, data->> -1 FROM docs WHERE id = $1",
     "SELECT substring($1 FROM 2 FOR 3), substr($1, $2)",
     "SELECT trim(both ' ' FROM $1)",
     "SELECT concat($1, $2)",

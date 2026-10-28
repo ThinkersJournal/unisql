@@ -22,6 +22,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL REFERENCES
                      amount integer NOT NULL, status text NOT NULL);
 CREATE TABLE kv (key text PRIMARY KEY, value text, n integer);
 CREATE TABLE docs (id integer PRIMARY KEY, data jsonb);
+CREATE TABLE arrs (id integer PRIMARY KEY, data jsonb);
+INSERT INTO arrs VALUES (1,'[10,"a",null,{"k":1},[2],true]'),(2,'{"a":1}'),(3,'"s"'),(4,'5'),(5,NULL),(6,'[]'),(7,'{"0":"zero"}'),(8,'null');
 INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"},"s":"null","f":1.5,"l":[1,2]}'),(2,'{"a":null,"n":7,"e":""}'),(3,'[1,2]'),(4,'"str"'),(5,NULL);
 CREATE TABLE events (id integer PRIMARY KEY, at timestamptz NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at timestamptz NOT NULL);
@@ -47,6 +49,8 @@ CREATE TABLE orders (id integer PRIMARY KEY, user_id integer NOT NULL, amount in
                      FOREIGN KEY (user_id) REFERENCES users(id));
 CREATE TABLE kv (`key` varchar(64) PRIMARY KEY, value varchar(64), n integer);
 CREATE TABLE docs (id integer PRIMARY KEY, data json);
+CREATE TABLE arrs (id integer PRIMARY KEY, data json);
+INSERT INTO arrs VALUES (1,'[10,"a",null,{"k":1},[2],true]'),(2,'{"a":1}'),(3,'"s"'),(4,'5'),(5,NULL),(6,'[]'),(7,'{"0":"zero"}'),(8,'null');
 INSERT INTO docs VALUES (1,'{"a":"x","n":5,"t":true,"o":{"k":"deep"},"s":"null","f":1.5,"l":[1,2]}'),(2,'{"a":null,"n":7,"e":""}'),(3,'[1,2]'),(4,'"str"'),(5,NULL);
 CREATE TABLE events (id integer PRIMARY KEY, at datetime NOT NULL);
 CREATE TABLE fixed_ts (id integer PRIMARY KEY, at datetime NOT NULL);
@@ -226,8 +230,28 @@ fn cases(maria: bool) -> Vec<Case> {
             "json_in_where",
             "SELECT id FROM docs WHERE data->>'a' = 'x' OR data->>'n' = '7' ORDER BY id",
         )),
+        ord(c(
+            "json_index",
+            "SELECT id, (data->0)::text, (data->1)::text, (data->2)::text, (data->3)::text, (data->4)::text, (data->5)::text, (data->6)::text, (data-> -1)::text, (data-> -2)::text, (data-> -6)::text, (data-> -7)::text FROM arrs ORDER BY id",
+        )),
+        ord(c(
+            "json_index_text",
+            "SELECT id, data->>0, data->>1, data->>2, data->>3, data->>4, data->>5, data->>6, data->> -1, data->> -2, data->> -6, data->> -7 FROM arrs ORDER BY id",
+        )),
+        ord(c(
+            "json_index_nested",
+            "SELECT id, data->3->>'k', data->4->>0, (data->0)::text = '10' FROM arrs ORDER BY id",
+        )),
         exp(
-            c("refuse_json_index", "SELECT data->0 FROM docs"),
+            c("refuse_json_index_param", "SELECT $1->0"),
+            Expect::Refused("json_get.parameter"),
+        ),
+        exp(
+            c("refuse_json_index_text_param", "SELECT $1->>0"),
+            Expect::Refused("json_get_text.parameter"),
+        ),
+        exp(
+            c("refuse_json_index_expr", "SELECT data->(1+1) FROM arrs"),
             Expect::Refused("json_get.key"),
         ),
         exp(
