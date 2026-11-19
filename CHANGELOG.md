@@ -2,6 +2,14 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.13 - 2026-11-19
+
+- **PostgreSQL `doc #> '{a,b}'` and `doc #>> '{a,b}'` with a literal path of keys to MySQL and MariaDB** (Exact): `JSON_EXTRACT(doc, '$."a"."b"')`; `#>>` maps a JSON null to SQL NULL as `->>` does.
+  Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4 over objects, arrays, scalars, JSON null and missing paths. A path element made only of digits is refused (`json_path.key`): it is an array index
+  on an array and a key on an object under PostgreSQL, which no one MySQL path reproduces. A parameter or expression path is refused; `#>>` writes the document twice, so a document holding a parameter is refused
+  (`json_path_text.parameter`). SQLite refuses `#>`/`#>>` (`json_path`, `json_path_text`): it was previously reported as not in the IR; chain `->` with literal keys instead.
+- **Dev dependencies:** `rusqlite` 0.40.2 to 0.43.0 (bundled SQLite 3.53.4 or later, `libsqlite3-sys` 0.39, RUSTSEC-2026-0459) and `libz-sys` 1.1.30 to 1.1.33 (RUSTSEC-2026-0418, RUSTSEC-2026-0544), so `cargo deny` advisories pass. Test-only; no published crate depends on them.
+
 ## 0.27.12 - 2026-10-27
 
 - **PostgreSQL `doc -> n` and `doc ->> n` with an integer literal index to MySQL and MariaDB** (Exact), a negative index counting from the end (`$[last]`, `$[last-k]`). PostgreSQL gives NULL

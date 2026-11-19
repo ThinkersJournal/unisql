@@ -953,6 +953,16 @@ impl Printer<'_> {
                 }
             }
             Expr::Binary {
+                op: op @ (BinaryOp::JsonPath | BinaryOp::JsonPathText),
+                left,
+                right,
+            } => {
+                let l = self.operand(left, c)?;
+                let r = self.operand(right, c)?;
+                self.t
+                    .json_path_access(*op == BinaryOp::JsonPathText, &l, &r, c)?
+            }
+            Expr::Binary {
                 op: op @ (BinaryOp::JsonGet | BinaryOp::JsonGetText),
                 left,
                 right,
@@ -1031,7 +1041,10 @@ impl Printer<'_> {
                     BinaryOp::ShiftLeft => "<<",
                     BinaryOp::ShiftRight => ">>",
                     BinaryOp::Xor => "<>",
-                    BinaryOp::JsonGet | BinaryOp::JsonGetText => unreachable!("handled above"),
+                    BinaryOp::JsonGet
+                    | BinaryOp::JsonGetText
+                    | BinaryOp::JsonPath
+                    | BinaryOp::JsonPathText => unreachable!("handled above"),
                     BinaryOp::NullSafeEq => unreachable!("handled above"),
                 };
                 let numeric = is_numeric(left)

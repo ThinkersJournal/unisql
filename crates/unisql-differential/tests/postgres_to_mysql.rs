@@ -262,6 +262,29 @@ fn cases(maria: bool) -> Vec<Case> {
             c("refuse_json_doc_param", "SELECT $1->>'a'"),
             Expect::Refused("json_get_text.parameter"),
         ),
+        ord(c(
+            "json_path",
+            "SELECT id, (data #> '{a}')::text, (data #> '{o,k}')::text, (data #> '{l,x}')::text, (data #> '{zz,k}')::text, (data #> '{n}')::text FROM docs ORDER BY id",
+        )),
+        ord(c(
+            "json_path_text",
+            "SELECT id, data #>> '{a}', data #>> '{o,k}', data #>> '{l,x}', data #>> '{zz,k}', data #>> '{n}', data #>> '{e}' FROM docs ORDER BY id",
+        )),
+        exp(
+            c(
+                "refuse_json_path_numeric",
+                "SELECT data #> '{l,0}' FROM docs",
+            ),
+            Expect::Refused("json_path.key"),
+        ),
+        exp(
+            c("refuse_json_path_param", "SELECT data #>> $1 FROM docs"),
+            Expect::Refused("json_path_text.key"),
+        ),
+        exp(
+            c("refuse_json_path_doc_param", "SELECT $1 #>> '{a}'"),
+            Expect::Refused("json_path_text.parameter"),
+        ),
         c(
             "split_part_literal",
             "SELECT id, split_part(email, '@', 1), split_part(email, '@', 2), split_part(email, '@', 3), split_part(name, 'a', 2), split_part(name, 'zz', 1), split_part(city, 'ab', 4), split_part('a,b,,d', ',', 3), split_part('a,b,,d', ',', 5), split_part('', ',', 1), split_part('h\u{e9}llo', '\u{e9}', 2), split_part('aaa', 'aa', 2) FROM users",

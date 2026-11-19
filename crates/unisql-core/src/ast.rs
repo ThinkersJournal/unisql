@@ -484,6 +484,10 @@ pub enum BinaryOp {
     JsonGet,
     /// JSON `->>` (returns text)
     JsonGetText,
+    /// JSON `#>` (path given as a text array; returns JSON)
+    JsonPath,
+    /// JSON `#>>` (path given as a text array; returns text)
+    JsonPathText,
     /// `a & b`
     BitAnd,
     /// `a | b`

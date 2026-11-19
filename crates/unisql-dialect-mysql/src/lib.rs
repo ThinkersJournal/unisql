@@ -689,6 +689,51 @@ impl Target for Mysql {
         ))
     }
 
+    fn json_path_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        let leaf = if text { "json_path_text" } else { "json_path" };
+        // Only a literal '{a,b}' of plain keys becomes a path ('$."a"."b"'). A numeric element is an
+        // array index on an array and a key on an object under PostgreSQL, which no one MySQL path
+        // reproduces, so it is refused with the parameters and expressions.
+        let keys: Option<Vec<&str>> = rhs
+            .strip_prefix('\'')
+            .and_then(|r| r.strip_suffix('\''))
+            .and_then(|r| r.strip_prefix('{'))
+            .and_then(|r| r.strip_suffix('}'))
+            .map(|r| r.split(',').collect::<Vec<_>>())
+            .filter(|ks| {
+                ks.iter().all(|k| {
+                    !k.is_empty()
+                        && k.chars().any(|c| !c.is_ascii_digit())
+                        && k.chars()
+                            .all(|c| c.is_ascii_alphanumeric() || matches!(c, '_' | '-'))
+                })
+            });
+        let Some(keys) = keys else {
+            return Err(ctx.refuse(
+                &format!("{leaf}.key"),
+                "only a literal path '{a,b}' of keys made of letters, digits, '_' and '-' (not all digits) is translated to a MySQL path",
+                &["use a literal path such as data #> '{a,b}', or chain -> with literal keys"],
+            ));
+        };
+        let path = keys.iter().map(|k| format!(".\"{k}\"")).collect::<String>();
+        let value = format!("JSON_EXTRACT({lhs}, '${path}')");
+        if !text {
+            ctx.note(leaf, Tier::Exact, "", None)?;
+            return Ok(value);
+        }
+        if lhs.contains('?') {
+            return Err(ctx.refuse(
+                &format!("{leaf}.parameter"),
+                "the document is written twice, and a positional ? binds once",
+                &["extract from a column, or in the application"],
+            ));
+        }
+        ctx.note(leaf, Tier::Exact, "", None)?;
+        Ok(format!(
+            "IF(JSON_TYPE({value}) = 'NULL', NULL, JSON_UNQUOTE({value}))"
+        ))
+    }
+
     fn group_by_rollup(&self, keys: &[String], ctx: &mut Ctx) -> R<String> {
         ctx.note("group_by.rollup", Tier::Exact, "", None)?;
         Ok(format!("{} WITH ROLLUP", keys.join(", ")))
