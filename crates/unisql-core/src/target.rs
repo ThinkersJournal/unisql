@@ -442,6 +442,17 @@ pub trait Target {
         Ok(format!("{lhs} {} {rhs}", if text { "->>" } else { "->" }))
     }
 
+    /// JSON `#>` / `#>>` with operands printed. Default: PostgreSQL.
+    fn json_path_access(&self, text: bool, lhs: &str, rhs: &str, ctx: &mut Ctx) -> R<String> {
+        ctx.note(
+            if text { "json_path_text" } else { "json_path" },
+            Tier::Exact,
+            "",
+            None,
+        )?;
+        Ok(format!("{lhs} {} {rhs}", if text { "#>>" } else { "#>" }))
+    }
+
     /// Replace the default `l OP r` text for a binary operator (for example `||` -> `CONCAT`,
     /// `/` -> `DIV`). Operands are already printed. Return `None` for the default.
     fn binary_override(

@@ -440,15 +440,6 @@ checksum = "e4eba85ea1d0a966a983acd07deee566e67395d2d96b6fb39e62b5a833f1eb0b"
 
 [[package]]
 name = "hashbrown"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
-dependencies = [
- "foldhash",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
@@ -462,7 +453,7 @@ version = "0.12.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a596f1b20ed2cc5ecac41a164aaebc7258057060f06c0cf7a2ba3991ee7990fb"
 dependencies = [
- "hashbrown 0.17.1",
+ "hashbrown",
 ]
 
 [[package]]
@@ -606,7 +597,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cc4e190f5d26ca7051642629da2c52fc03bde85a03197c99408dcd291734c855"
 dependencies = [
  "equivalent",
- "hashbrown 0.17.1",
+ "hashbrown",
 ]
 
 [[package]]
@@ -652,9 +643,9 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.38.2"
+version = "0.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f1d20bef17f513b9b3004532233187769cd072d790971f4e4da0e346eb6401e8"
+checksum = "b06e69070b7e12262b0cd90832f0a7396f142a2b330181255562decf9f0c6215"
 dependencies = [
  "cc",
  "pkg-config",
@@ -663,9 +654,9 @@ dependencies = [
 
 [[package]]
 name = "libz-sys"
-version = "1.1.30"
+version = "1.1.33"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f710a23e6dbf193214fd46ca56a9d6864e550abe86202184532ae7275e46de19"
+checksum = "fee3f59f4321dab0c78d828942e7aa09d0bd8ad6e78a501977e6bf3d02938045"
 dependencies = [
  "cc",
  "pkg-config",
@@ -1147,19 +1138,18 @@ checksum = "d6f6ff9a378485b298a5286656da665ba74413d36db0979633275d2e708145d4"
 
 [[package]]
 name = "rsqlite-vfs"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c51c9ae4df8a7fba42103df5c621fa3c37eccf3a3c650879e90fc48b11cc192c"
+checksum = "353b74f9810d5b085b6c42c9d86a5f0fdb795553235cdd48753b32e3809d18a7"
 dependencies = [
- "hashbrown 0.16.1",
  "thiserror",
 ]
 
 [[package]]
 name = "rusqlite"
-version = "0.40.2"
+version = "0.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "23f2a97da3e3873c73cb2a2e71b35c40ff95e0b1eefa8d72d8499a6928c3b5b3"
+checksum = "f172c4812a19b26d1c23cdb0070e69db335503dfa378b910eb857386e5b8beba"
 dependencies = [
  "bitflags",
  "fallible-iterator 0.3.0",
@@ -1309,14 +1299,12 @@ dependencies = [
 
 [[package]]
 name = "sqlite-wasm-rs"
-version = "0.5.5"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc3efc0da82635d7e1ced0053bbbfa8c7ab9645d0bf36ceb4f7127bb85315d75"
+checksum = "a6cd504cecbfe7eef649988840f9a6cb768d11085efec138f8e99f160632d867"
 dependencies = [
  "cc",
- "js-sys",
  "rsqlite-vfs",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -1610,7 +1598,7 @@ checksum = "7df058c713841ad818f1dc5d3fd88063241cc61f49f5fbea4b951e8cf5a8d71d"
 
 [[package]]
 name = "unisql"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "unisql-core",
  "unisql-dialect-mysql",
@@ -1621,7 +1609,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-core"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "serde",
  "serde_json",
@@ -1629,7 +1617,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-mysql"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1637,7 +1625,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-postgres"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1645,7 +1633,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-dialect-sqlite"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "unisql-core",
  "unisql-sqlparser-adapter",
@@ -1653,7 +1641,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-differential"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "mysql",
  "postgres",
@@ -1664,18 +1652,18 @@ dependencies = [
 
 [[package]]
 name = "unisql-embed"
-version = "0.27.12"
+version = "0.27.13"
 
 [[package]]
 name = "unisql-macro-core"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "unisql",
 ]
 
 [[package]]
 name = "unisql-macros"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1688,7 +1676,7 @@ dependencies = [
 
 [[package]]
 name = "unisql-sqlparser-adapter"
-version = "0.27.12"
+version = "0.27.13"
 dependencies = [
  "sqlparser",
  "unisql-core",

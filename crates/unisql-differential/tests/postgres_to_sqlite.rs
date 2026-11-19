@@ -1003,7 +1003,7 @@ fn cases() -> Vec<Case> {
         ),
         exp(
             c("ir_json_path_op", "SELECT data #> '{o,k}' FROM docs", &[]),
-            Expect::NotInIr("binary_operator"),
+            Expect::Refused("json_path"),
         ),
         exp(
             c(

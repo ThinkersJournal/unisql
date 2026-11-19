@@ -1863,6 +1863,8 @@ fn expr(e: sp::Expr) -> R<Expr> {
                 B::Xor => BinaryOp::Xor,
                 B::Arrow => BinaryOp::JsonGet,
                 B::LongArrow => BinaryOp::JsonGetText,
+                B::HashArrow => BinaryOp::JsonPath,
+                B::HashLongArrow => BinaryOp::JsonPathText,
                 other => {
                     return no(
                         "binary_operator",

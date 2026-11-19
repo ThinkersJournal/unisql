@@ -389,6 +389,8 @@ impl Walk<'_> {
                     BinaryOp::Xor => self.add("xor"),
                     BinaryOp::JsonGet => self.add("json_get"),
                     BinaryOp::JsonGetText => self.add("json_get_text"),
+                    BinaryOp::JsonPath => self.add("json_path"),
+                    BinaryOp::JsonPathText => self.add("json_path_text"),
                     _ => {}
                 }
                 self.expr(left);

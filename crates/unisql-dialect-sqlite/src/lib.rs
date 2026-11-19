@@ -223,6 +223,15 @@ impl Target for Sqlite {
         }
     }
 
+    fn json_path_access(&self, text: bool, _lhs: &str, _rhs: &str, ctx: &mut Ctx) -> R<String> {
+        let leaf = if text { "json_path_text" } else { "json_path" };
+        Err(ctx.refuse(
+            leaf,
+            "SQLite has no text-array path operator; its -> takes a '$.a.b' path, not a PostgreSQL '{a,b}' array",
+            &["chain -> with literal keys: doc -> 'a' -> 'b'"],
+        ))
+    }
+
     fn function(&self, f: &Function, args: &[String], ctx: &mut Ctx) -> R<String> {
         let n = f.name.as_str();
         if n == "current_date" {
