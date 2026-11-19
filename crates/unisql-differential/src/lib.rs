@@ -6,6 +6,14 @@
 //! strictly (no int/float coercion; PostgreSQL booleans are read as 0/1, which is exactly the
 //! `boolean_as_integer` allowance). A case that cannot connect **fails**; nothing is skipped.
 
+// Compiles the root README's examples as doc-tests, so a change to the API that breaks them fails
+// `cargo test`. Here, not in `unisql`, because the README sits outside that crate's package.
+#[cfg(doctest)]
+mod root_readme_doctests {
+    #[doc = include_str!("../../../README.md")]
+    struct RootReadme;
+}
+
 use std::collections::BTreeSet;
 
 use postgres::types::{ToSql, Type};

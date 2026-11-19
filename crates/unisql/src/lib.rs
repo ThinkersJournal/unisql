@@ -20,8 +20,6 @@ use std::fmt;
 mod readme_doctests {
     #[doc = include_str!("../README.md")]
     struct CrateReadme;
-    #[doc = include_str!("../../../README.md")]
-    struct RootReadme;
 }
 
 pub use unisql_core::ast;
