@@ -200,6 +200,17 @@ fn cases(maria: bool) -> Vec<Case> {
             c("refuse_right_negative", "SELECT right(name, -1) FROM users"),
             Expect::Refused("fn:right.length"),
         ),
+        c(
+            "substr_literal",
+            "SELECT id, substr(name, 1), substr(name, 2), substr(name, 2, 3), substring(name, 1, 0), substring(name, 3, 100), substr(name, 100), substr(email, 2, 4), substr('h\u{e9}llo', 2, 3) FROM users",
+        ),
+        exp(
+            c(
+                "refuse_substr_column",
+                "SELECT substr(name, age) FROM users",
+            ),
+            Expect::Refused("fn:substr.args"),
+        ),
         exp(
             c(
                 "refuse_lpad_empty_pad",
@@ -796,7 +807,7 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         exp(
             c("refuse_substr", "SELECT substr(name, 0, 3) FROM users"),
-            Expect::Refused("fn:substr"),
+            Expect::Refused("fn:substr.args"),
         ),
         exp(
             c("refuse_concat_fn", "SELECT concat(name, city) FROM users"),

@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.15 - 2026-11-21
+
+- **PostgreSQL `substr(s, start[, len])` / `substring(s, start[, len])` with a literal start >= 1 and a literal length >= 0 to MySQL and MariaDB** (Exact): `SUBSTRING(s, start[, len])`. Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4 over text columns, multi-byte text, a start past the end and a zero length. A start before 1, a negative length or a non-literal start or length stays refused (leaf `fn:substr.args`, previously `fn:substr`).
+
 ## 0.27.14 - 2026-11-20
 
 - **Test and packaging only: the root README's doc-tests moved from `unisql` to the unpublished `unisql-differential` crate**, so no published crate reads a file outside its own package (`include_str!("../../../README.md")`
