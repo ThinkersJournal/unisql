@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.14 - 2026-11-20
+
+- **Test and packaging only: the root README's doc-tests moved from `unisql` to the unpublished `unisql-differential` crate**, so no published crate reads a file outside its own package (`include_str!("../../../README.md")`
+  under `cfg(doctest)`). The same two README examples still compile and run under `cargo test`. No change to any translation or public API.
+
 ## 0.27.13 - 2026-11-19
 
 - **PostgreSQL `doc #> '{a,b}'` and `doc #>> '{a,b}'` with a literal path of keys to MySQL and MariaDB** (Exact): `JSON_EXTRACT(doc, '$."a"."b"')`; `#>>` maps a JSON null to SQL NULL as `->>` does.
