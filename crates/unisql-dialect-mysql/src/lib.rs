@@ -357,10 +357,24 @@ impl Target for Mysql {
                 ctx.note("fn:substr", Tier::Exact, "", None)?;
                 Ok(call("substring", args))
             }
+            // A literal start >= 1 and a literal length >= 0 are the cases both engines agree on.
+            "substr" | "substring"
+                if matches!(args.len(), 2 | 3)
+                    && unisql_core::target::literal_count(f, 1).is_some_and(|p| p >= 1)
+                    && (args.len() == 2 || unisql_core::target::literal_count(f, 2).is_some()) =>
+            {
+                ctx.note(
+                    "fn:substr",
+                    Tier::Exact,
+                    "literal start >= 1 and literal length >= 0",
+                    None,
+                )?;
+                Ok(call("substring", args))
+            }
             "substr" | "substring" => Err(ctx.refuse(
-                &format!("fn:{n}"),
-                "start positions before 1 behave differently (PostgreSQL clips the length, MySQL returns '')",
-                &["use a start position >= 1"],
+                "fn:substr.args",
+                "a start before 1, a negative length or a non-literal start/length behaves differently (PostgreSQL clips the length, MySQL returns '')",
+                &["use a literal start >= 1 and a literal length >= 0"],
             )),
             "concat" => Err(ctx.refuse(
                 "fn:concat",

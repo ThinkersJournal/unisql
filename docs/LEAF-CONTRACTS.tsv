@@ -106,7 +106,8 @@ fn:row_number	row_number() OVER (...) numbers the rows of a partition from 1 in 
 fn:strftime	strftime(fmt, ts) formats a timestamp by a SQLite format string. Refused: no verified mapping.
 fn:string_agg	string_agg(x, sep) concatenates the non-NULL x with sep between them; NULL over no rows.
 fn:string_agg.order_by	string_agg(x, sep ORDER BY k) concatenates in the order given by k.
-fn:substr	substr(s, start[, len]) is the substring from the 1-based start. Refused where start positions before 1 behave differently.
+fn:substr	substr(s, start[, len]) is the substring from the 1-based start. Mapped for a literal start >= 1 and a literal len >= 0.
+fn:substr.args	substr(s, start[, len]) with a start before 1, a negative len or a non-literal start or len is refused: the engines differ.
 fn:sum	sum(x) over non-NULL inputs gives the source's total and NULL over no rows.
 fn:sum.order_by	sum(x ORDER BY k): an aggregate with an ORDER BY clause. Refused by every target that cannot honour the ordering inside the aggregate.
 fn:age	age(a, b) is the calendar interval (years, months, days, time) from b to a. Refused where there is no interval value.
