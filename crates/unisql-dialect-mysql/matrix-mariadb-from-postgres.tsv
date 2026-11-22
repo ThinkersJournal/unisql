@@ -44,6 +44,7 @@ construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	mis
 construct	fn:age	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_age	age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value	postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
 construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::btrim_default		postgres
+construct	fn:btrim.char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_chars_single		postgres
 construct	fn:ceil	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
 construct	fn:char_length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::escape_string_literal		postgres
 construct	fn:coalesce	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::coalesce_nullif		postgres
@@ -70,6 +71,7 @@ construct	fn:length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=
 construct	fn:lpad	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::lpad_rpad		postgres
 construct	fn:lpad.args	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_lpad_empty_pad	a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)	postgres
 construct	fn:ltrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::string_funcs		postgres
+construct	fn:ltrim.char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_chars_single		postgres
 construct	fn:make_interval	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
 construct	fn:make_interval.standalone	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_interval_positional	only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
@@ -89,6 +91,8 @@ construct	fn:right	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=n
 construct	fn:right.length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_right_negative	a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL	postgres
 construct	fn:row_number	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::distinct_on_basic		postgres
 construct	fn:rpad	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::lpad_rpad		postgres
+construct	fn:rtrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_chars_single		postgres
+construct	fn:rtrim.char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_chars_single		postgres
 construct	fn:split_part	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::split_part_literal		postgres
 construct	fn:split_part.args	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_split_part_zero	a zero or negative field, or an empty delimiter, behaves differently (PostgreSQL error or counts from the end)	postgres
 construct	fn:split_part.parameter	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_split_part_param	the string is written three times, and a positional ? binds once	postgres
@@ -104,6 +108,7 @@ construct	fn:sum.order_by	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	m
 construct	fn:to_char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::to_char_fields		postgres
 construct	fn:to_char.format	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_to_char_day_name	to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped	postgres
 construct	fn:to_timestamp	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::to_timestamp_epoch		postgres
+construct	fn:trim_chars	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_ltrim_set	MySQL has no ltrim/rtrim/btrim with a character set; only a single literal character is mapped	postgres
 construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.text_collation	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=text_collation	postgres

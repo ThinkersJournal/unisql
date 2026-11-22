@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=182
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=184
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -185,6 +185,8 @@ PASS trim_leading_char            same
        -> SELECT TRIM(LEADING 'x' FROM 'xxhixx')
 PASS btrim_default                same
        -> SELECT TRIM('  hi  ')
+PASS trim_chars_single            same
+       -> SELECT TRIM(LEADING 'x' FROM 'xxhixx'), TRIM(TRAILING 'x' FROM 'xxhixx'), TRIM(BOTH 'x' FROM 'xxhixx'), TRIM(BOTH 'a' FROM `name`) FROM `users`
 PASS string_agg_single            same
        -> SELECT GROUP_CONCAT(`name` SEPARATOR ',') FROM `users` WHERE `id` = 1
 PASS agg_order_desc_nulls_last    same
@@ -244,6 +246,7 @@ PASS refuse_filter                refused `filter_clause`: MySQL has no FILTER (
 PASS refuse_json                  refused `json_get_text.key`: only a literal key of letters, digits, '_', '-' and spaces, or an integer literal index, is translated to a MySQL path
 PASS refuse_substr                refused `fn:substr.args`: a start before 1, a negative length or a non-literal start/length behaves differently (PostgreSQL clips the length, MySQL returns '')
 PASS refuse_concat_fn             refused `fn:concat`: PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL
+PASS refuse_ltrim_set             refused `fn:trim_chars`: MySQL has no ltrim/rtrim/btrim with a character set; only a single literal character is mapped
 PASS refuse_trim_set              refused `trim.multi_char`: PostgreSQL trims a set of characters, MySQL a repeated string: they agree only for one character
 PASS update_from                  same
        -> UPDATE `orders`, `users` SET `orders`.`status` = 'x' WHERE (`users`.`id` = `orders`.`user_id`) AND (`users`.`city` = 'Bergen')
@@ -312,7 +315,7 @@ PASS table_function_series_alias_refused refused `table_function.generate_series
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 129 passing translated cases:
+MATRIX (construct, tier) from 130 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -340,6 +343,8 @@ MATRIX (construct, tier) from 129 passing translated cases:
   extract.year                 exact
   fn:avg                       exact
   fn:btrim                     emulated
+  fn:btrim                     exact
+  fn:btrim.char                emulated
   fn:ceil                      exact
   fn:char_length               emulated
   fn:coalesce                  exact
@@ -359,6 +364,7 @@ MATRIX (construct, tier) from 129 passing translated cases:
   fn:length                    emulated
   fn:lpad                      exact
   fn:ltrim                     exact
+  fn:ltrim.char                emulated
   fn:make_interval             exact
   fn:max                       conditional
   fn:min                       conditional
@@ -370,6 +376,8 @@ MATRIX (construct, tier) from 129 passing translated cases:
   fn:right                     exact
   fn:row_number                exact
   fn:rpad                      exact
+  fn:rtrim                     exact
+  fn:rtrim.char                emulated
   fn:split_part                exact
   fn:string_agg                conditional
   fn:string_agg.order_by       exact

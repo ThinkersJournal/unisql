@@ -7,10 +7,11 @@
 //! `boolean_as_integer` allowance). A case that cannot connect **fails**; nothing is skipped.
 
 // Compiles the root README's examples as doc-tests, so a change to the API that breaks them fails
-// `cargo test`. Here, not in `unisql`, because the README sits outside that crate's package.
+// `cargo test`. Here, not in `unisql`, because the README sits outside that crate's package. The copy
+// beside this crate is kept byte-equal to the root file by `tests/root_readme_copy.rs`.
 #[cfg(doctest)]
 mod root_readme_doctests {
-    #[doc = include_str!("../../../README.md")]
+    #[doc = include_str!("../ROOT-README.md")]
     struct RootReadme;
 }
 

@@ -44,6 +44,7 @@ construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missin
 construct	fn:age	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_age	age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value	postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
 construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
+construct	fn:btrim.char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
 construct	fn:ceil	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::ceil_floor		postgres
 construct	fn:char_length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::escape_string_literal		postgres
 construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
@@ -70,6 +71,7 @@ construct	fn:length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emu
 construct	fn:lpad	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lpad_rpad		postgres
 construct	fn:lpad.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_lpad_empty_pad	a negative length or an empty pad behaves differently (PostgreSQL '' / unpadded, MySQL NULL)	postgres
 construct	fn:ltrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
+construct	fn:ltrim.char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
 construct	fn:make_interval	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours		postgres
 construct	fn:make_interval.month_year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_literal_month	make_interval(months => ..): month/year arithmetic differs between the engines	postgres
 construct	fn:make_interval.standalone	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_interval_positional	only `timestamp +/- make_interval(secs|mins|hours|days|weeks => ..)` is translated	postgres
@@ -89,6 +91,8 @@ construct	fn:right	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=nati
 construct	fn:right.length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_right_negative	a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL	postgres
 construct	fn:row_number	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::distinct_on_basic		postgres
 construct	fn:rpad	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lpad_rpad		postgres
+construct	fn:rtrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
+construct	fn:rtrim.char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
 construct	fn:split_part	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::split_part_literal		postgres
 construct	fn:split_part.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_split_part_zero	a zero or negative field, or an empty delimiter, behaves differently (PostgreSQL error or counts from the end)	postgres
 construct	fn:split_part.parameter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_split_part_param	the string is written three times, and a positional ? binds once	postgres
@@ -104,6 +108,7 @@ construct	fn:sum.order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	miss
 construct	fn:to_char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::to_char_fields		postgres
 construct	fn:to_char.format	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_to_char_day_name	to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped	postgres
 construct	fn:to_timestamp	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::to_timestamp_epoch		postgres
+construct	fn:trim_chars	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_ltrim_set	MySQL has no ltrim/rtrim/btrim with a character set; only a single literal character is mapped	postgres
 construct	ilike	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::ilike	allowance=text_collation	postgres
