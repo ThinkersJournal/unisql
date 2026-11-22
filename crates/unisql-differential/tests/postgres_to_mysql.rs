@@ -643,6 +643,10 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT 7 / 2, -7 / 2, 7 % 3, -7 % 3 FROM users WHERE id = 1",
         ),
         c(
+            "mod_function",
+            "SELECT mod(7, 3), mod(-7, 3), mod(7, -3), mod(-7, -3), mod(id, 2) FROM users WHERE id = 1",
+        ),
+        c(
             "cast_int_text",
             "SELECT CAST(id AS TEXT), CAST('12' AS INTEGER) FROM users WHERE id = 1",
         ),
