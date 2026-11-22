@@ -608,6 +608,10 @@ fn cases(maria: bool) -> Vec<Case> {
         ),
         c("btrim_default", "SELECT btrim('  hi  ')"),
         c(
+            "trim_chars_single",
+            "SELECT ltrim('xxhixx', 'x'), rtrim('xxhixx', 'x'), btrim('xxhixx', 'x'), btrim(name, 'a') FROM users",
+        ),
+        c(
             "string_agg_single",
             "SELECT string_agg(name, ',') FROM users WHERE id = 1",
         ),
@@ -812,6 +816,10 @@ fn cases(maria: bool) -> Vec<Case> {
         exp(
             c("refuse_concat_fn", "SELECT concat(name, city) FROM users"),
             Expect::Refused("fn:concat"),
+        ),
+        exp(
+            c("refuse_ltrim_set", "SELECT ltrim('xyxhi', 'xy')"),
+            Expect::Refused("fn:trim_chars"),
         ),
         exp(
             c("refuse_trim_set", "SELECT trim(both 'xy' from 'xyxhi')"),

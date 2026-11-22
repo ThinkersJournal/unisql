@@ -1,4 +1,4 @@
-sqlite 3.54.1 -> postgres 16.15 (Debian 16.15-1.pgdg13+2); cases=66
+sqlite 3.54.1 -> postgres 16.16 (Debian 16.16-1.pgdg13+1); cases=66
 PASS hex_literal_compare          same
        -> SELECT "id", '\x41'::bytea = '\x41'::bytea, '\x41'::bytea = '\x42'::bytea, '\x4142'::bytea = '\x4142'::bytea FROM "users"
 PASS ph_question                  same

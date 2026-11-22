@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.16 - 2026-11-22
+
+- **PostgreSQL `ltrim(s, c)`, `rtrim(s, c)` and `btrim(s, c)` with one literal character `c` to MySQL and MariaDB** (Emulated): `TRIM(LEADING c FROM s)`, `TRIM(TRAILING c FROM s)`, `TRIM(BOTH c FROM s)`. Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4. PostgreSQL strips any character of a set and MySQL has no two-argument form (it was passed through as invalid SQL, and `btrim` was written as `TRIM(s, c)`), so any other second argument is refused (leaf `fn:trim_chars`).
+- **Test and packaging only: the root README doc-tests now compile from a copy inside the `unisql-differential` crate** (`ROOT-README.md`, with a test that fails if it drifts from the root `README.md`), so no source file reads a path outside its crate.
+
 ## 0.27.15 - 2026-11-21
 
 - **PostgreSQL `substr(s, start[, len])` / `substring(s, start[, len])` with a literal start >= 1 and a literal length >= 0 to MySQL and MariaDB** (Exact): `SUBSTRING(s, start[, len])`. Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4 over text columns, multi-byte text, a start past the end and a zero length. A start before 1, a negative length or a non-literal start or length stays refused (leaf `fn:substr.args`, previously `fn:substr`).

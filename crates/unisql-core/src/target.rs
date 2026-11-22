@@ -709,6 +709,14 @@ pub fn literal_nonempty_string(f: &Function, i: usize) -> bool {
     )
 }
 
+/// The argument at `i` when it is a string literal of exactly one character.
+pub fn literal_single_char_string(f: &Function, i: usize) -> bool {
+    matches!(
+        f.args.get(i),
+        Some(FunctionArg::Expr(Expr::Literal(Literal::String(s)))) if s.chars().count() == 1
+    )
+}
+
 /// The fractional-second precision written in `UTC_TIMESTAMP(p)`: `Some(0)` when absent, `None`
 /// when it is not an integer literal.
 pub fn utc_timestamp_precision(f: &Function) -> Option<u32> {

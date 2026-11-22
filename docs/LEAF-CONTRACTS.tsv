@@ -191,3 +191,8 @@ upsert_where.two_columns	An upsert whose WHERE reads two or more of the columns 
 window_function	`f(...) OVER (PARTITION BY ... ORDER BY ...)` evaluates over each partition in order.
 update_limit	UPDATE ... ORDER BY ... LIMIT n changes the first n rows, in the stated order, that satisfy WHERE. Written natively on MySQL/MariaDB and as a row-identifier subquery (ctid, rowid) elsewhere; refused with FROM tables.
 delete_limit	DELETE ... ORDER BY ... LIMIT n removes the first n rows, in the stated order, that satisfy WHERE. Written natively on MySQL/MariaDB and as a row-identifier subquery (ctid, rowid) elsewhere.
+fn:btrim.char	btrim(s, c) with one literal character c removes c from both ends, like TRIM(BOTH c FROM s).
+fn:ltrim.char	ltrim(s, c) with one literal character c removes c from the start, like TRIM(LEADING c FROM s).
+fn:rtrim.char	rtrim(s, c) with one literal character c removes c from the end, like TRIM(TRAILING c FROM s).
+fn:trim_chars	ltrim/rtrim/btrim(s, chars) with anything but one literal character is refused: PostgreSQL strips a set of characters, MySQL has no such form.
+fn:rtrim	rtrim(s) removes trailing spaces.

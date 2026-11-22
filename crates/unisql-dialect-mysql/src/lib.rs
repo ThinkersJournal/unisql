@@ -185,6 +185,22 @@ impl Target for Mysql {
                 )?;
                 Ok(format!("{}({}{})", n.to_uppercase(), if f.distinct { "DISTINCT " } else { "" }, args.join(", ")))
             }
+            // PostgreSQL ltrim/rtrim/btrim(s, chars) strips any of `chars`; MySQL has no 2-argument
+            // form, and TRIM(.. FROM) strips a whole string, so only one literal character agrees.
+            "ltrim" | "rtrim" | "btrim" if args.len() == 2 && unisql_core::target::literal_single_char_string(f, 1) => {
+                ctx.note(format!("fn:{n}.char"), Tier::Emulated, "-> TRIM(LEADING/TRAILING/BOTH c FROM s), one literal character", None)?;
+                let side = match n {
+                    "ltrim" => "LEADING",
+                    "rtrim" => "TRAILING",
+                    _ => "BOTH",
+                };
+                Ok(format!("TRIM({side} {} FROM {})", args[1], args[0]))
+            }
+            "ltrim" | "rtrim" | "btrim" if args.len() == 2 => Err(ctx.refuse(
+                "fn:trim_chars",
+                "MySQL has no ltrim/rtrim/btrim with a character set; only a single literal character is mapped",
+                &["trim one literal character"],
+            )),
             "coalesce" | "nullif" | "abs" | "replace" | "ltrim" | "rtrim" | "md5" => {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
                 Ok(call(n, args))
