@@ -82,6 +82,7 @@ fn:date_format	date_format(ts, fmt) formats a timestamp by a MySQL format string
 fn:ceil	ceil(x) (MySQL CEIL/CEILING) is the smallest integer value not less than x, NULL for NULL. Refused on SQLite, whose math functions are a compile-time option.
 fn:floor	floor(x) is the largest integer value not greater than x, NULL for NULL. Refused on SQLite, whose math functions are a compile-time option.
 fn:strpos	strpos(s, t) (MySQL INSTR(s, t) / LOCATE(t, s), POSITION(t IN s), SQLite instr(s, t)) is the 1-based position of the first occurrence of t in s, 0 if t is absent, 1 if t is empty, NULL if either is NULL. Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
+fn:starts_with	starts_with(s, p) (MySQL INSTR(s, p) = 1) is true when s begins with p, true for an empty p, false otherwise, NULL if either is NULL. Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
 fn:locate	LOCATE(t, s, pos) with a start position is not mapped (the engines differ on a start beyond the end and on a negative start).
 fn:current_date	CURRENT_DATE is the date of the current day in the session time zone.
 fn:lag	lag(x) OVER (...) is x of the previous row in the window.

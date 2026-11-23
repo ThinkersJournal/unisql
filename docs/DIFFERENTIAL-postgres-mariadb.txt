@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=185
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=186
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -66,6 +66,8 @@ PASS refuse_split_part_zero       refused `fn:split_part.args`: a zero or negati
 PASS refuse_split_part_param      refused `fn:split_part.parameter`: the string is written three times, and a positional ? binds once
 PASS strpos_position              same
        -> SELECT `id`, INSTR(`name`, 'a'), INSTR(`name`, 'a'), INSTR(`name`, 'zzz'), INSTR(`name`, '') FROM `users`
+PASS starts_with_literal          same
+       -> SELECT `id`, (INSTR(`name`, 'a') = 1), (INSTR(`name`, '') = 1), (INSTR(`name`, 'zzz') = 1), (INSTR('héllo', 'hé') = 1), (INSTR('héllo', 'é') = 1), (INSTR('a%c', 'a%') = 1) FROM `users` WHERE (INSTR(`email`, 'a') = 1) OR (NOT (INSTR(`name`, 'b') = 1))
 PASS in_list                      same
        -> SELECT `id` FROM `users` WHERE (`id` IN (1, 3, 5)) AND (`id` NOT IN (5))
 PASS between                      same
@@ -317,7 +319,7 @@ PASS table_function_series_alias_refused refused `table_function.generate_series
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 131 passing translated cases:
+MATRIX (construct, tier) from 132 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -381,6 +383,7 @@ MATRIX (construct, tier) from 131 passing translated cases:
   fn:rtrim                     exact
   fn:rtrim.char                emulated
   fn:split_part                exact
+  fn:starts_with               conditional
   fn:string_agg                conditional
   fn:string_agg.order_by       exact
   fn:strpos                    conditional

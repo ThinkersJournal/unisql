@@ -319,6 +319,10 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
         ),
         c(
+            "starts_with_literal",
+            "SELECT id, starts_with(name, 'a'), starts_with(name, ''), starts_with(name, 'zzz'), starts_with('h\u{e9}llo', 'h\u{e9}'), starts_with('h\u{e9}llo', '\u{e9}'), starts_with('a%c', 'a%') FROM users WHERE starts_with(email, 'a') OR NOT starts_with(name, 'b')",
+        ),
+        c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
         ),

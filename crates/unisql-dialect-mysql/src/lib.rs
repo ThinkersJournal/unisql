@@ -354,6 +354,15 @@ impl Target for Mysql {
                 )?;
                 Ok(format!("INSTR({}, {})", args[0], args[1]))
             }
+            "starts_with" if args.len() == 2 => {
+                ctx.note(
+                    "fn:starts_with",
+                    Tier::Conditional,
+                    "-> (INSTR(s, p) = 1): INSTR compares by the column collation, exact only under a binary (_bin) collation",
+                    Some(Allowance::TextCollation),
+                )?;
+                Ok(format!("(INSTR({}, {}) = 1)", args[0], args[1]))
+            }
             "current_date" => {
                 ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
                 Ok("CURRENT_DATE".to_string())
