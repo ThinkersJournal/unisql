@@ -83,6 +83,11 @@ fn:ceil	ceil(x) (MySQL CEIL/CEILING) is the smallest integer value not less than
 fn:floor	floor(x) is the largest integer value not greater than x, NULL for NULL. Refused on SQLite, whose math functions are a compile-time option.
 fn:strpos	strpos(s, t) (MySQL INSTR(s, t) / LOCATE(t, s), POSITION(t IN s), SQLite instr(s, t)) is the 1-based position of the first occurrence of t in s, 0 if t is absent, 1 if t is empty, NULL if either is NULL. Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
 fn:starts_with	starts_with(s, p) (MySQL INSTR(s, p) = 1) is true when s begins with p, true for an empty p, false otherwise, NULL if either is NULL. Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
+fn:ascii	ascii(s) is the Unicode code point of the first character of s, 0 for the empty string, NULL for NULL (MySQL and MariaDB ASCII() and ORD() read bytes, so it is written through UTF-32).
+fn:chr	chr(n) with a literal n from 1 to U+10FFFF that is not a surrogate is the one-character string for that code point. Any other n is refused: PostgreSQL raises an error, MySQL and MariaDB return NULL or an invalid string.
+fn:translate	translate(s, from, to) with literal from and to, no repeated `from` character and no `to` character that is also in `from`, replaces each `from` character with the `to` character at the same position, or deletes it when `to` is shorter (nested REPLACE). Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
+fn:chr.args	chr(n) with a non-literal n, 0, a surrogate or a value past U+10FFFF is refused: PostgreSQL raises an error, MySQL and MariaDB return NULL or an invalid string.
+fn:translate.args	translate(s, from, to) with a non-literal from or to, a repeated `from` character, or a `to` character that is also in `from` is refused: a chain of REPLACEs would differ from PostgreSQL.
 fn:locate	LOCATE(t, s, pos) with a start position is not mapped (the engines differ on a start beyond the end and on a negative start).
 fn:current_date	CURRENT_DATE is the date of the current day in the session time zone.
 fn:lag	lag(x) OVER (...) is x of the previous row in the window.

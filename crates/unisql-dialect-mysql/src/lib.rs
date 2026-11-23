@@ -363,6 +363,81 @@ impl Target for Mysql {
                 )?;
                 Ok(format!("(INSTR({}, {}) = 1)", args[0], args[1]))
             }
+            // MySQL ASCII() and ORD() read the first BYTE (MariaDB ORD() a byte-composed number);
+            // PostgreSQL returns the code point. UTF-32 hex is the code point.
+            "ascii" if args.len() == 1 => {
+                ctx.note(
+                    "fn:ascii",
+                    Tier::Emulated,
+                    "-> the code point of the first character via UTF-32 (MySQL ASCII() reads the first byte)",
+                    None,
+                )?;
+                Ok(format!(
+                    "CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT({}, 1) USING utf32))), 16, 10) AS UNSIGNED)",
+                    args[0]
+                ))
+            }
+            // A literal code point is written as the exact UTF-8 bytes of its character. A
+            // non-literal one is refused: PostgreSQL raises an error for 0, a surrogate or a value
+            // past U+10FFFF, and MySQL and MariaDB return NULL or an invalid string.
+            "chr" if args.len() == 1 => {
+                match unisql_core::target::literal_count(f, 0).and_then(|n| u32::try_from(n).ok()).and_then(char::from_u32) {
+                    Some(c) if c != '\0' => {
+                        let mut buf = [0u8; 4];
+                        let hex: String = c.encode_utf8(&mut buf).bytes().map(|x| format!("{x:02X}")).collect();
+                        ctx.note("fn:chr", Tier::Exact, "literal code point written as its UTF-8 bytes", None)?;
+                        Ok(format!("CONVERT(0x{hex} USING utf8mb4)"))
+                    }
+                    _ => Err(ctx.refuse(
+                        "fn:chr.args",
+                        "only a literal code point from 1 to U+10FFFF that is not a surrogate is translated (PostgreSQL raises an error for others, MySQL returns NULL or an invalid string)",
+                        &["use a literal code point"],
+                    )),
+                }
+            }
+            // translate(s, from, to) with literal from/to is a chain of REPLACEs when no `from`
+            // character repeats and no `to` character is also a `from` character (a chain would
+            // re-replace it); a `from` character with no `to` counterpart is deleted.
+            "translate" if args.len() == 3 => {
+                let lit = |i: usize| match f.args.get(i) {
+                    Some(FunctionArg::Expr(Expr::Literal(Literal::String(s)))) => Some(s.clone()),
+                    _ => None,
+                };
+                let (from, to) = (lit(1), lit(2));
+                let ok = match (&from, &to) {
+                    (Some(fr), Some(t)) => {
+                        let fc: Vec<char> = fr.chars().collect();
+                        let unique = fc.iter().enumerate().all(|(i, c)| !fc[..i].contains(c));
+                        !fc.is_empty() && unique && !t.chars().any(|c| fc.contains(&c))
+                    }
+                    _ => false,
+                };
+                if !ok {
+                    return Err(ctx.refuse(
+                        "fn:translate.args",
+                        "only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character",
+                        &["use literal strings, or chain replace() calls"],
+                    ));
+                }
+                ctx.note(
+                    "fn:translate",
+                    Tier::Conditional,
+                    "-> nested REPLACE; REPLACE compares by the column collation: exact only under a binary (_bin) collation",
+                    Some(Allowance::TextCollation),
+                )?;
+                let (fr, t) = (from.unwrap_or_default(), to.unwrap_or_default());
+                let mut tc = t.chars();
+                let mut out = args[0].clone();
+                for c in fr.chars() {
+                    let rep = tc.next().map(String::from).unwrap_or_default();
+                    out = format!(
+                        "REPLACE({out}, {}, {})",
+                        self.string_literal(&c.to_string()),
+                        self.string_literal(&rep)
+                    );
+                }
+                Ok(out)
+            }
             "current_date" => {
                 ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
                 Ok("CURRENT_DATE".to_string())

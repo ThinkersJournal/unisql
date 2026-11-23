@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=184
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=190
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -68,6 +68,15 @@ PASS strpos_position              same
        -> SELECT `id`, INSTR(`name`, 'a'), INSTR(`name`, 'a'), INSTR(`name`, 'zzz'), INSTR(`name`, '') FROM `users`
 PASS starts_with_literal          same
        -> SELECT `id`, (INSTR(`name`, 'a') = 1), (INSTR(`name`, '') = 1), (INSTR(`name`, 'zzz') = 1), (INSTR('héllo', 'hé') = 1), (INSTR('héllo', 'é') = 1), (INSTR('a%c', 'a%') = 1) FROM `users` WHERE (INSTR(`email`, 'a') = 1) OR (NOT (INSTR(`name`, 'b') = 1))
+PASS ascii_code_point             same
+       -> SELECT `id`, CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT(`name`, 1) USING utf32))), 16, 10) AS UNSIGNED), CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT('', 1) USING utf32))), 16, 10) AS UNSIGNED), CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT('héllo', 1) USING utf32))), 16, 10) AS UNSIGNED), CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT('é', 1) USING utf32))), 16, 10) AS UNSIGNED), CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT('€', 1) USING utf32))), 16, 10) AS UNSIGNED), CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT('😀', 1) USING utf32))), 16, 10) AS UNSIGNED), CAST(CONV(CONCAT('0', HEX(CONVERT(LEFT(CAST(NULL AS CHAR), 1) USING utf32))), 16, 10) AS UNSIGNED) FROM `users`
+PASS chr_literal                  same
+       -> SELECT `id`, CONVERT(0x61 USING utf8mb4), CONVERT(0xC3A9 USING utf8mb4), CONVERT(0xE282AC USING utf8mb4), CONVERT(0xF09F9880 USING utf8mb4), CONCAT(CONVERT(0x41 USING utf8mb4), `name`) FROM `users`
+PASS refuse_chr_param             refused `fn:chr.args`: only a literal code point from 1 to U+10FFFF that is not a surrogate is translated (PostgreSQL raises an error for others, MySQL returns NULL or an invalid string)
+PASS translate_literal            same
+       -> SELECT `id`, REPLACE(REPLACE(`name`, 'a', 'x'), 'b', 'y'), REPLACE(REPLACE(`email`, '@', '_'), '.', ''), REPLACE(REPLACE(REPLACE('12345', '1', 'a'), '4', 'x'), '3', ''), REPLACE('héllo', 'é', 'e'), REPLACE(`name`, 'a', '') FROM `users`
+PASS refuse_translate_swap        refused `fn:translate.args`: only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character
+PASS refuse_translate_param       refused `fn:translate.args`: only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character
 PASS in_list                      same
        -> SELECT `id` FROM `users` WHERE (`id` IN (1, 3, 5)) AND (`id` NOT IN (5))
 PASS between                      same
@@ -320,7 +329,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 135 passing translated cases:
+MATRIX (construct, tier) from 138 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -346,12 +355,14 @@ MATRIX (construct, tier) from 135 passing translated cases:
   extract.quarter              exact
   extract.week                 exact
   extract.year                 exact
+  fn:ascii                     emulated
   fn:avg                       exact
   fn:btrim                     emulated
   fn:btrim                     exact
   fn:btrim.char                emulated
   fn:ceil                      exact
   fn:char_length               emulated
+  fn:chr                       exact
   fn:coalesce                  exact
   fn:concat_ws                 exact
   fn:count                     exact
@@ -392,6 +403,7 @@ MATRIX (construct, tier) from 135 passing translated cases:
   fn:sum                       exact
   fn:to_char                   exact
   fn:to_timestamp              exact
+  fn:translate                 conditional
   ilike                        conditional
   interval_arithmetic          conditional
   join:inner_join              exact

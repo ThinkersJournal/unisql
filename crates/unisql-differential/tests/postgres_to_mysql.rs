@@ -323,6 +323,36 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id, starts_with(name, 'a'), starts_with(name, ''), starts_with(name, 'zzz'), starts_with('h\u{e9}llo', 'h\u{e9}'), starts_with('h\u{e9}llo', '\u{e9}'), starts_with('a%c', 'a%') FROM users WHERE starts_with(email, 'a') OR NOT starts_with(name, 'b')",
         ),
         c(
+            "ascii_code_point",
+            "SELECT id, ascii(name), ascii(''), ascii('h\u{e9}llo'), ascii('\u{e9}'), ascii('\u{20ac}'), ascii('\u{1f600}'), ascii(NULL::text) FROM users",
+        ),
+        c(
+            "chr_literal",
+            "SELECT id, chr(97), chr(233), chr(8364), chr(128512), chr(65) || name FROM users",
+        ),
+        exp(
+            c("refuse_chr_param", "SELECT chr($1::int)"),
+            Expect::Refused("fn:chr.args"),
+        ),
+        c(
+            "translate_literal",
+            "SELECT id, translate(name, 'ab', 'xy'), translate(email, '@.', '_'), translate('12345', '143', 'ax'), translate('h\u{e9}llo', '\u{e9}', 'e'), translate(name, 'a', '') FROM users",
+        ),
+        exp(
+            c(
+                "refuse_translate_swap",
+                "SELECT translate(name, 'ab', 'ba') FROM users",
+            ),
+            Expect::Refused("fn:translate.args"),
+        ),
+        exp(
+            c(
+                "refuse_translate_param",
+                "SELECT translate(name, $1::text, 'x') FROM users",
+            ),
+            Expect::Refused("fn:translate.args"),
+        ),
+        c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
         ),
