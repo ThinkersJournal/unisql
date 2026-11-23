@@ -88,6 +88,8 @@ fn:chr	chr(n) with a literal n from 1 to U+10FFFF that is not a surrogate is the
 fn:translate	translate(s, from, to) with literal from and to, no repeated `from` character and no `to` character that is also in `from`, replaces each `from` character with the `to` character at the same position, or deletes it when `to` is shorter (nested REPLACE). Sound for a case-sensitive comparison: MySQL and MariaDB follow the column collation.
 fn:chr.args	chr(n) with a non-literal n, 0, a surrogate or a value past U+10FFFF is refused: PostgreSQL raises an error, MySQL and MariaDB return NULL or an invalid string.
 fn:translate.args	translate(s, from, to) with a non-literal from or to, a repeated `from` character, or a `to` character that is also in `from` is refused: a chain of REPLACEs would differ from PostgreSQL.
+fn:bit_length	bit_length(s) is eight times the number of bytes of s (UTF-8 on both engines), NULL for NULL.
+fn:trunc	trunc(x[, places]) cuts x toward zero at the given number of decimal places (negative places cut left of the point), NULL for NULL (MySQL TRUNCATE(x, places)).
 fn:locate	LOCATE(t, s, pos) with a start position is not mapped (the engines differ on a start beyond the end and on a negative start).
 fn:current_date	CURRENT_DATE is the date of the current day in the session time zone.
 fn:lag	lag(x) OVER (...) is x of the previous row in the window.

@@ -44,6 +44,7 @@ construct	filter_clause	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	mis
 construct	fn:age	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_age	age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value	postgres
 construct	fn:ascii	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::ascii_code_point		postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
+construct	fn:bit_length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::bit_length_trunc		postgres
 construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::btrim_default		postgres
 construct	fn:btrim.char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_chars_single		postgres
 construct	fn:ceil	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
@@ -117,6 +118,7 @@ construct	fn:translate	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wron
 construct	fn:translate.args	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_translate_param	only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character	postgres
 construct	fn:translate.text_collation	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::translate_literal	allowance=text_collation	postgres
 construct	fn:trim_chars	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mariadb;test=postgres-to-mariadb::refuse_ltrim_set	MySQL has no ltrim/rtrim/btrim with a character set; only a single literal character is mapped	postgres
+construct	fn:trunc	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::bit_length_trunc		postgres
 construct	ilike	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	diverges from the strict contract unless accepted: allowance=ascii_only_case_folding,text_collation	postgres
 construct	ilike.ascii_only_case_folding	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=ascii_only_case_folding	postgres
 construct	ilike.text_collation	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::ilike	allowance=text_collation	postgres

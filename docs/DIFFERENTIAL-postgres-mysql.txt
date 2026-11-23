@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=190
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=191
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -77,6 +77,8 @@ PASS translate_literal            same
        -> SELECT `id`, REPLACE(REPLACE(`name`, 'a', 'x'), 'b', 'y'), REPLACE(REPLACE(`email`, '@', '_'), '.', ''), REPLACE(REPLACE(REPLACE('12345', '1', 'a'), '4', 'x'), '3', ''), REPLACE('héllo', 'é', 'e'), REPLACE(`name`, 'a', '') FROM `users`
 PASS refuse_translate_swap        refused `fn:translate.args`: only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character
 PASS refuse_translate_param       refused `fn:translate.args`: only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character
+PASS bit_length_trunc             same
+       -> SELECT `id`, BIT_LENGTH(`name`), BIT_LENGTH(''), BIT_LENGTH('héllo'), CAST(TRUNCATE(2.7, 0) AS DOUBLE), CAST(TRUNCATE(-2.7, 0) AS DOUBLE), CAST(TRUNCATE(1234.5678, 2) AS DOUBLE), CAST(TRUNCATE(1234.5678, -2) AS DOUBLE), TRUNCATE(-CAST(1.99 AS DOUBLE), 0) FROM `users`
 PASS in_list                      same
        -> SELECT `id` FROM `users` WHERE (`id` IN (1, 3, 5)) AND (`id` NOT IN (5))
 PASS between                      same
@@ -329,7 +331,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 138 passing translated cases:
+MATRIX (construct, tier) from 139 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -357,6 +359,7 @@ MATRIX (construct, tier) from 138 passing translated cases:
   extract.year                 exact
   fn:ascii                     emulated
   fn:avg                       exact
+  fn:bit_length                exact
   fn:btrim                     emulated
   fn:btrim                     exact
   fn:btrim.char                emulated
@@ -404,6 +407,7 @@ MATRIX (construct, tier) from 138 passing translated cases:
   fn:to_char                   exact
   fn:to_timestamp              exact
   fn:translate                 conditional
+  fn:trunc                     exact
   ilike                        conditional
   interval_arithmetic          conditional
   join:inner_join              exact

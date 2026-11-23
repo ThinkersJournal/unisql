@@ -438,6 +438,17 @@ impl Target for Mysql {
                 }
                 Ok(out)
             }
+            "bit_length" if args.len() == 1 => {
+                ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+                Ok(format!("{}({})", n.to_uppercase(), args[0]))
+            }
+            // PostgreSQL trunc(x[, places]) cuts toward zero; MySQL TRUNCATE(x, places) does too,
+            // for negative places as well.
+            "trunc" if matches!(args.len(), 1 | 2) => {
+                ctx.note(format!("fn:{n}"), Tier::Exact, "-> TRUNCATE(x, places)", None)?;
+                let places = args.get(1).map_or("0", String::as_str);
+                Ok(format!("TRUNCATE({}, {places})", args[0]))
+            }
             "current_date" => {
                 ctx.note("fn:current_date", Tier::Exact, "the date in the session time zone", None)?;
                 Ok("CURRENT_DATE".to_string())

@@ -353,6 +353,10 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("fn:translate.args"),
         ),
         c(
+            "bit_length_trunc",
+            "SELECT id, bit_length(name), bit_length(''), bit_length('h\u{e9}llo'), trunc(2.7)::float8, trunc(-2.7)::float8, trunc(1234.5678, 2)::float8, trunc(1234.5678, -2)::float8, trunc(-1.99::float8) FROM users",
+        ),
+        c(
             "in_list",
             "SELECT id FROM users WHERE id IN (1, 3, 5) AND id NOT IN (5)",
         ),
