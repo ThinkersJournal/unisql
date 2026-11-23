@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=182
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=183
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -200,6 +200,8 @@ PASS now_not_null                 same
        -> SELECT `id` FROM `users` WHERE (NOW() IS NOT NULL) AND (`id` = 1)
 PASS int_division                 same
        -> SELECT 7 DIV 2, (-7) DIV 2, 7 % 3, (-7) % 3 FROM `users` WHERE `id` = 1
+PASS mod_function                 same
+       -> SELECT 7 % 3, (-7) % 3, 7 % (-3), (-7) % (-3), `id` % 2 FROM `users` WHERE `id` = 1
 PASS cast_int_text                same
        -> SELECT CAST(`id` AS CHAR), CAST('12' AS SIGNED) FROM `users` WHERE `id` = 1
 PASS interval_secs                same
@@ -316,7 +318,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 133 passing translated cases:
+MATRIX (construct, tier) from 134 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional

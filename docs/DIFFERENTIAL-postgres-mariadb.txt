@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=184
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=185
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -200,6 +200,8 @@ PASS now_not_null                 same
        -> SELECT `id` FROM `users` WHERE (NOW() IS NOT NULL) AND (`id` = 1)
 PASS int_division                 same
        -> SELECT 7 DIV 2, (-7) DIV 2, 7 % 3, (-7) % 3 FROM `users` WHERE `id` = 1
+PASS mod_function                 same
+       -> SELECT 7 % 3, (-7) % 3, 7 % (-3), (-7) % (-3), `id` % 2 FROM `users` WHERE `id` = 1
 PASS cast_int_text                same
        -> SELECT CAST(`id` AS CHAR), CAST('12' AS SIGNED) FROM `users` WHERE `id` = 1
 PASS interval_secs                same
@@ -315,7 +317,7 @@ PASS table_function_series_alias_refused refused `table_function.generate_series
 PASS lock_share                   refused `row_lock.share`: MariaDB has no FOR SHARE (it spells a shared lock LOCK IN SHARE MODE)
 PASS lock_of_table                refused `row_lock.of`: MariaDB has no FOR UPDATE OF <table>
 
-MATRIX (construct, tier) from 130 passing translated cases:
+MATRIX (construct, tier) from 131 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional

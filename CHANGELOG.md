@@ -2,6 +2,11 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.17 - 2026-11-23
+
+- **Test only: a differential case for PostgreSQL `mod(a, b)` on integers to MySQL and MariaDB.** `mod()` already reads as the `%` operator; the case pins the sign of the remainder on both engines. No change to any translation.
+- **Dependencies (lockfile only):** `url` 2.5.8 to 2.5.9 and `form_urlencoded` 1.2.2 to 1.2.3.
+
 ## 0.27.16 - 2026-11-22
 
 - **PostgreSQL `ltrim(s, c)`, `rtrim(s, c)` and `btrim(s, c)` with one literal character `c` to MySQL and MariaDB** (Emulated): `TRIM(LEADING c FROM s)`, `TRIM(TRAILING c FROM s)`, `TRIM(BOTH c FROM s)`. Checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4. PostgreSQL strips any character of a set and MySQL has no two-argument form (it was passed through as invalid SQL, and `btrim` was written as `TRIM(s, c)`), so any other second argument is refused (leaf `fn:trim_chars`).
