@@ -438,6 +438,18 @@ impl Target for Mysql {
                 }
                 Ok(out)
             }
+            // PostgreSQL to_hex(int) is lowercase hex, two's complement at the argument's width for a
+            // negative; MySQL HEX() is uppercase and always 64-bit. A non-negative literal is the
+            // case both agree on.
+            "to_hex" if args.len() == 1 && unisql_core::target::literal_count(f, 0).is_some() => {
+                ctx.note("fn:to_hex", Tier::Exact, "-> LOWER(HEX(n)) for a non-negative integer literal", None)?;
+                Ok(format!("LOWER(HEX({}))", args[0]))
+            }
+            "to_hex" => Err(ctx.refuse(
+                "fn:to_hex.args",
+                "only a non-negative integer literal is translated (a negative value is two's complement at the argument's width in PostgreSQL, always 64-bit in MySQL)",
+                &["use a literal, or format in the application"],
+            )),
             "bit_length" if args.len() == 1 => {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
                 Ok(format!("{}({})", n.to_uppercase(), args[0]))

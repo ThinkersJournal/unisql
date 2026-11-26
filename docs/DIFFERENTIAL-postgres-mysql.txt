@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=192
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=194
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -78,6 +78,9 @@ PASS translate_literal            same
        -> SELECT `id`, REPLACE(REPLACE(`name`, 'a', 'x'), 'b', 'y'), REPLACE(REPLACE(`email`, '@', '_'), '.', ''), REPLACE(REPLACE(REPLACE('12345', '1', 'a'), '4', 'x'), '3', ''), REPLACE('héllo', 'é', 'e'), REPLACE(`name`, 'a', '') FROM `users`
 PASS refuse_translate_swap        refused `fn:translate.args`: only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character
 PASS refuse_translate_param       refused `fn:translate.args`: only literal from/to strings are translated, where no `from` character repeats and no `to` character is also a `from` character
+PASS to_hex_literal               same
+       -> SELECT `id`, LOWER(HEX(0)), LOWER(HEX(255)), LOWER(HEX(4096)), LOWER(HEX(2147483647)), LOWER(HEX(4294967296)) FROM `users`
+PASS refuse_to_hex_column         refused `fn:to_hex.args`: only a non-negative integer literal is translated (a negative value is two's complement at the argument's width in PostgreSQL, always 64-bit in MySQL)
 PASS bit_length_trunc             same
        -> SELECT `id`, BIT_LENGTH(`name`), BIT_LENGTH(''), BIT_LENGTH('héllo'), CAST(TRUNCATE(2.7, 0) AS DOUBLE), CAST(TRUNCATE(-2.7, 0) AS DOUBLE), CAST(TRUNCATE(1234.5678, 2) AS DOUBLE), CAST(TRUNCATE(1234.5678, -2) AS DOUBLE), TRUNCATE(-CAST(1.99 AS DOUBLE), 0) FROM `users`
 PASS in_list                      same
@@ -332,7 +335,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 139 passing translated cases:
+MATRIX (construct, tier) from 140 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -406,6 +409,7 @@ MATRIX (construct, tier) from 139 passing translated cases:
   fn:substr                    exact
   fn:sum                       exact
   fn:to_char                   exact
+  fn:to_hex                    exact
   fn:to_timestamp              exact
   fn:translate                 conditional
   fn:trunc                     exact

@@ -360,6 +360,14 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("fn:translate.args"),
         ),
         c(
+            "to_hex_literal",
+            "SELECT id, to_hex(0), to_hex(255), to_hex(4096), to_hex(2147483647), to_hex(4294967296) FROM users",
+        ),
+        exp(
+            c("refuse_to_hex_column", "SELECT to_hex(age) FROM users"),
+            Expect::Refused("fn:to_hex.args"),
+        ),
+        c(
             "bit_length_trunc",
             "SELECT id, bit_length(name), bit_length(''), bit_length('h\u{e9}llo'), trunc(2.7)::float8, trunc(-2.7)::float8, trunc(1234.5678, 2)::float8, trunc(1234.5678, -2)::float8, trunc(-1.99::float8) FROM users",
         ),
