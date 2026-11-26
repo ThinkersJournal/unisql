@@ -193,6 +193,13 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id, lpad(name, 8, '*'), rpad(name, 8, 'ab'), lpad(name, 3, '*'), rpad(name, 0, 'x'), lpad(city, 6, 'xy'), lpad('\u{e9}', 3, '\u{fc}'), rpad(email, 4, '.') FROM users",
         ),
         exp(
+            c(
+                "refuse_int_div_decimal_literal",
+                "SELECT age / 7.0 FROM users",
+            ),
+            Expect::Refused("division_decimal_literal"),
+        ),
+        exp(
             c("refuse_left_column", "SELECT left(name, age) FROM users"),
             Expect::Refused("fn:left.length"),
         ),
@@ -317,6 +324,44 @@ fn cases(maria: bool) -> Vec<Case> {
         c(
             "strpos_position",
             "SELECT id, strpos(name, 'a'), position('a' in name), strpos(name, 'zzz'), strpos(name, '') FROM users",
+        ),
+        c(
+            "starts_with_literal",
+            "SELECT id, starts_with(name, 'a'), starts_with(name, ''), starts_with(name, 'zzz'), starts_with('h\u{e9}llo', 'h\u{e9}'), starts_with('h\u{e9}llo', '\u{e9}'), starts_with('a%c', 'a%') FROM users WHERE starts_with(email, 'a') OR NOT starts_with(name, 'b')",
+        ),
+        c(
+            "ascii_code_point",
+            "SELECT id, ascii(name), ascii(''), ascii('h\u{e9}llo'), ascii('\u{e9}'), ascii('\u{20ac}'), ascii('\u{1f600}'), ascii(NULL::text) FROM users",
+        ),
+        c(
+            "chr_literal",
+            "SELECT id, chr(97), chr(233), chr(8364), chr(128512), chr(65) || name FROM users",
+        ),
+        exp(
+            c("refuse_chr_param", "SELECT chr($1::int)"),
+            Expect::Refused("fn:chr.args"),
+        ),
+        c(
+            "translate_literal",
+            "SELECT id, translate(name, 'ab', 'xy'), translate(email, '@.', '_'), translate('12345', '143', 'ax'), translate('h\u{e9}llo', '\u{e9}', 'e'), translate(name, 'a', '') FROM users",
+        ),
+        exp(
+            c(
+                "refuse_translate_swap",
+                "SELECT translate(name, 'ab', 'ba') FROM users",
+            ),
+            Expect::Refused("fn:translate.args"),
+        ),
+        exp(
+            c(
+                "refuse_translate_param",
+                "SELECT translate(name, $1::text, 'x') FROM users",
+            ),
+            Expect::Refused("fn:translate.args"),
+        ),
+        c(
+            "bit_length_trunc",
+            "SELECT id, bit_length(name), bit_length(''), bit_length('h\u{e9}llo'), trunc(2.7)::float8, trunc(-2.7)::float8, trunc(1234.5678, 2)::float8, trunc(1234.5678, -2)::float8, trunc(-1.99::float8) FROM users",
         ),
         c(
             "in_list",
