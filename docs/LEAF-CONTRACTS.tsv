@@ -55,6 +55,7 @@ distinct_on	`SELECT DISTINCT ON (keys) ...` keeps exactly one row per distinct k
 distinct_on.star_projection	DISTINCT ON combined with a `*` projection. Refused: the emulation's helper columns would appear in the result.
 division	`/` and `%` on the tested operands give the source's value; division by zero raises an error as at the source.
 division_integer	Division of two integers truncates toward zero and yields an integer.
+division_decimal_literal	A PostgreSQL division with a decimal literal operand is refused toward MySQL and MariaDB: DIV would truncate it to an integer.
 filter_clause	`agg(...) FILTER (WHERE p)` aggregates only the rows for which p is true.
 fn:avg	avg() over non-NULL inputs gives the source's mean and NULL over no rows.
 fn:btrim	btrim(s) removes leading and trailing spaces.

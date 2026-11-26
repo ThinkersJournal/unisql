@@ -1191,6 +1191,25 @@ impl Target for Mysql {
             BinaryOp::Divide if matches!(ctx.source, "mysql" | "mariadb") => Ok(None),
             BinaryOp::Divide => {
                 let _ = numeric;
+                let is_fraction = |s: &str| {
+                    let s = s
+                        .trim()
+                        .trim_start_matches('(')
+                        .trim_end_matches(')')
+                        .trim();
+                    s.chars()
+                        .next()
+                        .is_some_and(|c| c.is_ascii_digit() || c == '.')
+                        && s.contains(['.', 'e', 'E'])
+                        && s.parse::<f64>().is_ok()
+                };
+                if is_fraction(l) || is_fraction(r) {
+                    return Err(ctx.refuse(
+                        "division_decimal_literal",
+                        "a decimal literal operand: DIV would truncate it to an integer",
+                        &["cast the operands to the type you want, or write the division for MySQL explicitly"],
+                    ));
+                }
                 ctx.note(
                     "division_integer",
                     Tier::Conditional,

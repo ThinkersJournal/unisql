@@ -193,6 +193,13 @@ fn cases(maria: bool) -> Vec<Case> {
             "SELECT id, lpad(name, 8, '*'), rpad(name, 8, 'ab'), lpad(name, 3, '*'), rpad(name, 0, 'x'), lpad(city, 6, 'xy'), lpad('\u{e9}', 3, '\u{fc}'), rpad(email, 4, '.') FROM users",
         ),
         exp(
+            c(
+                "refuse_int_div_decimal_literal",
+                "SELECT age / 7.0 FROM users",
+            ),
+            Expect::Refused("division_decimal_literal"),
+        ),
+        exp(
             c("refuse_left_column", "SELECT left(name, age) FROM users"),
             Expect::Refused("fn:left.length"),
         ),

@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=193
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mariadb 11.4.13-MariaDB-ubu2404; cases=194
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -27,6 +27,7 @@ PASS left_right                   same
        -> SELECT `id`, LEFT(`name`, 2), RIGHT(`name`, 2), LEFT(`name`, 0), RIGHT(`name`, 0), LEFT(`name`, 100), RIGHT(`name`, 100), LEFT(`email`, 3), LEFT('héllo', 2), RIGHT('héllo', 2) FROM `users`
 PASS lpad_rpad                    same
        -> SELECT `id`, LPAD(`name`, 8, '*'), RPAD(`name`, 8, 'ab'), LPAD(`name`, 3, '*'), RPAD(`name`, 0, 'x'), LPAD(`city`, 6, 'xy'), LPAD('é', 3, 'ü'), RPAD(`email`, 4, '.') FROM `users`
+PASS refuse_int_div_decimal_literal refused `division_decimal_literal`: a decimal literal operand: DIV would truncate it to an integer
 PASS refuse_left_column           refused `fn:left.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
 PASS refuse_right_negative        refused `fn:right.length`: a negative count means 'all but the last |n|' in PostgreSQL and '' in MySQL
 PASS substr_literal               same

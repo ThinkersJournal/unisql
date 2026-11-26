@@ -2,6 +2,12 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.18 - 2026-11-26
+
+- **PostgreSQL `starts_with(s, p)`, `ascii(s)`, `chr(n)` with a literal, `translate(s, from, to)` with literals, `bit_length(s)` and `trunc(x[, n])` to MySQL and MariaDB.** Each checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4. `starts_with` is `INSTR(s, p) = 1`.
+- **Fix: PostgreSQL `a / b` with a decimal literal operand (`age / 7.0`) to MySQL and MariaDB is now refused (leaf `division_decimal_literal`).** It was written as `DIV`, which truncates to an integer and silently gave a wrong value.
+- **CI: the shared portfolio workflow is pinned to a newer revision.**
+
 ## 0.27.17 - 2026-11-23
 
 - **Test only: a differential case for PostgreSQL `mod(a, b)` on integers to MySQL and MariaDB.** `mod()` already reads as the `%` operator; the case pins the sign of the remainder on both engines. No change to any translation.
