@@ -368,6 +368,14 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("fn:to_hex.args"),
         ),
         c(
+            "bool_aggregates",
+            "SELECT bool_and(age > 1), bool_or(age > 100), bool_and(age > 100), bool_or(age > 1), every(age > 1), bool_and(DISTINCT age > 1) FROM users",
+        ),
+        c(
+            "bool_aggregates_empty",
+            "SELECT bool_and(age > 1), bool_or(age > 1) FROM users WHERE id < 0",
+        ),
+        c(
             "div_function",
             "SELECT div(7, 2)::bigint, div(-7, 2)::bigint, div(7, -2)::bigint, div(9.5, 2)::bigint, div(-9.5, 2)::bigint, div(7.9, 2.5)::bigint, div(id + 6, 2)::bigint, div(age - 1, 4)::bigint FROM users WHERE id = 1",
         ),
