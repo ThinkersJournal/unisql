@@ -90,6 +90,7 @@ fn:translate	translate(s, from, to) with literal from and to, no repeated `from`
 fn:chr.args	chr(n) with a non-literal n, 0, a surrogate or a value past U+10FFFF is refused: PostgreSQL raises an error, MySQL and MariaDB return NULL or an invalid string.
 fn:translate.args	translate(s, from, to) with a non-literal from or to, a repeated `from` character, or a `to` character that is also in `from` is refused: a chain of REPLACEs would differ from PostgreSQL.
 fn:bit_length	bit_length(s) is eight times the number of bytes of s (UTF-8 on both engines), NULL for NULL.
+fn:div	div(y, x) (MySQL (y DIV x)) is the quotient truncated toward zero, for integer and decimal operands; division by zero raises an error as at the source.
 fn:to_hex	to_hex(n) with a non-negative integer literal (MySQL LOWER(HEX(n))) is the lowercase hexadecimal digits of n without leading zeros, "0" for 0.
 fn:to_hex.args	to_hex(x) where x is not a non-negative integer literal is refused on MySQL and MariaDB: a negative value is two's complement at the argument's width in PostgreSQL and always 64-bit in MySQL.
 fn:trunc	trunc(x[, places]) cuts x toward zero at the given number of decimal places (negative places cut left of the point), NULL for NULL (MySQL TRUNCATE(x, places)).

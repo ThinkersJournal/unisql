@@ -368,6 +368,10 @@ fn cases(maria: bool) -> Vec<Case> {
             Expect::Refused("fn:to_hex.args"),
         ),
         c(
+            "div_function",
+            "SELECT div(7, 2)::bigint, div(-7, 2)::bigint, div(7, -2)::bigint, div(9.5, 2)::bigint, div(-9.5, 2)::bigint, div(7.9, 2.5)::bigint, div(id + 6, 2)::bigint, div(age - 1, 4)::bigint FROM users WHERE id = 1",
+        ),
+        c(
             "bit_length_trunc",
             "SELECT id, bit_length(name), bit_length(''), bit_length('h\u{e9}llo'), trunc(2.7)::float8, trunc(-2.7)::float8, trunc(1234.5678, 2)::float8, trunc(1234.5678, -2)::float8, trunc(-1.99::float8) FROM users",
         ),
