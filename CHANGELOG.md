@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.19 - 2026-11-27
+
+- PostgreSQL `to_hex` of a non-negative literal maps to `LOWER(HEX(n))` for MySQL and MariaDB (matrix rows, `unisql-dialect-mysql`, differential test and docs). One mapping slice; not breaking.
+
 ## 0.27.18 - 2026-11-26
 
 - **PostgreSQL `starts_with(s, p)`, `ascii(s)`, `chr(n)` with a literal, `translate(s, from, to)` with literals, `bit_length(s)` and `trunc(x[, n])` to MySQL and MariaDB.** Each checked live on PostgreSQL 16, MySQL 8.4 and MariaDB 11.4. `starts_with` is `INSTR(s, p) = 1`.
