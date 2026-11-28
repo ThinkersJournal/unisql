@@ -2,6 +2,10 @@
 
 One version number for every crate in the workspace. Pre-1.0, the second number is the breaking one.
 
+## 0.27.20 - 2026-11-27 (allocated by pm-assist; additive: `div()`, `bool_and`/`every`/`bool_or` mapped to MySQL/MariaDB)
+
+- Leaf-contract mappings for MySQL and MariaDB (`unisql-dialect-mysql`), regenerated matrices and differential reports, `docs/LEAF-CONTRACTS.tsv`; the lane ran its local gates green (106 suites, live engines).
+
 ## 0.27.19 - 2026-11-27
 
 - PostgreSQL `to_hex` of a non-negative literal maps to `LOWER(HEX(n))` for MySQL and MariaDB (matrix rows, `unisql-dialect-mysql`, differential test and docs). One mapping slice; not breaking.
