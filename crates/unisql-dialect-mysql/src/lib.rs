@@ -475,6 +475,20 @@ impl Target for Mysql {
                 // DIV binds tighter than + and -, so an operand that is itself an expression is parenthesised.
                 Ok(format!("(({}) DIV ({}))", args[0], args[1]))
             }
+            // Trigonometry on double precision: the same function in both, no domain error for these
+            // (asin/acos/ln/sqrt are left out: PostgreSQL raises, MySQL returns NULL).
+            "degrees" | "radians" | "sin" | "cos" | "tan" | "atan" if args.len() == 1 => {
+                ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
+                Ok(format!("{}({})", n.to_uppercase(), args[0]))
+            }
+            "atan2" if args.len() == 2 => {
+                ctx.note("fn:atan2", Tier::Exact, "", None)?;
+                Ok(format!("ATAN2({}, {})", args[0], args[1]))
+            }
+            "pi" if args.is_empty() => {
+                ctx.note("fn:pi", Tier::Exact, "", None)?;
+                Ok("PI()".to_string())
+            }
             "bit_length" if args.len() == 1 => {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
                 Ok(format!("{}({})", n.to_uppercase(), args[0]))

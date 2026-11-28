@@ -44,6 +44,8 @@ construct	extract.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=
 construct	filter_clause	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_filter	MySQL has no FILTER (WHERE ..) on aggregates	postgres
 construct	fn:age	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_age	age() returns a calendar interval (years, months, days); MySQL/MariaDB has no interval value	postgres
 construct	fn:ascii	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::ascii_code_point		postgres
+construct	fn:atan	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
+construct	fn:atan2	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
 construct	fn:bit_length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::bit_length_trunc		postgres
 construct	fn:bool_and	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
@@ -59,6 +61,7 @@ construct	fn:chr.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	
 construct	fn:coalesce	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
 construct	fn:concat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_concat_fn	PostgreSQL concat() ignores NULLs; MySQL CONCAT() returns NULL if any argument is NULL	postgres
 construct	fn:concat_ws	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_functions		postgres
+construct	fn:cos	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
 construct	fn:count	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:current_date	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::current_date_text		postgres
 construct	fn:current_user	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_current_user	no verified mapping for this function on MySQL/MariaDB yet	postgres
@@ -72,6 +75,7 @@ construct	fn:date_trunc.parameter	mysql	8.4.11	collation=utf8mb4_bin;schema=none
 construct	fn:date_trunc.quarter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
+construct	fn:degrees	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
 construct	fn:div	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::div_function	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
 construct	fn:div.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::div_function	allowance=division_by_zero_is_null	postgres
 construct	fn:every	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
@@ -97,6 +101,8 @@ construct	fn:min.text_collation	mysql	8.4.11	collation=utf8mb4_bin;schema=none	y
 construct	fn:now	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	diverges from the strict contract unless accepted: allowance=now_as_text	postgres
 construct	fn:now.now_as_text	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::interval_literal_hours	allowance=now_as_text	postgres
 construct	fn:nullif	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::coalesce_nullif		postgres
+construct	fn:pi	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
+construct	fn:radians	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
 construct	fn:repeat	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_functions		postgres
 construct	fn:replace	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_funcs		postgres
 construct	fn:reverse	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::string_functions		postgres
@@ -106,6 +112,7 @@ construct	fn:row_number	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier
 construct	fn:rpad	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::lpad_rpad		postgres
 construct	fn:rtrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
 construct	fn:rtrim.char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
+construct	fn:sin	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
 construct	fn:split_part	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::split_part_literal		postgres
 construct	fn:split_part.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_split_part_zero	a zero or negative field, or an empty delimiter, behaves differently (PostgreSQL error or counts from the end)	postgres
 construct	fn:split_part.parameter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_split_part_param	the string is written three times, and a positional ? binds once	postgres
@@ -120,6 +127,7 @@ construct	fn:substr	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=nat
 construct	fn:substr.args	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_substr	a start before 1, a negative length or a non-literal start/length behaves differently (PostgreSQL clips the length, MySQL returns '')	postgres
 construct	fn:sum	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::aggregates		postgres
 construct	fn:sum.order_by	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_agg_order_sum	this target cannot honour an ORDER BY inside this aggregate	postgres
+construct	fn:tan	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::trig_functions		postgres
 construct	fn:to_char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::to_char_fields		postgres
 construct	fn:to_char.format	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite=postgres-to-mysql;test=postgres-to-mysql::refuse_to_char_day_name	to_char: only literal formats of YYYY, MM, DD, HH24, MI, SS and - / : . , space are mapped	postgres
 construct	fn:to_hex	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::to_hex_literal		postgres

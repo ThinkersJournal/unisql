@@ -94,6 +94,14 @@ fn:bool_and	bool_and(x) and every(x) (MySQL MIN(x)) are true when every non-NULL
 fn:bool_or	bool_or(x) (MySQL MAX(x)) is true when some x is true; skips NULLs and is NULL for no rows, as at the source; MySQL and MariaDB return it as the integer 0/1, not a boolean.
 fn:div	div(y, x) (MySQL (y DIV x)) is the quotient truncated toward zero, for integer and decimal operands; division by zero raises an error as at the source.
 fn:every	every(x) is the same function as bool_and(x) (MySQL MIN(x)): true when every non-NULL x is true; skips NULLs and is NULL for no rows, as at the source; MySQL and MariaDB return it as the integer 0/1, not a boolean.
+fn:degrees	degrees(x) converts radians to degrees on double precision (MySQL DEGREES(x)); NULL for NULL.
+fn:radians	radians(x) converts degrees to radians on double precision (MySQL RADIANS(x)); NULL for NULL.
+fn:sin	sin(x) is the sine of x radians on double precision (MySQL SIN(x)); NULL for NULL.
+fn:cos	cos(x) is the cosine of x radians on double precision (MySQL COS(x)); NULL for NULL.
+fn:tan	tan(x) is the tangent of x radians on double precision (MySQL TAN(x)); NULL for NULL.
+fn:atan	atan(x) is the arc tangent of x on double precision (MySQL ATAN(x)); NULL for NULL.
+fn:atan2	atan2(y, x) is the arc tangent of y/x using both signs to pick the quadrant, on double precision (MySQL ATAN2(y, x)); NULL for NULL.
+fn:pi	pi() is the constant pi as a double precision value (MySQL PI()).
 fn:to_hex	to_hex(n) with a non-negative integer literal (MySQL LOWER(HEX(n))) is the lowercase hexadecimal digits of n without leading zeros, "0" for 0.
 fn:to_hex.args	to_hex(x) where x is not a non-negative integer literal is refused on MySQL and MariaDB: a negative value is two's complement at the argument's width in PostgreSQL and always 64-bit in MySQL.
 fn:trunc	trunc(x[, places]) cuts x toward zero at the given number of decimal places (negative places cut left of the point), NULL for NULL (MySQL TRUNCATE(x, places)).

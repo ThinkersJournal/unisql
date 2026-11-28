@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=197
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=198
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -87,6 +87,8 @@ PASS bool_aggregates_empty        same
        -> SELECT MIN(`age` > 1), MAX(`age` > 1) FROM `users` WHERE `id` < 0
 PASS div_function                 same
        -> SELECT CAST(((7) DIV (2)) AS SIGNED), CAST(((-7) DIV (2)) AS SIGNED), CAST(((7) DIV (-2)) AS SIGNED), CAST(((9.5) DIV (2)) AS SIGNED), CAST(((-9.5) DIV (2)) AS SIGNED), CAST(((7.9) DIV (2.5)) AS SIGNED), CAST(((`id` + 6) DIV (2)) AS SIGNED), CAST(((`age` - 1) DIV (4)) AS SIGNED) FROM `users` WHERE `id` = 1
+PASS trig_functions               same
+       -> SELECT DEGREES(CAST(1.0 AS DOUBLE)), RADIANS(CAST(180.0 AS DOUBLE)), DEGREES(CAST(0.0 AS DOUBLE)), PI(), SIN(CAST(1.0 AS DOUBLE)), COS(CAST(1.0 AS DOUBLE)), TAN(CAST(1.0 AS DOUBLE)), ATAN(CAST(1.0 AS DOUBLE)), ATAN2(CAST(1.0 AS DOUBLE), CAST(2.0 AS DOUBLE)), SIN(CAST(`id` AS DOUBLE)), COS(CAST(`age` AS DOUBLE)), DEGREES(CAST(`id` AS DOUBLE)), ATAN2(CAST(`age` AS DOUBLE), CAST(`id` AS DOUBLE)) FROM `users` WHERE `id` = 1
 PASS bit_length_trunc             same
        -> SELECT `id`, BIT_LENGTH(`name`), BIT_LENGTH(''), BIT_LENGTH('héllo'), CAST(TRUNCATE(2.7, 0) AS DOUBLE), CAST(TRUNCATE(-2.7, 0) AS DOUBLE), CAST(TRUNCATE(1234.5678, 2) AS DOUBLE), CAST(TRUNCATE(1234.5678, -2) AS DOUBLE), TRUNCATE(-CAST(1.99 AS DOUBLE), 0) FROM `users`
 PASS in_list                      same
@@ -341,7 +343,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 143 passing translated cases:
+MATRIX (construct, tier) from 144 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -368,6 +370,8 @@ MATRIX (construct, tier) from 143 passing translated cases:
   extract.week                 exact
   extract.year                 exact
   fn:ascii                     emulated
+  fn:atan                      exact
+  fn:atan2                     exact
   fn:avg                       exact
   fn:bit_length                exact
   fn:bool_and                  conditional
@@ -380,6 +384,7 @@ MATRIX (construct, tier) from 143 passing translated cases:
   fn:chr                       exact
   fn:coalesce                  exact
   fn:concat_ws                 exact
+  fn:cos                       exact
   fn:count                     exact
   fn:current_date              exact
   fn:date_trunc.day            exact
@@ -389,6 +394,7 @@ MATRIX (construct, tier) from 143 passing translated cases:
   fn:date_trunc.quarter        exact
   fn:date_trunc.week           exact
   fn:date_trunc.year           exact
+  fn:degrees                   exact
   fn:div                       conditional
   fn:every                     conditional
   fn:floor                     exact
@@ -403,6 +409,8 @@ MATRIX (construct, tier) from 143 passing translated cases:
   fn:min                       conditional
   fn:now                       conditional
   fn:nullif                    exact
+  fn:pi                        exact
+  fn:radians                   exact
   fn:repeat                    exact
   fn:replace                   exact
   fn:reverse                   exact
@@ -411,6 +419,7 @@ MATRIX (construct, tier) from 143 passing translated cases:
   fn:rpad                      exact
   fn:rtrim                     exact
   fn:rtrim.char                emulated
+  fn:sin                       exact
   fn:split_part                exact
   fn:starts_with               conditional
   fn:string_agg                conditional
@@ -418,6 +427,7 @@ MATRIX (construct, tier) from 143 passing translated cases:
   fn:strpos                    conditional
   fn:substr                    exact
   fn:sum                       exact
+  fn:tan                       exact
   fn:to_char                   exact
   fn:to_hex                    exact
   fn:to_timestamp              exact
