@@ -450,6 +450,31 @@ impl Target for Mysql {
                 "only a non-negative integer literal is translated (a negative value is two's complement at the argument's width in PostgreSQL, always 64-bit in MySQL)",
                 &["use a literal, or format in the application"],
             )),
+            // bool_and/every and bool_or over booleans: both engines skip NULLs and return NULL for no
+            // rows. A MySQL boolean is the integer 0/1, so MIN is AND and MAX is OR; the result comes
+            // back as an integer, not a boolean.
+            "bool_and" | "every" | "bool_or" if args.len() == 1 => {
+                ctx.note(
+                    format!("fn:{n}"),
+                    Tier::Conditional,
+                    "-> MIN/MAX over the 0/1 integer a MySQL boolean is; the result is an integer, not a boolean",
+                    Some(Allowance::BooleanAsInteger),
+                )?;
+                let func = if n == "bool_or" { "MAX" } else { "MIN" };
+                Ok(format!("{func}({}{})", if f.distinct { "DISTINCT " } else { "" }, args[0]))
+            }
+            // PostgreSQL div(y, x) is the truncated quotient (toward zero, numeric); MySQL DIV is the
+            // same for integers and for decimals (9.5 DIV 2 = 4). Only a zero divisor differs.
+            "div" if args.len() == 2 => {
+                ctx.note(
+                    "fn:div",
+                    Tier::Conditional,
+                    "-> (y DIV x); division by zero is NULL (with a warning) on MySQL and an error on PostgreSQL",
+                    Some(Allowance::DivisionByZeroIsNull),
+                )?;
+                // DIV binds tighter than + and -, so an operand that is itself an expression is parenthesised.
+                Ok(format!("(({}) DIV ({}))", args[0], args[1]))
+            }
             "bit_length" if args.len() == 1 => {
                 ctx.note(format!("fn:{n}"), Tier::Exact, "", None)?;
                 Ok(format!("{}({})", n.to_uppercase(), args[0]))

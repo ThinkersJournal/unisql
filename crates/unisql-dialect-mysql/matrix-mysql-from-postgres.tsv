@@ -46,6 +46,10 @@ construct	fn:age	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	missing	suite
 construct	fn:ascii	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::ascii_code_point		postgres
 construct	fn:avg	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::avg_cast		postgres
 construct	fn:bit_length	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::bit_length_trunc		postgres
+construct	fn:bool_and	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	fn:bool_and.boolean_as_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	allowance=boolean_as_integer	postgres
+construct	fn:bool_or	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	fn:bool_or.boolean_as_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	allowance=boolean_as_integer	postgres
 construct	fn:btrim	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::btrim_default		postgres
 construct	fn:btrim.char	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::trim_chars_single		postgres
 construct	fn:ceil	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::ceil_floor		postgres
@@ -68,6 +72,10 @@ construct	fn:date_trunc.parameter	mysql	8.4.11	collation=utf8mb4_bin;schema=none
 construct	fn:date_trunc.quarter	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.week	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.year	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::date_trunc_fields		postgres
+construct	fn:div	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::div_function	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
+construct	fn:div.division_by_zero_is_null	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::div_function	allowance=division_by_zero_is_null	postgres
+construct	fn:every	mysql	8.4.11	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	fn:every.boolean_as_integer	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mysql;test=postgres-to-mysql::bool_aggregates	allowance=boolean_as_integer	postgres
 construct	fn:floor	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::ceil_floor		postgres
 construct	fn:gen_random_uuid	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mysql;test=postgres-to-mysql::gen_random_uuid_v4		postgres
 construct	fn:left	mysql	8.4.11	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mysql;test=postgres-to-mysql::left_right		postgres

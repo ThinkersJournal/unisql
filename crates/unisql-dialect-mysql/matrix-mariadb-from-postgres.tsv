@@ -46,6 +46,10 @@ construct	fn:age	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	missing	su
 construct	fn:ascii	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::ascii_code_point		postgres
 construct	fn:avg	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::avg_cast		postgres
 construct	fn:bit_length	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::bit_length_trunc		postgres
+construct	fn:bool_and	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	fn:bool_and.boolean_as_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::bool_aggregates	allowance=boolean_as_integer	postgres
+construct	fn:bool_or	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	fn:bool_or.boolean_as_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::bool_aggregates	allowance=boolean_as_integer	postgres
 construct	fn:btrim	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::btrim_default		postgres
 construct	fn:btrim.char	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::trim_chars_single		postgres
 construct	fn:ceil	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
@@ -68,6 +72,10 @@ construct	fn:date_trunc.parameter	mariadb	11.4.13	collation=utf8mb4_bin;schema=n
 construct	fn:date_trunc.quarter	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.week	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_week_quarter		postgres
 construct	fn:date_trunc.year	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::date_trunc_fields		postgres
+construct	fn:div	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::div_function	diverges from the strict contract unless accepted: allowance=division_by_zero_is_null	postgres
+construct	fn:div.division_by_zero_is_null	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::div_function	allowance=division_by_zero_is_null	postgres
+construct	fn:every	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	no	wrong	suite=postgres-to-mariadb;test=postgres-to-mariadb::bool_aggregates	diverges from the strict contract unless accepted: allowance=boolean_as_integer	postgres
+construct	fn:every.boolean_as_integer	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=conditional;suite=postgres-to-mariadb;test=postgres-to-mariadb::bool_aggregates	allowance=boolean_as_integer	postgres
 construct	fn:floor	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::ceil_floor		postgres
 construct	fn:gen_random_uuid	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=emulated;suite=postgres-to-mariadb;test=postgres-to-mariadb::gen_random_uuid_v4		postgres
 construct	fn:left	mariadb	11.4.13	collation=utf8mb4_bin;schema=none	yes		tier=native;suite=postgres-to-mariadb;test=postgres-to-mariadb::left_right		postgres

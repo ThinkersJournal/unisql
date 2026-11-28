@@ -1,4 +1,4 @@
-postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=194
+postgres 16.15 (Debian 16.15-1.pgdg13+2) -> mysql 8.4.11; cases=197
 PASS select_param                 same
        -> SELECT `id`, `name` FROM `users` WHERE `id` = ?
 PASS param_reuse_reorder          same
@@ -81,6 +81,12 @@ PASS refuse_translate_param       refused `fn:translate.args`: only literal from
 PASS to_hex_literal               same
        -> SELECT `id`, LOWER(HEX(0)), LOWER(HEX(255)), LOWER(HEX(4096)), LOWER(HEX(2147483647)), LOWER(HEX(4294967296)) FROM `users`
 PASS refuse_to_hex_column         refused `fn:to_hex.args`: only a non-negative integer literal is translated (a negative value is two's complement at the argument's width in PostgreSQL, always 64-bit in MySQL)
+PASS bool_aggregates              same
+       -> SELECT MIN(`age` > 1), MAX(`age` > 100), MIN(`age` > 100), MAX(`age` > 1), MIN(`age` > 1), MIN(DISTINCT `age` > 1) FROM `users`
+PASS bool_aggregates_empty        same
+       -> SELECT MIN(`age` > 1), MAX(`age` > 1) FROM `users` WHERE `id` < 0
+PASS div_function                 same
+       -> SELECT CAST(((7) DIV (2)) AS SIGNED), CAST(((-7) DIV (2)) AS SIGNED), CAST(((7) DIV (-2)) AS SIGNED), CAST(((9.5) DIV (2)) AS SIGNED), CAST(((-9.5) DIV (2)) AS SIGNED), CAST(((7.9) DIV (2.5)) AS SIGNED), CAST(((`id` + 6) DIV (2)) AS SIGNED), CAST(((`age` - 1) DIV (4)) AS SIGNED) FROM `users` WHERE `id` = 1
 PASS bit_length_trunc             same
        -> SELECT `id`, BIT_LENGTH(`name`), BIT_LENGTH(''), BIT_LENGTH('héllo'), CAST(TRUNCATE(2.7, 0) AS DOUBLE), CAST(TRUNCATE(-2.7, 0) AS DOUBLE), CAST(TRUNCATE(1234.5678, 2) AS DOUBLE), CAST(TRUNCATE(1234.5678, -2) AS DOUBLE), TRUNCATE(-CAST(1.99 AS DOUBLE), 0) FROM `users`
 PASS in_list                      same
@@ -335,7 +341,7 @@ PASS lock_share                   same
 PASS lock_of_table                same
        -> SELECT `u`.`id` FROM `users` AS `u` INNER JOIN `orders` AS `o` ON `o`.`user_id` = `u`.`id` WHERE `o`.`id` = 1 FOR UPDATE OF `u`
 
-MATRIX (construct, tier) from 140 passing translated cases:
+MATRIX (construct, tier) from 143 passing translated cases:
   array_param                  conditional
   bitwise                      conditional
   boolean_literal              conditional
@@ -364,6 +370,8 @@ MATRIX (construct, tier) from 140 passing translated cases:
   fn:ascii                     emulated
   fn:avg                       exact
   fn:bit_length                exact
+  fn:bool_and                  conditional
+  fn:bool_or                   conditional
   fn:btrim                     emulated
   fn:btrim                     exact
   fn:btrim.char                emulated
@@ -381,6 +389,8 @@ MATRIX (construct, tier) from 140 passing translated cases:
   fn:date_trunc.quarter        exact
   fn:date_trunc.week           exact
   fn:date_trunc.year           exact
+  fn:div                       conditional
+  fn:every                     conditional
   fn:floor                     exact
   fn:gen_random_uuid           emulated
   fn:left                      exact
